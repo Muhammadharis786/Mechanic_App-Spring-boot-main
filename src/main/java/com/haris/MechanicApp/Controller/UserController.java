@@ -1,0 +1,91 @@
+package com.haris.MechanicApp.Controller;
+
+import com.haris.MechanicApp.Model.Verification.ForgotEmail;
+import com.haris.MechanicApp.Model.Verification.Token;
+import com.haris.MechanicApp.Model.Verification.User;
+import com.haris.MechanicApp.Service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
+@RestController
+public class UserController {
+
+    @Autowired
+  AuthenticationManager authenticationManager;
+
+
+    @Autowired
+    UserService userService;
+
+
+
+    @GetMapping ("/")
+    public String home (){
+
+        return "hello world";
+    }
+
+
+    @PostMapping ("api/user/register")
+
+    public ResponseEntity <?> registration (@RequestBody User user){
+
+        return userService.register(user);
+}
+
+@PostMapping ("api/verify/user/token")
+    public ResponseEntity<?> verifyRegistration (@RequestBody Token token
+                                               ){
+return userService.verifyRegistration(token.getToken() ,token.getEmail() );
+}
+    @PostMapping("api/user/login")
+    public ResponseEntity<?> loginUser (@RequestBody User user  ){
+        return userService.login(user ,authenticationManager);
+    }
+
+    @PostMapping("api/user/forgot")
+    public ResponseEntity<?> forgotPasswords (@RequestBody ForgotEmail email){
+
+            return userService.forgotpasswords(email.getEmail());
+
+    }
+
+    @PostMapping ("api/user/forget/verify")
+    public ResponseEntity<?> verifynewPasswordToken (@RequestBody Token token){
+
+            return userService.verifynewPasswordToken (token);
+
+    }
+
+    @PostMapping ("api/user/newPassword")
+    public ResponseEntity<?> updatepassword (@RequestBody User user){
+
+        return userService. updatePassword (user);
+
+    }
+//ye simple user ki image save krnay k lie optional hay ager day tu thk wrna n
+@PostMapping(value = "api/save/user/userimage" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
+
+    public ResponseEntity<?> saveImage(
+            @RequestParam("file") MultipartFile file  ,
+            @AuthenticationPrincipal UserDetails userDetails )
+    {
+
+        String email = userDetails.getUsername();
+        return userService.saveUserImage(file , email);
+
+    }
+}
+
