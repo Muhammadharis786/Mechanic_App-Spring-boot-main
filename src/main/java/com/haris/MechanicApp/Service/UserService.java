@@ -294,7 +294,7 @@ public class UserService implements UserDetailsService {
 
             user.setUserimgurl(uploadDir + fileName);
             userRepo.save(user);
-            return ResponseEntity.ok("Upload successful");
+            return ResponseEntity.ok("Upload successfuls");
 
 } catch (IOException e) {
             throw new RuntimeException(e);
