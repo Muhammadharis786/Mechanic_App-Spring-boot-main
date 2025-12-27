@@ -87,5 +87,13 @@ return userService.verifyRegistration(token.getToken() ,token.getEmail() );
         return userService.saveUserImage(file , email);
 
     }
+
+    @GetMapping ("api/user/dashboard")
+
+    public ResponseEntity<?> userdashboard (
+            @AuthenticationPrincipal UserDetails userDetails){
+        String email = userDetails.getUsername();
+        return userService.userdashboard (email) ;
+    }
 }
 

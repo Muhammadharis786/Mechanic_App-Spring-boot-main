@@ -1,6 +1,5 @@
 package com.haris.MechanicApp.Service;
 
-import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Verification.Token;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Model.Verification.VerificationToken;
@@ -299,5 +298,12 @@ public class UserService implements UserDetailsService {
 } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ResponseEntity<?> userdashboard(String email) {
+        User user = userRepo.findByEmail(email).get();
+
+        return ResponseEntity.ok(user);
+
     }
 }

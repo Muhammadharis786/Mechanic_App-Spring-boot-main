@@ -15,18 +15,14 @@ public class QuestionController {
 
 
 
-@GetMapping("api/problems/root")
-public ResponseEntity <?> getByRoot (){
-    return qservice.findbysubproblems(null);
+@GetMapping("api/subproblems/{parentID}")
+public ResponseEntity <?> getBybikeMechanic (@PathVariable("parentID") Integer parentID){
+    return qservice.findbysubproblems(parentID);
 
 }
 
-    @GetMapping("api/problem/subproblems/{parentID}")
 
-    public ResponseEntity<?> getsubproblems(@PathVariable Integer parentID) {
-        return  qservice.findbysubproblems(parentID);
 
-    }
 
 
 

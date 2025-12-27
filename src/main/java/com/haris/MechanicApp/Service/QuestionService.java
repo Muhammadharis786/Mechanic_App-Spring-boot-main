@@ -18,13 +18,9 @@ public class QuestionService {
 
      public ResponseEntity<?> findbysubproblems(Integer parentID) {
 
-if(parentID==null){
-    List<Questions> rootQuestions = QuestionRepo.findByParentQuestionIdIsNull();
-    return ResponseEntity.ok(rootQuestions);
 
-}
+    Optional<Questions> questions = QuestionRepo.findById(parentID);
 
-        Optional<Questions>  questions = QuestionRepo.findById(parentID);
         if(questions.isPresent()){
             Questions question = questions.get();
             List<Questions>  subproblems =  QuestionRepo.findByParentQuestion(question);
