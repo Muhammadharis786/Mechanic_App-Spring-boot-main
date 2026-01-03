@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Controller;
 
+import com.haris.MechanicApp.Model.Verification.DtoUser;
 import com.haris.MechanicApp.Model.Verification.ForgotEmail;
 import com.haris.MechanicApp.Model.Verification.Token;
 import com.haris.MechanicApp.Model.Verification.User;
@@ -40,10 +41,12 @@ public class UserController {
 
     @PostMapping ("api/user/register")
 
-    public ResponseEntity <?> registration (@RequestBody User user){
+    public ResponseEntity <?> registration (@RequestBody DtoUser user){
 
         return userService.register(user);
 }
+
+
 
 @PostMapping ("api/verify/user/token")
     public ResponseEntity<?> verifyRegistration (@RequestBody Token token
@@ -51,7 +54,7 @@ public class UserController {
 return userService.verifyRegistration(token.getToken() ,token.getEmail() );
 }
     @PostMapping("api/user/login")
-    public ResponseEntity<?> loginUser (@RequestBody User user  ){
+    public ResponseEntity<?> loginUser (@RequestBody DtoUser user  ){
         return userService.login(user ,authenticationManager);
     }
 
@@ -70,7 +73,7 @@ return userService.verifyRegistration(token.getToken() ,token.getEmail() );
     }
 
     @PostMapping ("api/user/newPassword")
-    public ResponseEntity<?> updatepassword (@RequestBody User user){
+    public ResponseEntity<?> updatepassword (@RequestBody DtoUser user){
 
         return userService. updatePassword (user);
 

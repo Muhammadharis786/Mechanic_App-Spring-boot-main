@@ -16,5 +16,5 @@ public interface VerificationTokenRepository  extends JpaRepository<Verification
 
 
 
-    Optional<VerificationToken> findByTokenAndUser_Id(String token, long userid);
+    Optional<VerificationToken> findByTokenAndUser_Userid(String token, long userid);
 }

@@ -48,6 +48,7 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/user/newPassword").permitAll()
                         .anyRequest().authenticated()
                 )
+
                 .httpBasic(Customizer.withDefaults());
 //                .oauth2Login(Customizer.withDefaults());
 //                .formLogin(Customizer.withDefaults());

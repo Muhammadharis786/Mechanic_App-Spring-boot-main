@@ -1,14 +1,19 @@
 package com.haris.MechanicApp.Service;
 
-import com.haris.MechanicApp.Model.Verification.Token;
-import com.haris.MechanicApp.Model.Verification.User;
-import com.haris.MechanicApp.Model.Verification.VerificationToken;
+import com.haris.MechanicApp.Model.GoogleDistance;
+import com.haris.MechanicApp.Model.Mechanic.Mechanic;
+import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
+import com.haris.MechanicApp.Model.Verification.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
+
+import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import com.haris.MechanicApp.Repository.VerificationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +45,8 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private MechanicRepository mechRepo;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -51,6 +58,7 @@ public class UserService implements UserDetailsService {
         Optional<User> checkUser = userRepo.findByEmail(email);
 
         if (checkUser.isPresent()) {
+
             User user = checkUser.get();
 
             if (user.isEnabled()) {
@@ -97,7 +105,7 @@ public class UserService implements UserDetailsService {
     // -----------------------------------
     // Register new user
     // -----------------------------------
-    public ResponseEntity<?> register(User user) {
+    public ResponseEntity<?> register(DtoUser user) {
 
         Optional<User> checkUser = userRepo.findByEmail(user.getEmail());
 
@@ -113,7 +121,7 @@ public class UserService implements UserDetailsService {
             }
             else   if ( !user2.isEnabled()){
 
-                System.out.println("my email is enable is false");
+
 
                 updateVerificationToken(user2, token);
                 emailService.sendVerificationEmail(user2.getEmail(), token);
@@ -127,6 +135,7 @@ public class UserService implements UserDetailsService {
             System.out.println("Create new register");
             User newUser = new User();
             newUser.setEmail(user.getEmail());
+
             newUser.setPassword(encoder.encode(user.getPassword()));
             newUser.setEnabled(false);
             newUser.setRegistrationDate(modernDate());
@@ -182,11 +191,12 @@ public class UserService implements UserDetailsService {
             Optional<User> checkuser = userRepo.findByEmail(email);
 
             if(checkuser.isPresent()){
-                User getuser= checkuser.get(); 
+                User getuser= checkuser.get();
+
                 if(getuser.isEnabled()){
                     return ResponseEntity.status(HttpStatus.IM_USED).body("Email Already Verified Please Login");
                 }
-                Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Id(token ,getuser.getId());
+                Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Userid(token ,getuser.getUserid());
                 if(checkToken.isPresent()){
                     VerificationToken verifiedToken = checkToken.get();
                     // Check if token expired
@@ -197,8 +207,11 @@ public class UserService implements UserDetailsService {
                     // Enable user account
                     User user = verifiedToken.getUser();
                     user.setEnabled(true);
+                    Set<Role> userRoles = new  HashSet<>() ;
+                    userRoles.add(Role.USER);
+                    user.setRoles(userRoles);
                     System.out.println("User True hogya hay ab");
-                    userRepo.save(user);
+                    userRepo.saveAndFlush(user);
 
                     // Delete token after verification
                     tokenRepo.delete(verifiedToken);
@@ -211,7 +224,7 @@ public class UserService implements UserDetailsService {
         return ResponseEntity.status(401).body("Invalid Token");
     }
 
-    public ResponseEntity<?> login(User user, AuthenticationManager authenticationManager) {
+    public ResponseEntity<?> login(DtoUser user, AuthenticationManager authenticationManager) {
 
         Optional<User> user1 =  userRepo.findByEmail(user.getEmail());
         try {
@@ -247,7 +260,7 @@ public class UserService implements UserDetailsService {
 
         if(checkuser.isPresent()){
             User user =  checkuser.get();
-            Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Id(token.getToken() , user.getId() );
+            Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Userid(token.getToken() , user.getUserid() );
             if(checkToken.isPresent()){
                 VerificationToken token1 = checkToken.get();
                 if (token1.getExpiryDate().before(Calendar.getInstance().getTime())) {
@@ -263,7 +276,7 @@ public class UserService implements UserDetailsService {
         return ResponseEntity.status(401).body("Invalid Token");
  }
 
-    public ResponseEntity<?> updatePassword(User user) {
+    public ResponseEntity<?> updatePassword(DtoUser user) {
 
 
 
@@ -302,8 +315,52 @@ public class UserService implements UserDetailsService {
 
     public ResponseEntity<?> userdashboard(String email) {
         User user = userRepo.findByEmail(email).get();
+        long id = 9089;
 
-        return ResponseEntity.ok(user);
+
+
+
+
+          List<Mechanic>  allmechanics = mechRepo.findAll();
+          Map<String , Object> map = new HashMap<>();
+        System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
+        List<MechanicDTO > mechanics = new ArrayList<>();
+        int i = 1;
+          for (Mechanic mechanic : allmechanics) {
+
+              MechanicDTO mechanicDTO = new MechanicDTO();
+              mechanicDTO.setName(mechanic.getName());
+              mechanicDTO.setMechanicType(mechanic.getMechanictype());
+              mechanicDTO.setAveragerating(mechanic.getAverageRating());
+              mechanicDTO.setExperience(mechanic.getExperienceyears());
+              mechanicDTO.setIsactive(mechanic.isIsactive());
+              mechanicDTO.setPhonenumber(mechanic.getPhonenumber());
+              mechanicDTO.setMechanicimgurl(mechanic.getMechanicimgurl());
+              mechanicDTO.setIsengaged(mechanic.isIsengaged());
+
+
+              GoogleDistance distance = new GoogleDistance();
+       float distancinkm =         distance.CalulateDistance(
+                       mechanic.getLatitude() , mechanic.getLongitude(),
+                       user.getLastLatitude() , user.getLastLongitude()
+               );
+
+    mechanicDTO.setDistance(BigDecimal.valueOf(distancinkm).setScale(1 , RoundingMode.HALF_UP));
+    mechanicDTO.setMechaniclocname(distance.getAddressFromLatLng(  mechanic.getLatitude()
+            ,mechanic.getLongitude()));
+
+         mechanics.add(mechanicDTO);
+
+
+ }
+        map.put("mechanics", mechanics);
+        map.put("user", user);
+return ResponseEntity.ok( map);
+
+
+
 
     }
+
+
 }

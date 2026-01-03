@@ -32,7 +32,9 @@ public class Mechanic {
 
 
     // 📍 Location & Address
+    @Column(precision = 10, scale = 8)
     private BigDecimal latitude;
+    @Column(precision = 11, scale = 8)
     private BigDecimal longitude;
      @Column(name = "shop_address")
     private String shopaddress;           // Workshop/shop address

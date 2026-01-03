@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Service;
 
+
 import com.haris.MechanicApp.Model.Verification.User;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class MyPrincipal implements UserDetails {
 
@@ -17,11 +19,13 @@ public class MyPrincipal implements UserDetails {
         this.user = user;
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority(user.getRole()));
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return  user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                    .collect(Collectors.toList());
 
-    }
+        }
 
     @Override
     public @Nullable String getPassword() {
@@ -48,10 +52,6 @@ public class MyPrincipal implements UserDetails {
     public boolean isEnabled() { return true; }
 
 
-//    acha isko upper wly say replace krna hay
-//    @Override
-//    public boolean isEnabled() {
-//        return user.isEmailVerified();
-//    }
+
 
 }
