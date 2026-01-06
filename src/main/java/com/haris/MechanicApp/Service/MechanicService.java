@@ -135,6 +135,10 @@ public class MechanicService     {
                 newregisteredmechanic.setMechanictype(mechanicdata.getMechanictype());
                 newregisteredmechanic.setWorkinghours(mechanicdata.getWorkinghours());
 
+
+                newregisteredmechanic.setLatitude(mechanicdata.getLatitude());
+                newregisteredmechanic.setLongitude(mechanicdata.getLongitude());
+
                 //this is for image save in Mechanic Entity of mechanic , cnic front , cnic back
 
                 newregisteredmechanic.setMechanicimgurl(uploadDir + mechaniciimagefile);
