@@ -34,7 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService  {
 
     @Autowired
 
@@ -53,22 +53,22 @@ public class UserService implements UserDetailsService {
     // -----------------------------------
     // Load user by email for Spring Security
     // -----------------------------------
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Optional<User> checkUser = userRepo.findByEmail(email);
-
-        if (checkUser.isPresent()) {
-
-            User user = checkUser.get();
-
-            if (user.isEnabled()) {
-                return new MyPrincipal(user);
-            }
-            throw new UsernameNotFoundException("User Not Verified");
-        }
-
-        throw new UsernameNotFoundException("User Not Found");
-    }
+//    @Override
+//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+//        Optional<User> checkUser = userRepo.findByEmail(email);
+//
+//        if (checkUser.isPresent()) {
+//
+//            User user = checkUser.get();
+//
+//            if (user.isEnabled()) {
+//                return new MyPrincipal(user);
+//            }
+//            throw new UsernameNotFoundException("User Not Verified");
+//        }
+//
+//        throw new UsernameNotFoundException("User Not Found");
+//    }
 
     // -----------------------------------
     // Get current date-time in formatted string
@@ -314,53 +314,50 @@ public class UserService implements UserDetailsService {
     }
 
     public ResponseEntity<?> userdashboard(String email) {
-        User user = userRepo.findByEmail(email).get();
+       Optional<User>  checkuser = userRepo.findByEmail(email);
         long id = 9089;
-
-
-
-
-
-          List<Mechanic>  allmechanics = mechRepo.findAll();
-          Map<String , Object> map = new HashMap<>();
+    if(checkuser.isPresent()){
+        User user =  checkuser.get();
+        List<Mechanic>  allmechanics = mechRepo.findAll();
+        Map<String , Object> map = new HashMap<>();
         System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
         List<MechanicDTO > mechanics = new ArrayList<>();
         int i = 1;
-          for (Mechanic mechanic : allmechanics) {
+        for (Mechanic mechanic : allmechanics) {
 
-              MechanicDTO mechanicDTO = new MechanicDTO();
-              mechanicDTO.setName(mechanic.getName());
-              mechanicDTO.setMechanicType(mechanic.getMechanictype());
-              mechanicDTO.setAveragerating(mechanic.getAverageRating());
-              mechanicDTO.setExperience(mechanic.getExperienceyears());
-              mechanicDTO.setIsactive(mechanic.isIsactive());
-              mechanicDTO.setPhonenumber(mechanic.getPhonenumber());
-              mechanicDTO.setMechanicimgurl(mechanic.getMechanicimgurl());
-              mechanicDTO.setIsengaged(mechanic.isIsengaged());
+            MechanicDTO mechanicDTO = new MechanicDTO();
+            mechanicDTO.setName(mechanic.getName());
+            mechanicDTO.setMechanicType(mechanic.getMechanictype());
+            mechanicDTO.setAveragerating(mechanic.getAverageRating());
+            mechanicDTO.setExperience(mechanic.getExperienceyears());
+            mechanicDTO.setIsactive(mechanic.isIsactive());
+            mechanicDTO.setPhonenumber(mechanic.getPhonenumber());
+            mechanicDTO.setMechanicimgurl(mechanic.getMechanicimgurl());
+            mechanicDTO.setIsengaged(mechanic.isIsengaged());
 
 
-              GoogleDistance distance = new GoogleDistance();
+            GoogleDistance distance = new GoogleDistance();
             float distancinkm =         distance.CalulateDistance(
-                       mechanic.getLatitude() , mechanic.getLongitude(),
-                       user.getLastLatitude() , user.getLastLongitude()
-               );
+                    mechanic.getLatitude() , mechanic.getLongitude(),
+                    user.getLastLatitude() , user.getLastLongitude()
+            );
 
-    mechanicDTO.setDistance(BigDecimal.valueOf(distancinkm).setScale(1 , RoundingMode.HALF_UP));
-    mechanicDTO.setMechaniclocname(distance.getAddressFromLatLng(  mechanic.getLatitude()
-            ,mechanic.getLongitude()));
+            mechanicDTO.setDistance(BigDecimal.valueOf(distancinkm).setScale(1 , RoundingMode.HALF_UP));
+            mechanicDTO.setMechaniclocname(distance.getAddressFromLatLng(  mechanic.getLatitude()
+                    ,mechanic.getLongitude()));
 
-         mechanics.add(mechanicDTO);
+            mechanics.add(mechanicDTO);
 
 
- }
+        }
         map.put("mechanics", mechanics);
         map.put("user", user);
-return ResponseEntity.ok( map);
-
-
-
+        return ResponseEntity.ok( map);
 
     }
+
+    return  ResponseEntity.status(401).body("Invalid User");
+}
 
 
 }

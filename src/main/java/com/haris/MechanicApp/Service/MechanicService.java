@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Service;
 
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
+import com.haris.MechanicApp.Model.Mechanic.MechanicCredientialsDTO;
 import com.haris.MechanicApp.Model.Mechanic.MechanicNumnerDto;
 import com.haris.MechanicApp.Model.Mechanic.MechanicRegistrationDto;
 import com.haris.MechanicApp.Model.Verification.Role;
@@ -10,6 +11,10 @@ import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,7 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class MechanicService     {
+public class MechanicService    {
 
     @Autowired
     private MechanicRepository mechanicRepository;
@@ -175,5 +180,52 @@ public class MechanicService     {
             return  ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Already registered");
         }
         return   ResponseEntity.status(HttpStatus.OK).body("Number is Valid");
+    }
+
+    public ResponseEntity<?> loginmechanic(MechanicCredientialsDTO credientialsDTO, AuthenticationManager authenticationManager) {
+        Optional<Mechanic> mechanic  = mechanicRepository.findByPhonenumber(credientialsDTO.getPhonenumber());
+        try
+        {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(credientialsDTO.getPhonenumber(),
+                            credientialsDTO.getPassword())
+                    );
+
+            if (auth.isAuthenticated()) {
+                if(mechanic.isPresent()){
+                    Mechanic mechanic1 =  mechanic.get();
+
+                    if(mechanic1.isIsverified()){
+                        return ResponseEntity.ok("Login Successful ✅");
+                    }
+                    else if (!mechanic1.isIsverified()){
+                        return ResponseEntity
+                                .status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Verified ❌");
+                    }
+
+                }
+
+            }
+
+
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password ❌");
+        } catch (AuthenticationException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public ResponseEntity<?> mechanicdashboard(String phonenumber) {
+Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
+    if(checkmechanic.isPresent()){
+
+            Mechanic verfiedmechanic = checkmechanic.get();
+            return  ResponseEntity.status(HttpStatus.OK).body(verfiedmechanic);
+
+
+    }
+    return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+
     }
 }
