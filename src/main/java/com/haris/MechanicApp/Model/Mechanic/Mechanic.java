@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Model.Mechanic;
 
+import com.haris.MechanicApp.Model.Verification.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -76,6 +77,10 @@ public class Mechanic {
     @Column(name = "total_jobs_cancelled")
     private int totalJobsCancelled = 0;
 
+    // ✅ USER FOREIGN KEY (IMPORTANT PART)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userid", nullable = false)
+    private User user;
 
     @Column(name = "average_rating", precision = 3 ,scale = 2)
     private BigDecimal averageRating = new BigDecimal("5.0");

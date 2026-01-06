@@ -1,11 +1,15 @@
 package com.haris.MechanicApp.Controller;
 
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
+import com.haris.MechanicApp.Model.Mechanic.MechanicNumnerDto;
+import com.haris.MechanicApp.Model.Mechanic.MechanicRegistrationDto;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Service.MechanicService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -36,6 +40,25 @@ public class MechanicController {
 
       mechanicService.updateEngagedStatus(id, engaged);
         return ResponseEntity.ok("Mechanic status updated");
+    }
+
+    @PostMapping(value = "api/mechanic/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> registerMechanic(
+            @RequestPart("userData") MechanicRegistrationDto mechanicdata,
+            @RequestPart("mechanicprofilePicture") MultipartFile mecanicimg,
+            @RequestPart("cnicfrontimg") MultipartFile cnicfrontimg,
+            @RequestPart("cnicbackimg") MultipartFile cnicbackimg
+
+            ){
+        return  mechanicService.registerMechanic (mechanicdata , mecanicimg , cnicbackimg ,cnicfrontimg);
+
+
+    }
+
+    @PostMapping ("api/mechanic/checknumber")
+    public ResponseEntity<?> checkNumber(MechanicNumnerDto numberDto){
+        return   mechanicService.checkmechanicnumber (numberDto);
+
     }
 }
 

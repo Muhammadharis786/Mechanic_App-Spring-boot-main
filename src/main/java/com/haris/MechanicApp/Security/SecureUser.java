@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Security;
 
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,19 @@ public class SecureUser {
     @Bean
 public SecurityFilterChain  securityFilterChain (HttpSecurity http){
         http
+                .logout(logout->logout
+                        .logoutUrl("/api/logout")
+                        .logoutSuccessHandler((request, response,
+                                               authentication) -> {
+
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.getWriter().write("Logged out Successfully");
+
+                        })
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+
+                )
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.addAllowedOriginPattern("*"); // allows all origins safely (Spring 5.3+)
@@ -46,6 +60,10 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/user/forgot").permitAll()
                         .requestMatchers("/api/user/forget/verify").permitAll()
                         .requestMatchers("/api/user/newPassword").permitAll()
+                        .requestMatchers("/api/mechanic/register").permitAll()
+                        .requestMatchers("/api/mechanic/checknumber").permitAll()
+
+
                         .anyRequest().authenticated()
                 )
 
