@@ -340,7 +340,7 @@ public class UserService implements UserDetailsService {
 
 
               GoogleDistance distance = new GoogleDistance();
-       float distancinkm =         distance.CalulateDistance(
+            float distancinkm =         distance.CalulateDistance(
                        mechanic.getLatitude() , mechanic.getLongitude(),
                        user.getLastLatitude() , user.getLastLongitude()
                );

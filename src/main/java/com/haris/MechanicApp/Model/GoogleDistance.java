@@ -12,10 +12,14 @@ public class GoogleDistance {
 
     private static final String API_KEY = "AIzaSyBpyZg2i30gOLUKK0furYdGDbWXe4lqpkU";
 
-    public   float CalulateDistance (BigDecimal mechlatitude, BigDecimal mechlongitude ,
+    public      float CalulateDistance (BigDecimal mechlatitude, BigDecimal mechlongitude ,
                             BigDecimal userlatitude , BigDecimal userlongitude ){
 
-
+        // Check for null coordinates to avoid issues
+        if (mechlatitude == null || mechlongitude == null || userlatitude == null || userlongitude == null) {
+            System.out.println("Error: One or more coordinates are null.");
+            return -1;
+        }
 
         String mechaniclocation = String.valueOf(mechlatitude +"," + mechlongitude );
         String userlocation = String.valueOf(userlatitude + "," + userlongitude );
