@@ -28,10 +28,23 @@ public class MechanicController {
     private MechanicService mechanicService;
     @GetMapping ("api/mechanic/allmechanic")
     public List<Mechanic> getAllMechanic(){
-    return mechanicRepo.findAll();
+
+
+
+        return mechanicRepo.findAll();
  }
 
 
+
+
+    @DeleteMapping ("api/delete/mechanic/{mechid}")
+
+ public ResponseEntity<?> deletemechanic (@PathVariable long mechid ){
+
+        return mechanicService.dltmechani(mechid);
+
+
+ }
  //ye check kraiga kay mechanic online hay offline
     @PostMapping("api/mechanic/checkinginternet/{id}/heartbeat") public void heartbeat(@PathVariable Long id) {
 

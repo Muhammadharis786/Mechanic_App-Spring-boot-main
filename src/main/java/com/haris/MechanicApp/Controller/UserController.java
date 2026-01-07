@@ -39,6 +39,19 @@ public class UserController {
     }
 
 
+    @GetMapping("api/user/allusers")
+    public ResponseEntity<?> allusers (){
+
+        return userService.allusers ();
+    }
+
+
+    @DeleteMapping ("api/user/delete/{userid}")
+    public ResponseEntity<?> dltuser (@PathVariable long userid){
+        return userService.dltuser (userid);
+
+    }
+
     @PostMapping ("api/user/register")
 
     public ResponseEntity <?> registration (@RequestBody DtoUser user){

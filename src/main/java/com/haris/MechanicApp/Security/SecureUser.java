@@ -62,7 +62,16 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/user/newPassword").permitAll()
                         .requestMatchers("/api/mechanic/register").permitAll()
                         .requestMatchers("/api/mechanic/checknumber").permitAll()
-                                .requestMatchers("/api/mechanic/login").permitAll()
+                        .requestMatchers("/api/mechanic/login").permitAll()
+                        .requestMatchers("/api/mechanic/allmechanic").permitAll()
+                        .requestMatchers("/api/delete/mechanic/{mechid}").permitAll()
+                        .requestMatchers("/api/user/allusers").permitAll()
+                        .requestMatchers("/api/user/delete/{userid}").permitAll()
+
+
+
+
+
 
 
 

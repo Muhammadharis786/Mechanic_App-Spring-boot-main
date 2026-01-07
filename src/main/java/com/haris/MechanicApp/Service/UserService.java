@@ -29,6 +29,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -360,4 +361,22 @@ public class UserService  {
 }
 
 
+    public ResponseEntity<?> allusers() {
+
+          List<User>  allusers = userRepo.findAll();
+
+          return  ResponseEntity.ok(allusers);
+    }
+
+    public ResponseEntity<?> dltuser(long userid) {
+
+        Optional<User>  checkuser = userRepo.findById(userid);
+        if(checkuser.isPresent()){
+            User user = checkuser.get();
+            userRepo.delete(user);
+            return ResponseEntity.ok("User Deleted");
+
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
+    }
 }

@@ -41,24 +41,8 @@ public class MechanicService    {
 
     private  final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-//    @Override
-//    public UserDetails loadUserByUsername(String phonenumber) throws UsernameNotFoundException {
-////        Optional<User> checkUser = userRepo.findByEmail(email);
-//
-//        Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
-//
-//        if (checkmechanic.isPresent()) {
-//
-//           Mechanic mechanic   = checkmechanic.get();
-//
-//            if (mechanic.isIsverified()) {
-//                return new MyPrincipalMechanic(mechanic);
-//            }
-//            throw new UsernameNotFoundException("Mechanic Not Verified");
-//        }
-//
-//        throw new UsernameNotFoundException("Mechanic Not Found");
-//    }
+
+
 
     public void updateLastSeen(Long mechanicId) {
         Mechanic m = mechanicRepository.findById(mechanicId)
@@ -106,7 +90,7 @@ public class MechanicService    {
             if(user.isPresent()){
                 User  mechanicAndduser = user.get();
                 if (mechanicRepository.existsByUser(mechanicAndduser)) {
-                    return ResponseEntity.ok("Already a mechanic");
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic already exists");
                 }
 
                 Mechanic newregisteredmechanic = new Mechanic();
@@ -227,5 +211,16 @@ Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phone
     }
     return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
 
+    }
+
+    public ResponseEntity<?> dltmechani(long mechid) {
+
+        Optional<Mechanic> mechanic = mechanicRepository.findById(mechid);
+        if(mechanic.isPresent()){
+              Mechanic mechanic1 =  mechanic.get();
+              mechanicRepository.delete(mechanic1);
+        return ResponseEntity.status(HttpStatus.OK).body("Mechanic is Deleted");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
     }
 }
