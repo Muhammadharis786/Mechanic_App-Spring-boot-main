@@ -3,8 +3,10 @@ package com.haris.MechanicApp.Model.Verification;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 @Entity
 @Table(name="verificationtoken")
@@ -18,7 +20,11 @@ public class VerificationToken  {
     @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)
     @JoinColumn(nullable = false, name = "userid")
     private User user;
-   public  VerificationToken() {
+
+
+    private LocalDateTime createdDate;
+
+    public  VerificationToken() {
 
     }
     public VerificationToken(User user, String token) {
@@ -28,6 +34,14 @@ public class VerificationToken  {
 
     public void setExpiryDate(int ExpiryDate) {
         this.expiryDate = calculateExpiryDate(ExpiryDate);
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 
     public Date getExpiryDate() {

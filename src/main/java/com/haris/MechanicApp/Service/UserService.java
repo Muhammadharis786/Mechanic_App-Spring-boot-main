@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Time;
 import java.util.Random;
 
 import com.haris.MechanicApp.Repository.MechanicRepository;
@@ -51,25 +52,6 @@ public class UserService  {
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    // -----------------------------------
-    // Load user by email for Spring Security
-    // -----------------------------------
-//    @Override
-//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        Optional<User> checkUser = userRepo.findByEmail(email);
-//
-//        if (checkUser.isPresent()) {
-//
-//            User user = checkUser.get();
-//
-//            if (user.isEnabled()) {
-//                return new MyPrincipal(user);
-//            }
-//            throw new UsernameNotFoundException("User Not Verified");
-//        }
-//
-//        throw new UsernameNotFoundException("User Not Found");
-//    }
 
     // -----------------------------------
     // Get current date-time in formatted string
@@ -169,7 +151,8 @@ public class UserService  {
             verificationToken.setUser(user);
             verificationToken.setToken(token);
         }
-        verificationToken.setExpiryDate(10); // Set new expiry date
+        verificationToken.setCreatedDate(LocalDateTime.now());
+        verificationToken.setExpiryDate(1); // Set new expiry date
         tokenRepo.save(verificationToken);
     }
 
@@ -180,7 +163,7 @@ public class UserService  {
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setUser(newUser);
         verificationToken.setToken(token);
-        verificationToken.setExpiryDate(10); // expiry in minutes (assumed)
+        verificationToken.setExpiryDate(1); // expiry in minutes (assumed)
         tokenRepo.save(verificationToken);
 
     }
@@ -200,10 +183,7 @@ public class UserService  {
                 Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Userid(token ,getuser.getUserid());
                 if(checkToken.isPresent()){
                     VerificationToken verifiedToken = checkToken.get();
-                    // Check if token expired
-                    if (verifiedToken.getExpiryDate().before(Calendar.getInstance().getTime())) {
-                        return ResponseEntity.status(498).body("Expired Token");
-                    }
+
 
                     // Enable user account
                     User user = verifiedToken.getUser();
@@ -219,10 +199,11 @@ public class UserService  {
 
                     return ResponseEntity.ok("User Verified Successfully!");
                 }
+                return ResponseEntity.status(401).body("Invalid Token or expired Token");
             }
 
 
-        return ResponseEntity.status(401).body("Invalid Token");
+        return ResponseEntity.status(401).body("First Enter Your Credentials");
     }
 
     public ResponseEntity<?> login(DtoUser user, AuthenticationManager authenticationManager) {

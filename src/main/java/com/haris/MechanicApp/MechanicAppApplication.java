@@ -2,11 +2,12 @@ package com.haris.MechanicApp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-
+@EnableScheduling
 @SpringBootApplication
 public class MechanicAppApplication {
 

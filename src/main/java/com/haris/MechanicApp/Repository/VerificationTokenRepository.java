@@ -4,6 +4,9 @@ import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Model.Verification.VerificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 public interface VerificationTokenRepository  extends JpaRepository<VerificationToken , Long> {
@@ -11,10 +14,11 @@ public interface VerificationTokenRepository  extends JpaRepository<Verification
 
     Optional<VerificationToken> findByUser(User user);
 
-//    @Query("SELECT v FROM VerificationToken v JOIN v.user u WHERE v.token = :token")
-//    Optional<VerificationToken> findByToken(@Param("token") String token);
+
 
 
 
     Optional<VerificationToken> findByTokenAndUser_Userid(String token, long userid);
+
+    List<VerificationToken> findAllByCreatedDateBefore(LocalDateTime threshold);
 }
