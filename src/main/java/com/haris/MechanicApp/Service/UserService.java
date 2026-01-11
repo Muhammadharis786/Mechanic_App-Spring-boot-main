@@ -164,6 +164,8 @@ public class UserService  {
         verificationToken.setUser(newUser);
         verificationToken.setToken(token);
         verificationToken.setExpiryDate(1); // expiry in minutes (assumed)
+
+        verificationToken.setCreatedDate(LocalDateTime.now());
         tokenRepo.save(verificationToken);
 
     }
@@ -199,7 +201,7 @@ public class UserService  {
 
                     return ResponseEntity.ok("User Verified Successfully!");
                 }
-                return ResponseEntity.status(401).body("Invalid Token or expired Token");
+                return ResponseEntity.status(401).body("Invalid or Expired Token");
             }
 
 
