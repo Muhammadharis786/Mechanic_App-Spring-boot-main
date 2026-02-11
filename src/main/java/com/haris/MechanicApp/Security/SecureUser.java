@@ -58,6 +58,7 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/user/login").permitAll()
                         .requestMatchers("/api/verify/user/token").permitAll()
                         .requestMatchers("/api/user/forgot").permitAll()
+                        .requestMatchers("/uploads/**" ).permitAll()
                         .requestMatchers("/api/user/forget/verify").permitAll()
                         .requestMatchers("/api/user/newPassword").permitAll()
                         .requestMatchers("/api/mechanic/register").permitAll()

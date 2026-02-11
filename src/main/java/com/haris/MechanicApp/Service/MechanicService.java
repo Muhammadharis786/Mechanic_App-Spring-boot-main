@@ -9,6 +9,7 @@ import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +34,9 @@ import java.util.UUID;
 
 @Service
 public class MechanicService    {
+    @Value("${server.base-url}" )
+    private String baseUrl;
+
 
     @Autowired
     private MechanicRepository mechanicRepository;
@@ -68,27 +72,23 @@ public class MechanicService    {
             MultipartFile cnicbackimg,
             MultipartFile cnicfrontimg) {
 
-        try
-        {
+        try {
             Optional<Mechanic> checknumbermechanic = mechanicRepository.findByPhonenumber(mechanicdata.getPhonenumber());
-                Optional<User> user = userRepository.findById(mechanicdata.getUserid());
+            Optional<User> user = userRepository.findById(mechanicdata.getUserid());
 
-
-
-
-            if (user.isEmpty()){
+            if (user.isEmpty()) {
 
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not Created ");
             }
 
-            if(!mechanicdata.isOtpVerified()){
+            if (!mechanicdata.isOtpVerified()) {
                 System.out.println("Otp Verifed nh hwa");
                 return ResponseEntity
                         .status(HttpStatus.UNAUTHORIZED)
                         .body("OTP not verified");
             }
-            if(user.isPresent()){
-                User  mechanicAndduser = user.get();
+            if (user.isPresent()) {
+                User mechanicAndduser = user.get();
                 if (mechanicRepository.existsByUser(mechanicAndduser)) {
                     return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic already exists");
                 }
@@ -96,24 +96,34 @@ public class MechanicService    {
                 Mechanic newregisteredmechanic = new Mechanic();
                 String uploadDir = "upload/mechanic/";
                 Files.createDirectories(Paths.get(uploadDir));
-                String mechaniciimagefile = UUID.randomUUID() + "_" + mecanicimg.getOriginalFilename();
-                String cnicfrontfile = UUID.randomUUID() + "_" + cnicbackimg.getOriginalFilename();
-                String cnicbackfile = UUID.randomUUID() + "_" + cnicfrontimg.getOriginalFilename();
+
+                String originalMechanicImgName = mecanicimg.getOriginalFilename().replace(" ", "_");
+                String originalCnicFrontName = cnicfrontimg.getOriginalFilename().replace(" ", "_");
+                String originalCnicBackName = cnicbackimg.getOriginalFilename().replace(" ", "_");
+
+                String mechaniciimagefile = UUID.randomUUID() + "_" + originalMechanicImgName;
+                String cnicfrontfile = UUID.randomUUID() + "_" + originalCnicFrontName;
+                String cnicbackfile = UUID.randomUUID() + "_" + originalCnicBackName;
 
 
                 Path pathmechimg = Paths.get(uploadDir + mechaniciimagefile);
                 Path pathcnicfront = Paths.get(uploadDir + cnicfrontfile);
                 Path pathcnicback = Paths.get(uploadDir + cnicbackfile);
 
-                Files.write(pathmechimg , mecanicimg.getBytes());
-                Files.write(pathcnicfront , cnicfrontimg.getBytes());
+                Files.write(pathmechimg, mecanicimg.getBytes());
+                Files.write(pathcnicfront, cnicfrontimg.getBytes());
                 Files.write(pathcnicback, cnicbackimg.getBytes());
 
-
+                //menay jo hay wo user jo tha ab mechanic bhi bn gya hay tu menay ab ussay save krdya hay Role mechanic
                 mechanicAndduser.getRoles().add(Role.MECHANIC);
                 userRepository.save(mechanicAndduser);
 
-                newregisteredmechanic .setUser (mechanicAndduser);
+                newregisteredmechanic.setUser(mechanicAndduser);
+
+
+                String mechanicImageUrl =  baseUrl +"/uploads/mechanic/" + mechaniciimagefile;
+                String cnicFrontUrl = baseUrl + "/uploads/mechanic/" + cnicfrontfile;
+                String cnicBackUrl = baseUrl + "/uploads/mechanic/" + cnicbackfile;
 
                 //this is important data or object of mechanic
                 newregisteredmechanic.setName(mechanicdata.getName());
@@ -130,9 +140,9 @@ public class MechanicService    {
 
                 //this is for image save in Mechanic Entity of mechanic , cnic front , cnic back
 
-                newregisteredmechanic.setMechanicimgurl(uploadDir + mechaniciimagefile);
-                newregisteredmechanic.setCnicfronturl(uploadDir + cnicfrontfile);
-                newregisteredmechanic.setCnicbackurl(uploadDir + cnicbackfile);
+                newregisteredmechanic.setMechanicimgurl(mechanicImageUrl);
+                newregisteredmechanic.setCnicfronturl(cnicFrontUrl);
+                newregisteredmechanic.setCnicbackurl(cnicBackUrl);
 
 
                 System.out.println("hogya mechanic registered");
@@ -142,17 +152,13 @@ public class MechanicService    {
             }
 
 
-        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Can not register");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Can not register");
 
 
-
-
-  }
-        catch ( Exception e){
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 
         }
-
 
 
     }
