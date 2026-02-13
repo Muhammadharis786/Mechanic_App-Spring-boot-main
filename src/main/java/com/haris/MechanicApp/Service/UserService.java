@@ -299,14 +299,14 @@ public class UserService  {
 
     public ResponseEntity<?> userdashboard(String email) {
        Optional<User>  checkuser = userRepo.findByEmail(email);
-        long id = 9089;
+
     if(checkuser.isPresent()){
         User user =  checkuser.get();
         List<Mechanic>  allmechanics = mechRepo.findAll();
         Map<String , Object> map = new HashMap<>();
         System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
         List<MechanicDTO > mechanics = new ArrayList<>();
-        int i = 1;
+
         for (Mechanic mechanic : allmechanics) {
 
             MechanicDTO mechanicDTO = new MechanicDTO();
