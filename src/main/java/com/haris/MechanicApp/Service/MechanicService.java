@@ -1,9 +1,5 @@
 package com.haris.MechanicApp.Service;
 
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicCredientialsDTO;
 import com.haris.MechanicApp.Model.Mechanic.MechanicNumnerDto;
@@ -14,8 +10,6 @@ import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.swing.text.html.Option;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,16 +37,14 @@ public class MechanicService    {
     @Value("${server.base-url}" )
     private String baseUrl;
 
-    @Autowired
-    private Storage storage;
+
     @Autowired
     private MechanicRepository mechanicRepository;
     @Autowired
     private UserRepository userRepository;
 
     private  final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    // Apni bucket ka naam yahan likhein
-    private final String BUCKET_NAME = "mechanic-app-images-bucket-1"; // <<-- APNI BUCKET KA NAAM LIKHEIN
+
 
 
 
@@ -73,14 +64,6 @@ public class MechanicService    {
 
         // true = accept, false = cancel
         mechanicRepository.save(m);
-    }
-
-    @Configuration
-    public class GcsConfig{
-        @Bean
-        public Storage storage() throws  IOException{
-            return StorageOptions.getDefaultInstance().getService();
-        }
     }
 
     public ResponseEntity<?> registerMechanic(
@@ -109,19 +92,40 @@ public class MechanicService    {
                 if (mechanicRepository.existsByUser(mechanicAndduser)) {
                     return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic already exists");
                 }
-                // ===== Step 2: Files ko GCS par upload karein =====
-                String mechanicImageUrl = uploadFileToGcs(mecanicimg);
-                String cnicFrontUrl = uploadFileToGcs(cnicfrontimg);
-                String cnicBackUrl = uploadFileToGcs(cnicbackimg);
-
 
                 Mechanic newregisteredmechanic = new Mechanic();
-              //menay jo hay wo user jo tha ab mechanic bhi bn gya hay tu menay ab ussay save krdya hay Role mechanic
+                String uploadDir = "upload/mechanic/";
+                Files.createDirectories(Paths.get(uploadDir));
+
+                String originalMechanicImgName = mecanicimg.getOriginalFilename().replace(" ", "_");
+                String originalCnicFrontName = cnicfrontimg.getOriginalFilename().replace(" ", "_");
+                String originalCnicBackName = cnicbackimg.getOriginalFilename().replace(" ", "_");
+
+                String mechaniciimagefile = UUID.randomUUID() + "_" + originalMechanicImgName;
+                String cnicfrontfile = UUID.randomUUID() + "_" + originalCnicFrontName;
+                String cnicbackfile = UUID.randomUUID() + "_" + originalCnicBackName;
+
+
+                Path pathmechimg = Paths.get(uploadDir + mechaniciimagefile);
+                Path pathcnicfront = Paths.get(uploadDir + cnicfrontfile);
+                Path pathcnicback = Paths.get(uploadDir + cnicbackfile);
+
+                Files.write(pathmechimg, mecanicimg.getBytes());
+                Files.write(pathcnicfront, cnicfrontimg.getBytes());
+                Files.write(pathcnicback, cnicbackimg.getBytes());
+
+                //menay jo hay wo user jo tha ab mechanic bhi bn gya hay tu menay ab ussay save krdya hay Role mechanic
                 mechanicAndduser.getRoles().add(Role.MECHANIC);
                 userRepository.save(mechanicAndduser);
 
                 newregisteredmechanic.setUser(mechanicAndduser);
-                  //this is important data or object of mechanic
+
+
+                String mechanicImageUrl =  baseUrl +"/uploads/mechanic/" + mechaniciimagefile;
+                String cnicFrontUrl = baseUrl + "/uploads/mechanic/" + cnicfrontfile;
+                String cnicBackUrl = baseUrl + "/uploads/mechanic/" + cnicbackfile;
+
+                //this is important data or object of mechanic
                 newregisteredmechanic.setName(mechanicdata.getName());
                 newregisteredmechanic.setPassword(encoder.encode(mechanicdata.getPassword()));
                 newregisteredmechanic.setPhonenumber(mechanicdata.getPhonenumber());
@@ -157,34 +161,6 @@ public class MechanicService    {
         }
 
 
-    }
-
-
-    /**
-     * Helper function jo file ko Google Cloud Storage par upload karti hai
-     * aur uska public URL wapas bhejti hai.
-     */
-
-    //ye jo hay wo google cloud storage may save kraiga files aur wha say retrive kraiga files ko jessay images ko
-    private String uploadFileToGcs(MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return null;
-        }
-
-        // File ka ek unique naam banayein (spaces ko underscore se badal kar)
-        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename().replace(" ", "_");
-
-        // BlobId object banayein (GCS mein file ka path)
-        BlobId blobId = BlobId.of(BUCKET_NAME, fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                .setContentType(file.getContentType())
-                .build();
-
-        // File ko GCS par upload karein
-        storage.create(blobInfo, file.getBytes());
-
-        // File ka public URL return karein
-        return "https://storage.googleapis.com/" + BUCKET_NAME + "/" + fileName;
     }
 
     public ResponseEntity<?> checkmechanicnumber(MechanicNumnerDto numberDto) {
