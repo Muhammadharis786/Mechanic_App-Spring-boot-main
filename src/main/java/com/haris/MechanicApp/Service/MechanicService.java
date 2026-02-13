@@ -78,7 +78,7 @@ public class MechanicService    {
     @Configuration
     public class GcsConfig{
         @Bean
-        public Storage storage(){
+        public Storage storage() throws  IOException{
             return StorageOptions.getDefaultInstance().getService();
         }
     }
