@@ -1,5 +1,9 @@
 package com.haris.MechanicApp.Service;
 
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicCredientialsDTO;
 import com.haris.MechanicApp.Model.Mechanic.MechanicNumnerDto;
@@ -10,6 +14,8 @@ import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.swing.text.html.Option;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,9 +50,14 @@ public class MechanicService    {
     @Autowired
     private UserRepository userRepository;
 
+
+
     private  final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-
+    @Autowired
+    private Storage storage;
+    // Apni bucket ka naam yahan likhein
+    @Value("${gcp.bucket.name}")
+    private String bucketName;
 
 
     public void updateLastSeen(Long mechanicId) {
@@ -65,6 +77,8 @@ public class MechanicService    {
         // true = accept, false = cancel
         mechanicRepository.save(m);
     }
+
+
 
     public ResponseEntity<?> registerMechanic(
             MechanicRegistrationDto mechanicdata,
@@ -92,39 +106,21 @@ public class MechanicService    {
                 if (mechanicRepository.existsByUser(mechanicAndduser)) {
                     return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic already exists");
                 }
+                // Files ko GCS par upload karein
+                String mechanicImageUrl = uploadFileToGcs(mecanicimg, "mechanic_images");
+                String cnicFrontUrl = uploadFileToGcs(cnicfrontimg, "cnic_images");
+                String cnicBackUrl = uploadFileToGcs(cnicbackimg, "cnic_images");
+
+                if (mechanicImageUrl == null || cnicFrontUrl == null || cnicBackUrl == null) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed.");
+                }
 
                 Mechanic newregisteredmechanic = new Mechanic();
-                String uploadDir = "upload/mechanic/";
-                Files.createDirectories(Paths.get(uploadDir));
-
-                String originalMechanicImgName = mecanicimg.getOriginalFilename().replace(" ", "_");
-                String originalCnicFrontName = cnicfrontimg.getOriginalFilename().replace(" ", "_");
-                String originalCnicBackName = cnicbackimg.getOriginalFilename().replace(" ", "_");
-
-                String mechaniciimagefile = UUID.randomUUID() + "_" + originalMechanicImgName;
-                String cnicfrontfile = UUID.randomUUID() + "_" + originalCnicFrontName;
-                String cnicbackfile = UUID.randomUUID() + "_" + originalCnicBackName;
-
-
-                Path pathmechimg = Paths.get(uploadDir + mechaniciimagefile);
-                Path pathcnicfront = Paths.get(uploadDir + cnicfrontfile);
-                Path pathcnicback = Paths.get(uploadDir + cnicbackfile);
-
-                Files.write(pathmechimg, mecanicimg.getBytes());
-                Files.write(pathcnicfront, cnicfrontimg.getBytes());
-                Files.write(pathcnicback, cnicbackimg.getBytes());
-
                 //menay jo hay wo user jo tha ab mechanic bhi bn gya hay tu menay ab ussay save krdya hay Role mechanic
                 mechanicAndduser.getRoles().add(Role.MECHANIC);
                 userRepository.save(mechanicAndduser);
 
                 newregisteredmechanic.setUser(mechanicAndduser);
-
-
-                String mechanicImageUrl =  baseUrl +"/uploads/mechanic/" + mechaniciimagefile;
-                String cnicFrontUrl = baseUrl + "/uploads/mechanic/" + cnicfrontfile;
-                String cnicBackUrl = baseUrl + "/uploads/mechanic/" + cnicbackfile;
-
                 //this is important data or object of mechanic
                 newregisteredmechanic.setName(mechanicdata.getName());
                 newregisteredmechanic.setPassword(encoder.encode(mechanicdata.getPassword()));
@@ -156,11 +152,38 @@ public class MechanicService    {
 
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 
         }
 
 
+    }
+
+
+    /**
+     * Helper function jo file ko Google Cloud Storage par upload karti hai
+     * aur uska public URL wapas bhejti hai.
+     */
+
+    //ye jo hay wo google cloud storage may save kraiga files aur wha say retrive kraiga files ko jessay images ko
+    private String uploadFileToGcs(MultipartFile file, String directory) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
+        String originalFileName = file.getOriginalFilename().replace(" ", "_");
+        String uniqueFileName = directory + "/" + UUID.randomUUID().toString() + "_" + originalFileName;
+
+        // Yahan BUCKET_NAME ke bajaye @Value se inject kiya hua 'bucketName' istemal karein
+        BlobId blobId = BlobId.of(bucketName, uniqueFileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType())
+                .build();
+
+        storage.create(blobInfo, file.getBytes());
+
+        return "https://storage.googleapis.com/" + bucketName + "/" + uniqueFileName;
     }
 
     public ResponseEntity<?> checkmechanicnumber(MechanicNumnerDto numberDto) {
@@ -179,7 +202,7 @@ public class MechanicService    {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(credientialsDTO.getPhonenumber(),
                             credientialsDTO.getPassword())
-                    );
+            );
 
             if (auth.isAuthenticated()) {
                 if(mechanic.isPresent()){
@@ -207,15 +230,15 @@ public class MechanicService    {
     }
 
     public ResponseEntity<?> mechanicdashboard(String phonenumber) {
-Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
-    if(checkmechanic.isPresent()){
+        Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
+        if(checkmechanic.isPresent()){
 
             Mechanic verfiedmechanic = checkmechanic.get();
             return  ResponseEntity.status(HttpStatus.OK).body(verfiedmechanic);
 
 
-    }
-    return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
 
     }
 
@@ -223,9 +246,9 @@ Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phone
 
         Optional<Mechanic> mechanic = mechanicRepository.findById(mechid);
         if(mechanic.isPresent()){
-              Mechanic mechanic1 =  mechanic.get();
-              mechanicRepository.delete(mechanic1);
-        return ResponseEntity.status(HttpStatus.OK).body("Mechanic is Deleted");
+            Mechanic mechanic1 =  mechanic.get();
+            mechanicRepository.delete(mechanic1);
+            return ResponseEntity.status(HttpStatus.OK).body("Mechanic is Deleted");
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
     }
