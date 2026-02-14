@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Model.Mechanic;
 
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +22,7 @@ public class MechanicDTO {
     private String mechanicimgurl;
     private String mechaniclocname;
     private boolean isengaged;
+    private BigDecimal latitude;
+    private BigDecimal longitude;
+
 }

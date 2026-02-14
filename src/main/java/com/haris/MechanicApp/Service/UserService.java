@@ -318,6 +318,8 @@ public class UserService  {
             mechanicDTO.setPhonenumber(mechanic.getPhonenumber());
             mechanicDTO.setMechanicimgurl(mechanic.getMechanicimgurl());
             mechanicDTO.setIsengaged(mechanic.isIsengaged());
+            mechanicDTO.setLatitude(mechanic.getLatitude());
+            mechanicDTO.setLongitude(mechanic.getLongitude());
 
 
             GoogleDistance distance = new GoogleDistance();
