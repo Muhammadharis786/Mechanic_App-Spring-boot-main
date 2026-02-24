@@ -301,13 +301,13 @@ public class UserService  {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File Upload Failed");
                 }
                 verifieduser.setEmail(userDto.getEmail());
-                verifieduser.setPassword(userDto.getPassword());
+                verifieduser.setPassword(  encoder.encode(userDto.getPassword()));
                 verifieduser.setUsername(userDto.getUsername());
                 verifieduser.setUserimgurl(mechanicImageUrl);
                 verifieduser.setPhonenumber(userDto.getPhonenumber());
                 userRepo.save(verifieduser);
 
-        return ResponseEntity.ok(verifieduser);
+        return ResponseEntity.ok("Updated Succesfully");
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User Not Exist");
 
