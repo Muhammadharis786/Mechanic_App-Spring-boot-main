@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Controller;
 
+import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.DtoUser;
 import com.haris.MechanicApp.Model.Verification.ForgotEmail;
 import com.haris.MechanicApp.Model.Verification.Token;
@@ -94,13 +95,14 @@ return userService.verifyRegistration(token.getToken() ,token.getEmail() );
 //ye simple user ki image save krnay k lie optional hay ager day tu thk wrna n
 @PostMapping(value = "api/save/user/userimage" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
 
-    public ResponseEntity<?> saveImage(
-            @RequestParam("file") MultipartFile file  ,
+    public ResponseEntity<?> updateUser(
+            @RequestPart("userimage") MultipartFile userimage,
+            @RequestPart("userdata") UserDto userDto,
             @AuthenticationPrincipal UserDetails userDetails )
     {
 
         String email = userDetails.getUsername();
-        return userService.saveUserImage(file , email);
+        return userService.updateUser( userDto,    userimage , email);
 
     }
 

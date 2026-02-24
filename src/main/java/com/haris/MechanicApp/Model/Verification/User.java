@@ -34,6 +34,10 @@ public class User {
     @Column(name = "enable")
     private boolean enabled = false;
 
+
+    @Column(name = "phonenumber")
+    private String phonenumber;
+
     @Column(name = "registration_date")
     private String registrationDate;
 

@@ -1,8 +1,12 @@
 package com.haris.MechanicApp.Service;
 
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
+import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.*;
 
 import java.io.IOException;
@@ -18,6 +22,7 @@ import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import com.haris.MechanicApp.Repository.VerificationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,7 +42,12 @@ import java.util.*;
 
 @Service
 public class UserService  {
+    // Apni bucket ka naam yahan likhein
+    @Value("${gcp.bucket.name}")
+    private String bucketName;
 
+    @Autowired
+    private Storage storage;
     @Autowired
 
     private UserRepository userRepo;
@@ -78,7 +88,7 @@ public class UserService  {
                 User user =  checkUser.get();
                 if(user.isEnabled()){
                     updateVerificationToken(user, token);
-                    emailService.sendVerificationEmail(user.getEmail(), token);
+                    emailService.sendForgotPasswordOTP(user.getEmail(), token);
                     return ResponseEntity.ok("Check Email....");
                 }
 
@@ -224,7 +234,7 @@ public class UserService  {
                         return ResponseEntity.ok("Login Successful ✅");
                     }
                     return ResponseEntity
-                            .status(HttpStatus.UNAUTHORIZED).body("Email Not Verified ❌");
+                            .status(HttpStatus.UNAUTHORIZED).body("Email Not Verified ❌ Register Again..");
                 }
 
             }
@@ -277,24 +287,54 @@ public class UserService  {
 
     }
 
-    public ResponseEntity<?> saveUserImage(MultipartFile file , String email) {
-            User user = userRepo.findByEmail(email).get();
+    public ResponseEntity<?> updateUser(UserDto userDto,
+                                            MultipartFile userimage ,
+                                           String email) {
+             Optional<User>  checkuser = userRepo.findByEmail(email);
         try
         {
-            String uploadDir = "upload/user/";
-            Files.createDirectories(Paths.get(uploadDir));
+            if(checkuser.isPresent()){
 
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(uploadDir + fileName);
-            Files.write(path, file.getBytes());
+                User verifieduser =   checkuser.get();
+                String mechanicImageUrl = uploadFileToGcs(userimage, "user_images");
+                if(mechanicImageUrl == null){
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File Upload Failed");
+                }
+                verifieduser.setEmail(userDto.getEmail());
+                verifieduser.setPassword(userDto.getPassword());
+                verifieduser.setUsername(userDto.getUsername());
+                verifieduser.setUserimgurl(mechanicImageUrl);
+                verifieduser.setPhonenumber(userDto.getPhonenumber());
+                userRepo.save(verifieduser);
 
-            user.setUserimgurl(uploadDir + fileName);
-            userRepo.save(user);
-            return ResponseEntity.ok("Upload successfuls");
+        return ResponseEntity.ok(verifieduser);
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User Not Exist");
 
-} catch (IOException e) {
+
+} catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    //ye jo hay wo google cloud storage may save kraiga files aur wha say retrive kraiga files ko jessay images ko
+    private String uploadFileToGcs(MultipartFile file, String directory) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
+        String originalFileName = file.getOriginalFilename().replace(" ", "_");
+        String uniqueFileName = directory + "/" + UUID.randomUUID().toString() + "_" + originalFileName;
+
+        // Yahan BUCKET_NAME ke bajaye @Value se inject kiya hua 'bucketName' istemal karein
+        BlobId blobId = BlobId.of(bucketName, uniqueFileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType())
+                .build();
+
+        storage.create(blobInfo, file.getBytes());
+
+        return "https://storage.googleapis.com/" + bucketName + "/" + uniqueFileName;
     }
 
     public ResponseEntity<?> userdashboard(String email) {

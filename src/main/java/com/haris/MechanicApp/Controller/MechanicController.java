@@ -87,6 +87,9 @@ public class MechanicController {
 
     }
 
+    @PutMapping ("api/mecahnic/update")
+//    public ResponseEntity<?> updatemechanic (@RequestBody )
+
     @GetMapping("api/mechanic/dashboard")
     public ResponseEntity <?> mechanicdashboard (@AuthenticationPrincipal UserDetails userDetails){
         String phonenumber =  userDetails.getUsername();
