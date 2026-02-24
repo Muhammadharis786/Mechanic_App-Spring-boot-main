@@ -93,7 +93,7 @@ return userService.verifyRegistration(token.getToken() ,token.getEmail() );
 
     }
 //ye simple user ki image save krnay k lie optional hay ager day tu thk wrna n
-@PostMapping(value = "api/save/user/userimage" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
+@PutMapping(value = "api/save/user/userimage" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
 
     public ResponseEntity<?> updateUser(
             @RequestPart("userimage") MultipartFile userimage,
