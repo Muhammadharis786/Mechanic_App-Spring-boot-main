@@ -230,14 +230,17 @@ public class MechanicService    {
     }
 
     public ResponseEntity<?> mechanicdashboard(String phonenumber) {
+        System.out.println("Mecahnic Dashboard Call hogya ");
         Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
         if(checkmechanic.isPresent()){
 
             Mechanic verfiedmechanic = checkmechanic.get();
+            System.out.println("Mechanic ka data show hoga ab");
             return  ResponseEntity.status(HttpStatus.OK).body(verfiedmechanic);
 
 
         }
+        System.out.println("Mechanic mila hi nh hay");
         return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
 
     }
