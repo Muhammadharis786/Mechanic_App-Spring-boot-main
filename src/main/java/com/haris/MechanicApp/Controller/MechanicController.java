@@ -78,6 +78,14 @@ public class MechanicController {
         return   mechanicService.checkmechanicnumber (numberDto);
 
     }
+    @GetMapping("api/mech/dash")
+    public ResponseEntity <?> mechanicdashboard (@AuthenticationPrincipal UserDetails userDetails){
+        System.out.println("Mecahnic Dashboard Call hogya ");
+        String phonenumber =  userDetails.getUsername();
+        return mechanicService.mechanicdashboard (phonenumber );
+
+    }
+
 
     @PostMapping ("api/mechanic/login")
 
@@ -90,13 +98,7 @@ public class MechanicController {
     @PutMapping ("/api/mechanic/update")
 //    public ResponseEntity<?> updatemechanic (@RequestBody )
 
-    @GetMapping("api/mech/dash")
-    public ResponseEntity <?> mechanicdashboard (@AuthenticationPrincipal UserDetails userDetails){
-        System.out.println("Mecahnic Dashboard Call hogya ");
-        String phonenumber =  userDetails.getUsername();
-        return mechanicService.mechanicdashboard (phonenumber );
 
-    }
 }
 
 
