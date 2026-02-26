@@ -90,7 +90,7 @@ public class MechanicController {
     @PutMapping ("/api/mechanic/update")
 //    public ResponseEntity<?> updatemechanic (@RequestBody )
 
-    @GetMapping("/api/mechanic/dashboard")
+    @GetMapping("api/mech/dash")
     public ResponseEntity <?> mechanicdashboard (@AuthenticationPrincipal UserDetails userDetails){
         System.out.println("Mecahnic Dashboard Call hogya ");
         String phonenumber =  userDetails.getUsername();
