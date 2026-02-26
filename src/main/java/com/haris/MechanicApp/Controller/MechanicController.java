@@ -95,8 +95,7 @@ public class MechanicController {
 
     }
 
-    @PutMapping ("/api/mechanic/update")
-//    public ResponseEntity<?> updatemechanic (@RequestBody )
+
 
 
 }
