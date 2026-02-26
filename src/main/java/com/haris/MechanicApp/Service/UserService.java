@@ -231,7 +231,8 @@ public class UserService  {
                     User check =  user1.get();
 
                     if(check.isEnabled()){
-                        return ResponseEntity.ok("Login Successful ✅");
+                        System.out.println(check.getRoles());  ;
+                        return ResponseEntity.ok(check);
                     }
                     return ResponseEntity
                             .status(HttpStatus.UNAUTHORIZED).body("Email Not Verified ❌ Register Again..");
