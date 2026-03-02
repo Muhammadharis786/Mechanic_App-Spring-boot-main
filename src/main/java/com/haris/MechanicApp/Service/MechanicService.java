@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -103,9 +104,16 @@ public class MechanicService    {
             }
             if (user.isPresent()) {
                 User mechanicAndduser = user.get();
-                if (mechanicRepository.existsByUser(mechanicAndduser)) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic already exists");
-                }
+
+
+
+
+
+
+
+//                if (mechanicRepository.existsByUser(mechanicAndduser)  ) {
+//                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic already exists");
+//                }
                 // Files ko GCS par upload karein
                 String mechanicImageUrl = uploadFileToGcs(mecanicimg, "mechanic_images");
                 String cnicFrontUrl = uploadFileToGcs(cnicfrontimg, "cnic_images");
