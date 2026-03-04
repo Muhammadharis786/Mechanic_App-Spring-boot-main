@@ -14,6 +14,5 @@ public class UserDto {
     private String email;
     private String userimgurl;
     private String username;
-    private String phonenumber;
 
 }

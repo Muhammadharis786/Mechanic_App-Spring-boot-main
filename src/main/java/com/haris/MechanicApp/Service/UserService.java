@@ -283,13 +283,12 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
                                             MultipartFile userimage ,
                                            String phonenumber) {
              Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
-//             Optional<User> checknumberanduser = userRepo.findByPhonenumberAndUserid( phonenumber , userDto.getUserid() );
         try
         {
             if(checkuser.isPresent()){
 
                 User verifieduser =   checkuser.get();
-                String mechanicImageUrl = uploadFileToGcs(userimage, "user_images");
+               String mechanicImageUrl = uploadFileToGcs(userimage, "user_images");
                 if(mechanicImageUrl == null){
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File Upload Failed");
                 }
@@ -297,7 +296,6 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
                 verifieduser.setPassword(  encoder.encode(userDto.getPassword()));
                 verifieduser.setUsername(userDto.getUsername());
                 verifieduser.setUserimgurl(mechanicImageUrl);
-                verifieduser.setPhonenumber(userDto.getPhonenumber());
                 userRepo.save(verifieduser);
 
         return ResponseEntity.ok("Updated Succesfully");
