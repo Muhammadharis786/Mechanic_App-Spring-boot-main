@@ -21,8 +21,8 @@ public class LocationController {
     @PostMapping("api/current/location")
     public ResponseEntity<?> userCurrentLocation(@RequestBody Location location ,
                                                  @AuthenticationPrincipal UserDetails userDetails ){
-            String email = userDetails.getUsername();
-        return locationService.userCurrentLocation(location , email);
+            String phonenumber = userDetails.getUsername();
+        return locationService.userCurrentLocation(location , phonenumber);
  }
 
 }
