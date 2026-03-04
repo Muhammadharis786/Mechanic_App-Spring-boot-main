@@ -12,10 +12,6 @@ import com.haris.MechanicApp.Model.Verification.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Time;
 import java.util.Random;
 
 import com.haris.MechanicApp.Repository.MechanicRepository;
@@ -28,14 +24,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -53,10 +45,12 @@ public class UserService  {
     private UserRepository userRepo;
 
     @Autowired
-    private VerificationTokenRepository tokenRepo;
+    private WhatsappOtpService whtsappotp;
 
     @Autowired
-    private EmailService emailService;
+    private VerificationTokenRepository tokenRepo;
+
+
     @Autowired
     private MechanicRepository mechRepo;
 
@@ -81,15 +75,16 @@ public class UserService  {
     // -----------------------------------
     // Forgot Password
     // -----------------------------------
-    public ResponseEntity<?> forgotpasswords(String email) {
-        Optional<User> checkUser = userRepo.findByEmail(email);
+    public ResponseEntity<?> forgotpasswords(String number) {
+        Optional<User> checkUser = userRepo.findByPhonenumber(number);
         String token = String.format("%06d", new Random().nextInt(999999));
         if(checkUser.isPresent()){
                 User user =  checkUser.get();
                 if(user.isEnabled()){
                     updateVerificationToken(user, token);
-                    emailService.sendForgotPasswordOTP(user.getEmail(), token);
-                    return ResponseEntity.ok("Check Email....");
+                    whtsappotp.sendwhatsappotp(user.getPhonenumber(), token);
+
+                    return ResponseEntity.ok("Check Whatsapp " + user.getPhonenumber());
                 }
 
         }
@@ -100,8 +95,7 @@ public class UserService  {
     // -----------------------------------
     public ResponseEntity<?> register(DtoUser user) {
 
-        Optional<User> checkUser = userRepo.findByEmail(user.getEmail());
-
+Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
         String token = String.format("%06d", new Random().nextInt(999999));
 
@@ -110,42 +104,42 @@ public class UserService  {
 
             if(user2.isEnabled()){
                 return ResponseEntity.status(HttpStatus.IM_USED)
-                        .body("Email Already Used ");
+                        .body("phone Number  Already Used ");
             }
-            else   if ( !user2.isEnabled()){
+
 
 
 
                 updateVerificationToken(user2, token);
-                emailService.sendVerificationEmail(user2.getEmail(), token);
-                return ResponseEntity.ok("We have sent a code of your email please check and verify your " +
-                        "account" + user2.getEmail());
-            }
+//
+                whtsappotp.sendwhatsappotp(user2.getPhonenumber() , token);
+
+                return ResponseEntity.ok("Check Your whatsApp for OTP code.." + user2.getPhonenumber());
+
 
         }
 
         else if(checkUser.isEmpty()){
             System.out.println("Create new register");
             User newUser = new User();
-            newUser.setEmail(user.getEmail());
+            newUser.setPhonenumber(user.getPhonenumber());
 
             newUser.setPassword(encoder.encode(user.getPassword()));
             newUser.setEnabled(false);
             newUser.setRegistrationDate(modernDate());
-            int at = user.getEmail().indexOf('@');
-            String username = user.getEmail().substring(0,at);
-            username = username.replaceAll("[^a-zA-Z0-9]", "");
-            newUser.setUsername(username);
+
+            newUser.setUsername(user.getPhonenumber());
             userRepo.save(newUser);
 
             createVerificationToken(newUser, token);
-            emailService.sendVerificationEmail(newUser.getEmail(), token);
-            return ResponseEntity.ok("We have sent a code of your email please check and verify your " +
-                    "account " + newUser.getEmail());
+//
+            whtsappotp.sendwhatsappotp(newUser.getPhonenumber() , token);
+
+            return ResponseEntity.ok("Check your Whatsapp for OTP code  " + newUser.getPhonenumber());
         }
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to send email. Please try again later.");
+                .body("Failed to send OTP. Please try again later.");
 
  }
 
@@ -183,14 +177,14 @@ public class UserService  {
     // -----------------------------------
     // Verify user registration via token
     // -----------------------------------
-    public ResponseEntity<?> verifyRegistration(String token ,String email ) {
-            Optional<User> checkuser = userRepo.findByEmail(email);
+    public ResponseEntity<?> verifyRegistration(String token ,String number ) {
+            Optional<User> checkuser = userRepo.findByPhonenumber(number);
 
             if(checkuser.isPresent()){
                 User getuser= checkuser.get();
 
                 if(getuser.isEnabled()){
-                    return ResponseEntity.status(HttpStatus.IM_USED).body("Email Already Verified Please Login");
+                    return ResponseEntity.status(HttpStatus.IM_USED).body(number + " Already Verified Please Login");
                 }
                 Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Userid(token ,getuser.getUserid());
                 if(checkToken.isPresent()){
@@ -219,39 +213,36 @@ public class UserService  {
     }
 
     public ResponseEntity<?> login(DtoUser user, AuthenticationManager authenticationManager) {
-
-        Optional<User> user1 =  userRepo.findByEmail(user.getEmail());
+        String identifier = user.getPhonenumber() + ";" + user.getLoginAs().toUpperCase();
+        System.out.println(identifier);
+        Optional<User> user1 =  userRepo.findByPhonenumber(user.getPhonenumber());
+        Optional<Mechanic> checkmechanic = mechRepo.findByPhonenumber(user.getPhonenumber());
         try {
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
+                    new UsernamePasswordAuthenticationToken(identifier, user.getPassword())
             );
 
             if (auth.isAuthenticated()) {
-                if(user1.isPresent()){
-                    User check =  user1.get();
+                if("USER".equals(user.getLoginAs().toUpperCase())) {
 
-                    if(check.isEnabled()){
-                        System.out.println(check.getRoles());  ;
-                        return ResponseEntity.ok(check);
-                    }
-                    return ResponseEntity
-                            .status(HttpStatus.UNAUTHORIZED).body("Email Not Verified ❌ Register Again..");
+                return ResponseEntity.ok(" USER Login Successfully");
                 }
+                else if ("MECHANIC".equals(user.getLoginAs().toUpperCase())) {
 
-            }
+                    return ResponseEntity.ok(" Mechanic Login Successfully");
 
-
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password ❌");
+                }
+                }
+         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Number or password ❌");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password ❌");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Number or password ❌");
         }
     }
 
 
     public ResponseEntity<?> verifynewPasswordToken(Token token) {
 
-        Optional<User> checkuser = userRepo.findByEmail(token.getEmail());
+        Optional<User> checkuser = userRepo.findByPhonenumber(token.getPhonenumber());
 
         if(checkuser.isPresent()){
             User user =  checkuser.get();
@@ -275,7 +266,7 @@ public class UserService  {
 
 
 
-                Optional<User>  checkuser =  userRepo.findByEmail(user.getEmail());
+                Optional<User>  checkuser =  userRepo.findByPhonenumber(user.getPhonenumber());
                 if(checkuser.isPresent()){
                       User updateuser =  checkuser.get();
 
@@ -290,8 +281,9 @@ public class UserService  {
 
     public ResponseEntity<?> updateUser(UserDto userDto,
                                             MultipartFile userimage ,
-                                           String email) {
-             Optional<User>  checkuser = userRepo.findByEmail(email);
+                                           String phonenumber) {
+             Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
+//             Optional<User> checknumberanduser = userRepo.findByPhonenumberAndUserid( phonenumber , userDto.getUserid() );
         try
         {
             if(checkuser.isPresent()){
@@ -338,8 +330,9 @@ public class UserService  {
         return "https://storage.googleapis.com/" + bucketName + "/" + uniqueFileName;
     }
 
-    public ResponseEntity<?> userdashboard(String email) {
-       Optional<User>  checkuser = userRepo.findByEmail(email);
+    public ResponseEntity<?> userdashboard(String phonenumber) {
+        System.out.println("im dashboard");
+       Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
 
     if(checkuser.isPresent()){
         User user =  checkuser.get();
@@ -402,6 +395,15 @@ public class UserService  {
             userRepo.delete(user);
             return ResponseEntity.ok("User Deleted");
 
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
+    }
+
+    public ResponseEntity<?> dashboard(String phonenumber) {
+        Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
+        if(checkuser.isPresent()){
+            User user = checkuser.get();
+            return ResponseEntity.ok(user);
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
     }

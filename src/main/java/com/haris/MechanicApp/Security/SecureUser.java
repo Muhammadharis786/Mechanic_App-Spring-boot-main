@@ -53,6 +53,7 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                     return config;
                 }))
                 .csrf(csrf->csrf.disable())
+                .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/api/user/register").permitAll()
                         .requestMatchers("/api/user/login").permitAll()
@@ -65,6 +66,11 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/mechanic/checknumber").permitAll()
                         .requestMatchers("/api/mechanic/login").permitAll()
                         .requestMatchers("/api/mechanic/allmechanic").permitAll()
+                                .requestMatchers("/api/login").permitAll()
+
+
+
+
 
                         .requestMatchers("/api/user/allusers").permitAll()
 

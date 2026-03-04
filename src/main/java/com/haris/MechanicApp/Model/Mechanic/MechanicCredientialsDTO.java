@@ -11,5 +11,7 @@ import lombok.NoArgsConstructor;
 public class MechanicCredientialsDTO {
 private String phonenumber;
 private String password;
+    private String loginAs;
+
 
 }

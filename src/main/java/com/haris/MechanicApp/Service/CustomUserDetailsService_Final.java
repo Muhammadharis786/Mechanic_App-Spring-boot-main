@@ -26,22 +26,53 @@ public class CustomUserDetailsService_Final   implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
 
-        // 1. Check if the identifier is an email (contains '@')
-        if (identifier.contains("@")) {
-            // User login with Email
-            Optional<User> userOpt =  userRepository.findByEmail(identifier);
-            if (userOpt.isPresent()) {
-                return new MyPrincipal(userOpt.get());
-            }
-            throw new UsernameNotFoundException("User not found with email: " + identifier);
-        } else {
-            // Mechanic login with Phone Number
-            Optional<Mechanic> mechanicOpt = mechanicRepository.findByPhonenumber(identifier);
-            if (mechanicOpt.isPresent()) {
-                return new MyPrincipalMechanic(mechanicOpt.get());
-            }
-            throw new UsernameNotFoundException("Mechanic not found with phone: " + identifier);
-        }
+
+        // --- DEBUGGING START ---
+        System.out.println("\n--- CustomUserDetailsService: loadUserByUsername CALLED ---");
+        System.out.println("Attempting to load user with identifier: '" + identifier + "'");
+        // --- DEBUGGING END ---
+
+      String [] parts =  identifier.split(";");
+      if(parts.length != 2){
+          System.out.println("ERROR: Identifier format is invalid. Throwing UsernameNotFoundException.");
+
+          throw new UsernameNotFoundException("Invalid Login Format");
+      }
+      String phonenumber= parts[0];
+      String Role = parts[1];
+      if("USER".equalsIgnoreCase(Role)){
+          System.out.println("Searching for a USER in the database...");
+
+          Optional<User> checkuser =  userRepository.findByPhonenumber(phonenumber);
+          if(checkuser.isPresent()){
+              System.out.println("SUCCESS: User found! Creating MyPrincipal object.");
+
+              return  new MyPrincipal(checkuser.get());
+          }
+          System.out.println("FAILURE: User not found with Phone Number: " + phonenumber);
+
+          throw new UsernameNotFoundException("User not found with Phone Number: " + phonenumber);
+
+      }
+      else if ("MECHANIC".equalsIgnoreCase(Role)){
+          System.out.println("Searching for a MECHANIC in the database...");
+
+          Optional<Mechanic> checkmech = mechanicRepository.findByPhonenumber(phonenumber);
+          if(checkmech.isPresent()){
+              System.out.println("SUCCESS: Mechanic found! Creating MyPrincipalMechanic object.");
+
+              return new MyPrincipalMechanic(checkmech.get());
+          }
+          System.out.println("FAILURE: Mechanic not found with Phone Number: " + phonenumber);
+
+          throw new UsernameNotFoundException("Mechanic not found with Phone Number: " + phonenumber);
+
+
+      }
+        System.out.println("ERROR: Invalid role specified: " + Role);
+
+          throw new UsernameNotFoundException("Invalid role specified: " + Role);
+
     }
 }
 

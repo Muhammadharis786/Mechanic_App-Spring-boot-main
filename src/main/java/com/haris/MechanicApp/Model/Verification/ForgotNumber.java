@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DtoUser {
+public class ForgotNumber {
+
     private String phonenumber;
-    private String password;
-    private String loginAs;
 
 
 }

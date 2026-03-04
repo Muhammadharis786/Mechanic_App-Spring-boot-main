@@ -15,8 +15,15 @@ public class MyPrincipal implements UserDetails {
 
     private final   User user;
     public MyPrincipal(User user) {
-
-        this.user = user;
+        System.out.println("\n--- MyPrincipal: CONSTRUCTOR CALLED ---");
+        if (user == null) {
+            System.out.println("ERROR: User object passed to MyPrincipal is NULL!");
+            this.user = new User(); // Avoid NullPointerException
+        } else {
+            System.out.println("User object received. Phonenumber: " + user.getPhonenumber());
+            this.user = user;
+        }
+        // --- DEBUGGING END ---
     }
 
         @Override
@@ -29,13 +36,20 @@ public class MyPrincipal implements UserDetails {
 
     @Override
     public @Nullable String getPassword() {
-        return  user.getPassword();
-    }
+
+        // --- DEBUGGING ---
+        // Password ko print na karein, lekin yeh check karein ke null to nahi.
+        String password = user.getPassword();
+        System.out.println("MyPrincipal getPassword(): " + (password == null ? "NULL" : "Password is present (hash)"));
+        return password;    }
 
     @Override
     public String getUsername() {
-        return user.getEmail();
-    }
+
+        // --- DEBUGGING ---
+        String username = user.getPhonenumber();
+        System.out.println("MyPrincipal getUsername(): Returning '" + username + "'");
+        return username;    }
 
     @Override
     public boolean isAccountNonExpired() { return true; }
