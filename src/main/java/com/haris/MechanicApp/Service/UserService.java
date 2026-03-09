@@ -106,11 +106,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
                 return ResponseEntity.status(HttpStatus.IM_USED)
                         .body("phone Number  Already Used ");
             }
-
-
-
-
-                updateVerificationToken(user2, token);
+ updateVerificationToken(user2, token);
 //
                 whtsappotp.sendwhatsappotp(user2.getPhonenumber() , token);
 

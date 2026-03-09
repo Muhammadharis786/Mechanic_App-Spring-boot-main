@@ -14,8 +14,7 @@ public class MechanicRegistrationDto {
     private long userid;
     private String name;
     private String phonenumber;
-    private String password;
-    private String shopaddress;
+   private String shopaddress;
     private String mechanictype;
     private int experienceyears;
     private String workinghours;
@@ -24,5 +23,5 @@ public class MechanicRegistrationDto {
     private String cnicbackurl;
     private BigDecimal latitude;
     private BigDecimal longitude;
-    private boolean otpVerified;
+
 }

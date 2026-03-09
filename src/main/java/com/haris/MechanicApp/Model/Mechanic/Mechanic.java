@@ -85,6 +85,9 @@ public class Mechanic {
     @Column(name = "average_rating", precision = 3 ,scale = 2)
     private BigDecimal averageRating = new BigDecimal("5.0");
 
+    @Column(name = "isotpverified")
+    private  boolean isotpverified =false;
+
     @Column(name = "total_reviews")
     private int totalReviews = 0;
 

@@ -1,9 +1,7 @@
 package com.haris.MechanicApp.Controller;
 
-import com.haris.MechanicApp.Model.Mechanic.Mechanic;
-import com.haris.MechanicApp.Model.Mechanic.MechanicCredientialsDTO;
-import com.haris.MechanicApp.Model.Mechanic.MechanicNumnerDto;
-import com.haris.MechanicApp.Model.Mechanic.MechanicRegistrationDto;
+import com.haris.MechanicApp.Model.Mechanic.*;
+import com.haris.MechanicApp.Model.Verification.Token;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Service.MechanicService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +57,12 @@ public class MechanicController {
       mechanicService.updateEngagedStatus(id, engaged);
         return ResponseEntity.ok("Mechanic status updated");
     }
+    @PostMapping ("api/mechanic/registerwithotp")
+    public ResponseEntity<?> registerwithotp( @RequestBody MechOtpDto otpDto ){
+
+       return    mechanicService.mechanicOtp( otpDto);
+
+    }
 
     @PostMapping(value = "api/mechanic/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registerMechanic(
@@ -74,7 +78,7 @@ public class MechanicController {
     }
 
     @PostMapping ("api/mechanic/checknumber")
-    public ResponseEntity<?> checkNumber(MechanicNumnerDto numberDto){
+    public ResponseEntity<?> checkNumber( @RequestBody MechanicNumnerDto numberDto){
         return   mechanicService.checkmechanicnumber (numberDto);
 
     }
@@ -94,6 +98,16 @@ public class MechanicController {
         return  mechanicService.loginmechanic (credientialsDTO , authenticationManager);
 
     }
+
+    @PostMapping ("api/mechanic/register/verify")
+
+    public ResponseEntity <?> verifymechanicregistration(@RequestBody Token token){
+
+    return  mechanicService.verifymechanic (token);
+    }
+
+
+
 
 
 
