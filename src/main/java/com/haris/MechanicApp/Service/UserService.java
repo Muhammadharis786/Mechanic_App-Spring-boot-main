@@ -324,7 +324,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         return "https://storage.googleapis.com/" + bucketName + "/" + uniqueFileName;
     }
 
-    public ResponseEntity<?> userdashboard(String phonenumber) {
+    public ResponseEntity<?> dashboard(String phonenumber) {
         System.out.println("im dashboard");
        Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
 
@@ -393,12 +393,5 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
     }
 
-    public ResponseEntity<?> dashboard(String phonenumber) {
-        Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
-        if(checkuser.isPresent()){
-            User user = checkuser.get();
-            return ResponseEntity.ok(user);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
-    }
+
 }

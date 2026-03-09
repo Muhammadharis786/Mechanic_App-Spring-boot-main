@@ -57,12 +57,24 @@ public class MechanicController {
       mechanicService.updateEngagedStatus(id, engaged);
         return ResponseEntity.ok("Mechanic status updated");
     }
+
+    //fist mechanic send otp on whatsapp number
     @PostMapping ("api/mechanic/registerwithotp")
     public ResponseEntity<?> registerwithotp( @RequestBody MechOtpDto otpDto ){
 
        return    mechanicService.mechanicOtp( otpDto);
 
     }
+    //second mechanic verify otp with existing otp that save in database if match so move to reigster api
+    @PostMapping ("api/mechanic/register/verify")
+
+    public ResponseEntity <?> verifymechanicregistration(@RequestBody Token token){
+
+        return  mechanicService.verifymechanic (token);
+    }
+
+    //last one to fill the form of mechanic fisrtly check userid and phonumber to get existing mechanic that
+    //verify itself with phone number
 
     @PostMapping(value = "api/mechanic/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registerMechanic(
@@ -99,12 +111,7 @@ public class MechanicController {
 
     }
 
-    @PostMapping ("api/mechanic/register/verify")
 
-    public ResponseEntity <?> verifymechanicregistration(@RequestBody Token token){
-
-    return  mechanicService.verifymechanic (token);
-    }
 
 
 
