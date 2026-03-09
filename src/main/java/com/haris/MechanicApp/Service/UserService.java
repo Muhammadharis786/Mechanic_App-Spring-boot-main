@@ -330,11 +330,16 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
     if(checkuser.isPresent()){
         User user =  checkuser.get();
-        List<Mechanic>  allmechanics = mechRepo.findAll();
+        List<Mechanic>   allmechanics = mechRepo.findAll();
+
         Map<String , Object> map = new HashMap<>();
         System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
         List<MechanicDTO > mechanics = new ArrayList<>();
-
+        if(allmechanics.isEmpty()){
+            map.put("user", user);
+            map.put("mechanics", "Mechanic not available right now");
+            return ResponseEntity.ok(map);
+        }
         for (Mechanic mechanic : allmechanics) {
 
             MechanicDTO mechanicDTO = new MechanicDTO();
@@ -364,10 +369,11 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
 
         }
+
         map.put("mechanics", mechanics);
         map.put("user", user);
-        return ResponseEntity.ok( map);
 
+        return  ResponseEntity.ok(map);
     }
 
     return  ResponseEntity.status(401).body("Invalid User");

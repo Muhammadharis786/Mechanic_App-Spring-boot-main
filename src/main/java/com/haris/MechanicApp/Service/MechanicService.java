@@ -274,9 +274,9 @@ public class MechanicService    {
             createToken (token , newmechanic);
             whtsappotp.sendwhatsappotp(otpDto.getPhonenumber() , token);
 
-            return ResponseEntity.ok("Check your WhatsApp Number"+ otpDto.getPhonenumber());
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("First Create User Account");
+                return ResponseEntity.ok("Check your WhatsApp Number"+ otpDto.getPhonenumber());
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("First Create User Account");
 
 }
 
