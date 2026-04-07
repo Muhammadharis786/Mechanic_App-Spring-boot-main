@@ -14,6 +14,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 public class UserController {
 
@@ -105,6 +107,7 @@ public class UserController {
         System.out.println("user dashboard controller");
         String identifier = userDetails.getUsername();
       return userService.dashboard (identifier);
+
     }
 
 }

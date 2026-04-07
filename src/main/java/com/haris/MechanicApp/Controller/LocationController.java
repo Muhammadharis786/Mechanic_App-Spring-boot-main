@@ -4,6 +4,7 @@ package com.haris.MechanicApp.Controller;
 import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Service.LocationService;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,5 +25,13 @@ public class LocationController {
             String phonenumber = userDetails.getUsername();
         return locationService.userCurrentLocation(location , phonenumber);
  }
+
+ @PostMapping ("api/mechanic/currentlocation")
+    public void addMechLocation (@RequestBody  Location location,
+                                              @AuthenticationPrincipal UserDetails userDetails ){
+        String phonenumber = userDetails.getUsername();
+         locationService.addMechanicLocations(location , phonenumber);
+ }
+
 
 }

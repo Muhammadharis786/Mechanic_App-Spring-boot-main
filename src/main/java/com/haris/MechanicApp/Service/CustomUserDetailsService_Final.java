@@ -45,9 +45,15 @@ public class CustomUserDetailsService_Final   implements UserDetailsService {
 
           Optional<User> checkuser =  userRepository.findByPhonenumber(phonenumber);
           if(checkuser.isPresent()){
-              System.out.println("SUCCESS: User found! Creating MyPrincipal object.");
+              User user =  checkuser.get();
+              if(user.isEnabled()){
+                  System.out.println("SUCCESS: User found! Creating MyPrincipal object.");
 
-              return  new MyPrincipal(checkuser.get());
+                  return  new MyPrincipal(checkuser.get());
+              }
+
+              throw new UsernameNotFoundException("User not Verified with Phone Number: " + phonenumber);
+
           }
           System.out.println("FAILURE: User not found with Phone Number: " + phonenumber);
 
@@ -59,6 +65,14 @@ public class CustomUserDetailsService_Final   implements UserDetailsService {
 
           Optional<Mechanic> checkmech = mechanicRepository.findByPhonenumber(phonenumber);
           if(checkmech.isPresent()){
+              Mechanic mechanic =  checkmech.get();
+              if(!mechanic.isIsverified()){
+                  throw new UsernameNotFoundException("Mechanic is not verified by admin") ;
+
+              }
+            if(!mechanic.isIsotpverified()){
+                    throw new UsernameNotFoundException("Mechaic Number is  not Verified");
+              }
               System.out.println("SUCCESS: Mechanic found! Creating MyPrincipalMechanic object.");
 
               return new MyPrincipalMechanic(checkmech.get());

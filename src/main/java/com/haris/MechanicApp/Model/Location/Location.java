@@ -2,38 +2,22 @@ package com.haris.MechanicApp.Model.Location;
 
 import com.haris.MechanicApp.Model.Verification.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 
 public class Location {
-
 
 
     private BigDecimal latitude;
     private BigDecimal longitude;
 
 
-    public Location() {
 
-    }
-
-
-
-
-    public BigDecimal getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(BigDecimal latitude) {
-        this.latitude = latitude;
-    }
-
-    public BigDecimal getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(BigDecimal longitude) {
-        this.longitude = longitude;
-    }
 }

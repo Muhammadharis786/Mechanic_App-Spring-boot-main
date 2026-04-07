@@ -12,6 +12,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.userdetails.UserDetailsPasswordService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,7 +31,10 @@ public class SecureUser {
 
     @Bean
 public SecurityFilterChain  securityFilterChain (HttpSecurity http){
+
+
         http
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .logout(logout->logout
                         .logoutUrl("/api/logout")
                         .logoutSuccessHandler((request, response,
@@ -52,7 +56,8 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                     config.setAllowCredentials(true);
                     return config;
                 }))
-                .csrf(csrf->csrf.disable())
+                // 1. CSRF ko bilkul disable kar dein (Testing ke liye )
+                .csrf(csrf -> csrf.disable())
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/api/user/register").permitAll()
@@ -66,7 +71,8 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/mechanic/checknumber").permitAll()
                         .requestMatchers("/api/mechanic/login").permitAll()
                         .requestMatchers("/api/mechanic/allmechanic").permitAll()
-                                .requestMatchers("/api/login").permitAll()
+                        .requestMatchers("/ws-notifications").permitAll()
+                        .requestMatchers("/api/login").permitAll()
                                 .requestMatchers("/api/mechanic/registerwithotp").permitAll()
                                 .requestMatchers("/api/mechanic/register/verify").permitAll()
 
@@ -84,25 +90,19 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
 
 
 
-
-
-
-
-
-
-
                         .anyRequest().authenticated()
                 )
 
                 .httpBasic(Customizer.withDefaults());
 //                .oauth2Login(Customizer.withDefaults());
 //                .formLogin(Customizer.withDefaults());
+             return http.build();
+ }
 
-
-
-        return http.build();
-
-
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        // Is se Spring Security is raste ko bilkul ignore kar degi
+        return (web) -> web.ignoring().requestMatchers("/ws-notifications/**");
     }
 
     @Bean

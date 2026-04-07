@@ -52,6 +52,7 @@ public class MechanicService    {
 
 
 
+
     private  final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     @Autowired
     private Storage storage;
@@ -94,6 +95,7 @@ public class MechanicService    {
                 if(checkmechanic.isPresent()){
 
                     Mechanic newregisteredmechanic = checkmechanic.get();
+
                     String mechanicImageUrl = uploadFileToGcs(mecanicimg, "mechanic_images");
                     String cnicFrontUrl = uploadFileToGcs(cnicfrontimg, "cnic_images");
                     String cnicBackUrl = uploadFileToGcs(cnicbackimg, "cnic_images");
@@ -114,11 +116,11 @@ public class MechanicService    {
                     newregisteredmechanic.setWorkinghours(mechanicdata.getWorkinghours());
 
 
-                    newregisteredmechanic.setLatitude(mechanicdata.getLatitude());
-                    newregisteredmechanic.setLongitude(mechanicdata.getLongitude());
+
+
 
                     //this is for image save in Mechanic Entity of mechanic , cnic front , cnic back
-
+                    newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
                     newregisteredmechanic.setMechanicimgurl(mechanicImageUrl);
                     newregisteredmechanic.setCnicfronturl(cnicFrontUrl);
                     newregisteredmechanic.setCnicbackurl(cnicBackUrl);
@@ -207,10 +209,7 @@ public class MechanicService    {
                 }
 
             }
-
-
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password ❌");
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password ❌");
         } catch (AuthenticationException e) {
             throw new RuntimeException(e);
         }
@@ -234,7 +233,6 @@ public class MechanicService    {
     }
 
     public ResponseEntity<?> dltmechani(long mechid) {
-
         Optional<Mechanic> mechanic = mechanicRepository.findById(mechid);
         if(mechanic.isPresent()){
             Mechanic mechanic1 =  mechanic.get();

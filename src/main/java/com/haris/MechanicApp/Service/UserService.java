@@ -19,11 +19,22 @@ import com.haris.MechanicApp.Repository.UserRepository;
 import com.haris.MechanicApp.Repository.VerificationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.redis.connection.RedisGeoCommands;
+import org.springframework.data.redis.core.GeoOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
+import org.springframework.data.redis.domain.geo.GeoReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,6 +48,9 @@ public class UserService  {
     // Apni bucket ka naam yahan likhein
     @Value("${gcp.bucket.name}")
     private String bucketName;
+
+    @Autowired
+    private RedisTemplate<String , String > redisTemplate;
 
     @Autowired
     private Storage storage;
@@ -211,8 +225,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
     public ResponseEntity<?> login(DtoUser user, AuthenticationManager authenticationManager) {
         String identifier = user.getPhonenumber() + ";" + user.getLoginAs().toUpperCase();
         System.out.println(identifier);
-        Optional<User> user1 =  userRepo.findByPhonenumber(user.getPhonenumber());
-        Optional<Mechanic> checkmechanic = mechRepo.findByPhonenumber(user.getPhonenumber());
+
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(identifier, user.getPassword())
@@ -221,17 +234,22 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             if (auth.isAuthenticated()) {
                 if("USER".equals(user.getLoginAs().toUpperCase())) {
 
-                return ResponseEntity.ok(" USER Login Successfully");
+
+                    return ResponseEntity.ok(" USER Login Successfully");
+
+
                 }
                 else if ("MECHANIC".equals(user.getLoginAs().toUpperCase())) {
 
-                    return ResponseEntity.ok(" Mechanic Login Successfully");
-
-                }
+                        return ResponseEntity.ok(" Mechanic Login Successfully");
+   }
                 }
          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Number or password ❌");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Number or password ❌");
+        } catch (AuthenticationException e) {
+            String Message = "Invalid Number or password";
+            if(e.getCause() instanceof UsernameNotFoundException)
+                 Message = e.getCause().getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Message);
         }
     }
 
@@ -330,17 +348,50 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
     if(checkuser.isPresent()){
         User user =  checkuser.get();
-        List<Mechanic>   allmechanics = mechRepo.findAll();
+
 
         Map<String , Object> map = new HashMap<>();
         System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
         List<MechanicDTO > mechanics = new ArrayList<>();
-        if(allmechanics.isEmpty()){
+
+        GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
+         double userlongitude =  user.getLastLongitude().doubleValue();
+         double userlatitude  = user.getLastLatitude().doubleValue();
+        GeoResults<GeoLocation<String>> results =
+                geoOperations.search(
+                        "mechanic",
+                        GeoReference.fromCoordinate(userlongitude, userlatitude),
+                        new Distance(65, Metrics.KILOMETERS),
+                        RedisGeoCommands.GeoSearchCommandArgs
+                                .newGeoSearchArgs()
+                                .includeDistance()
+
+                );
+        List<Long> mechanicIds = new ArrayList<>();
+        Map <Long , Double>  distanceMap= new HashMap<>();
+
+        for (GeoResult<GeoLocation<String>> result  : results){
+          long mechanicid =  Long.parseLong (result.getContent().getName());
+          boolean isexistbyid=   mechRepo.existsById(mechanicid);
+          if(!isexistbyid){
+              GeoOperations<String ,String> geops = redisTemplate.opsForGeo();
+              geops.remove("mechanic", String.valueOf(mechanicid) );
+          }
+            double  distance = result.getDistance().getValue() ;
+
+              distanceMap.put(mechanicid , distance);
+
+          mechanicIds.add(mechanicid);
+        }
+
+
+        List<Mechanic>   allnearbymechanics = mechRepo.findAllById(mechanicIds);
+        if(allnearbymechanics.isEmpty()){
             map.put("user", user);
             map.put("mechanics", "Mechanic not available right now");
             return ResponseEntity.ok(map);
         }
-        for (Mechanic mechanic : allmechanics) {
+        for (Mechanic mechanic : allnearbymechanics) {
 
             MechanicDTO mechanicDTO = new MechanicDTO();
             mechanicDTO.setName(mechanic.getName());
@@ -354,16 +405,19 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             mechanicDTO.setLatitude(mechanic.getLatitude());
             mechanicDTO.setLongitude(mechanic.getLongitude());
 
+    Double redisDistance =  distanceMap.get(mechanic.getId());
 
-            GoogleDistance distance = new GoogleDistance();
-            float distancinkm =         distance.CalulateDistance(
-                    mechanic.getLatitude() , mechanic.getLongitude(),
-                    user.getLastLatitude() , user.getLastLongitude()
-            );
+    if (redisDistance != null) {
+        mechanicDTO.setDistance(
+                BigDecimal.valueOf(redisDistance)
+                        .setScale(1, RoundingMode.HALF_UP)
+        );
+    }
 
-            mechanicDTO.setDistance(BigDecimal.valueOf(distancinkm).setScale(1 , RoundingMode.HALF_UP));
-            mechanicDTO.setMechaniclocname(distance.getAddressFromLatLng(  mechanic.getLatitude()
-                    ,mechanic.getLongitude()));
+
+//            mechanicDTO.setDistance(BigDecimal.valueOf(distancinkm).setScale(1 , RoundingMode.HALF_UP));
+//            mechanicDTO.setMechaniclocname(distance.getAddressFromLatLng(  mechanic.getLatitude()
+//                    ,mechanic.getLongitude()));
 
             mechanics.add(mechanicDTO);
 
@@ -394,8 +448,11 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             User user = checkuser.get();
             userRepo.delete(user);
             return ResponseEntity.ok("User Deleted");
+            
 
         }
+
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
     }
 

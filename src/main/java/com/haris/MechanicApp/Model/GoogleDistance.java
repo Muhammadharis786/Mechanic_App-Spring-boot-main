@@ -45,7 +45,7 @@ public class GoogleDistance {
         String distanceText = element.getJSONObject("distance").getString("text");
 
             float distanceinkm =  Float.parseFloat(String.valueOf(distanceMeters))/1000;
-        System.out.println("Distance: " + distanceText + " (" + distanceinkm + " meters)");
+
 
         return distanceinkm;
 
