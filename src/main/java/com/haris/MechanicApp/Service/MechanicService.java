@@ -114,8 +114,8 @@ public class MechanicService    {
                     newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
                     newregisteredmechanic.setMechanictype(mechanicdata.getMechanictype());
                     newregisteredmechanic.setWorkinghours(mechanicdata.getWorkinghours());
-                    newregisteredmechanic.setLatitude(mechanicdata.getLatitude());
-                    newregisteredmechanic.setLongitude(mechanicdata.getLongitude());
+                    newregisteredmechanic.setShoplatitude(mechanicdata.getLatitude());
+                    newregisteredmechanic.setShoplongitude(mechanicdata.getLongitude());
 
                     newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
                     newregisteredmechanic.setMechanicimgurl(mechanicImageUrl);

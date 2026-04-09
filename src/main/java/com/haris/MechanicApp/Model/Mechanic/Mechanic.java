@@ -40,6 +40,10 @@ public class Mechanic {
      @Column(name = "shop_address")
     private String shopaddress;           // Workshop/shop address
 
+    @Column(precision = 10, scale = 8 , name = "shop_lat")
+    private BigDecimal shoplatitude;
+    @Column(precision = 11, scale = 8 , name= "shop_long")
+    private BigDecimal shoplongitude;
 
     // 📄 Documents & Verification
     private String mechanicimgurl;

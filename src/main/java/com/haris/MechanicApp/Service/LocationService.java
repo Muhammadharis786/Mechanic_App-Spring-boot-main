@@ -51,6 +51,8 @@ public class LocationService {
     Optional<Mechanic> ismechanic =   mechRepo.findByPhonenumber(mechphonenumber);
     if(ismechanic.isPresent()){
         Mechanic currentMechanic = ismechanic.get();
+        currentMechanic.setLongitude(location.getLongitude());
+        currentMechanic.setLatitude(location.getLatitude());
         String mechid = currentMechanic.getId().toString();
         double latitude  =   (location.getLatitude()).doubleValue()  ;
         double longitude = location.getLongitude().doubleValue();
