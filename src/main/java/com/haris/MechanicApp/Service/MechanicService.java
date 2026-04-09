@@ -114,12 +114,9 @@ public class MechanicService    {
                     newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
                     newregisteredmechanic.setMechanictype(mechanicdata.getMechanictype());
                     newregisteredmechanic.setWorkinghours(mechanicdata.getWorkinghours());
+                    newregisteredmechanic.setLatitude(mechanicdata.getLatitude());
+                    newregisteredmechanic.setLongitude(mechanicdata.getLongitude());
 
-
-
-
-
-                    //this is for image save in Mechanic Entity of mechanic , cnic front , cnic back
                     newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
                     newregisteredmechanic.setMechanicimgurl(mechanicImageUrl);
                     newregisteredmechanic.setCnicfronturl(cnicFrontUrl);
