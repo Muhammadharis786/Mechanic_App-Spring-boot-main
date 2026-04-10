@@ -53,6 +53,7 @@ public class LocationService {
         Mechanic currentMechanic = ismechanic.get();
         currentMechanic.setLongitude(location.getLongitude());
         currentMechanic.setLatitude(location.getLatitude());
+        mechRepo.save(currentMechanic);
         String mechid = currentMechanic.getId().toString();
         double latitude  =   (location.getLatitude()).doubleValue()  ;
         double longitude = location.getLongitude().doubleValue();
