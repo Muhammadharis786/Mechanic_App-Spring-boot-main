@@ -240,8 +240,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
                 }
                 else if ("MECHANIC".equals(user.getLoginAs().toUpperCase())) {
+                    Mechanic mech = mechRepo.findByPhonenumber(user.getPhonenumber()).get();
 
-                        return ResponseEntity.ok(" Mechanic Login Successfully");
+                        return ResponseEntity.ok(mech);
    }
                 }
          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Number or password ❌");
