@@ -6,6 +6,7 @@ import com.google.cloud.storage.Storage;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
+import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.*;
 
@@ -19,10 +20,7 @@ import com.haris.MechanicApp.Repository.UserRepository;
 import com.haris.MechanicApp.Repository.VerificationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.GeoResult;
-import org.springframework.data.geo.GeoResults;
-import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -358,6 +356,8 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
          double userlongitude =  user.getLastLongitude().doubleValue();
          double userlatitude  = user.getLastLatitude().doubleValue();
+        System.out.println("user Latitude: " + userlatitude );
+        System.out.println("user Longitude: " + userlongitude );
         GeoResults<GeoLocation<String>> results =
                 geoOperations.search(
                         "mechanic",
@@ -366,25 +366,27 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
                         RedisGeoCommands.GeoSearchCommandArgs
                                 .newGeoSearchArgs()
                                 .includeDistance()
+                                .includeCoordinates()
 
                 );
         List<Long> mechanicIds = new ArrayList<>();
         Map <Long , Double>  distanceMap= new HashMap<>();
+        StringBuilder destinationparam = new StringBuilder();
 
         for (GeoResult<GeoLocation<String>> result  : results){
           long mechanicid =  Long.parseLong (result.getContent().getName());
-          boolean isexistbyid=   mechRepo.existsById(mechanicid);
-          if(!isexistbyid){
-              GeoOperations<String ,String> geops = redisTemplate.opsForGeo();
-              geops.remove("mechanic", String.valueOf(mechanicid) );
-          }
-            double  distance = result.getDistance().getValue() ;
 
-              distanceMap.put(mechanicid , distance);
-
+          Point point = result.getContent().getPoint();
+            System.out.println("Mechanic Latitude: "+ point.getX());
+            System.out.println("Mechanic Longitude: "+ point.getY());
+            destinationparam.append(point.getY()).append(",").append(point.getX()).append("|");
           mechanicIds.add(mechanicid);
         }
-
+        GoogleDistance googleapi =  new GoogleDistance();
+        if(destinationparam.length()>0){
+            destinationparam.setLength(destinationparam.length()-1);
+        }
+     List<RoadInfo> distancewithtime =    googleapi.getBatchRoadDistances(userlatitude , userlongitude , destinationparam.toString());
 
         List<Mechanic>   allnearbymechanics = mechRepo.findAllById(mechanicIds);
         if(allnearbymechanics.isEmpty()){
@@ -392,8 +394,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             map.put("mechanics", "Mechanic not available right now");
             return ResponseEntity.ok(map);
         }
+        int  i =0 ;
         for (Mechanic mechanic : allnearbymechanics) {
-
+            RoadInfo info = distancewithtime.get(i);
             MechanicDTO mechanicDTO = new MechanicDTO();
             mechanicDTO.setName(mechanic.getName());
             mechanicDTO.setMechanicType(mechanic.getMechanictype());
@@ -405,22 +408,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             mechanicDTO.setIsengaged(mechanic.isIsengaged());
             mechanicDTO.setLatitude(mechanic.getLatitude());
             mechanicDTO.setLongitude(mechanic.getLongitude());
-
-    Double redisDistance =  distanceMap.get(mechanic.getId());
-
-    if (redisDistance != null) {
-        mechanicDTO.setDistance(
-                BigDecimal.valueOf(redisDistance)
-                        .setScale(1, RoundingMode.HALF_UP)
-        );
-    }
-
-
-//            mechanicDTO.setDistance(BigDecimal.valueOf(distancinkm).setScale(1 , RoundingMode.HALF_UP));
-//            mechanicDTO.setMechaniclocname(distance.getAddressFromLatLng(  mechanic.getLatitude()
-//                    ,mechanic.getLongitude()));
-
-            mechanics.add(mechanicDTO);
+            BigDecimal distance = new BigDecimal(info.getDistance());
+            mechanicDTO.setDistance(distance);
+              mechanics.add(mechanicDTO);
 
 
         }

@@ -3,15 +3,13 @@ package com.haris.MechanicApp.Service;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Request.RequestUserDto;
+import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.GeoResult;
-import org.springframework.data.geo.GeoResults;
-import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -80,7 +78,7 @@ public class NotificationService {
             //this is for search mechanic and calcute distance bw user and mechanic and give nearbymechanic
              //that define specific range and save in results type object
 
-
+// 1. Redis search with Coordinates
             GeoResults<RedisGeoCommands.GeoLocation<String>> results =
                     geoOperations.search(
                             "mechanic",
@@ -89,28 +87,59 @@ public class NotificationService {
                             RedisGeoCommands.GeoSearchCommandArgs
                                     .newGeoSearchArgs()
                                     .includeDistance()
+                                    .includeCoordinates()
 
                     );
-            GoogleDistance UserLocationName =  new GoogleDistance();
-            RequestUserDto reqDto = new RequestUserDto();
-            String locname =     UserLocationName.getAddressFromLatLng(user.getLastLatitude() , user.getLastLongitude());
-            reqDto.setUserlocname(locname);
-            reqDto.setUserid(user.getUserid());
-            reqDto.setPrice(1200);
-            reqDto.setUsername(user.getUsername());
 
+
+             StringBuilder destinationsparam = new StringBuilder();
+             List<Long> mechanicIds =  new ArrayList<>();
+// 2. Sirf data jama karein loop mein
             for (GeoResult<RedisGeoCommands.GeoLocation<String>> result  : results){
                 long mechanicid =  Long.parseLong (result.getContent().getName());
-                double  distance = result.getDistance().getValue();
+                Point point = result.getContent().getPoint();
+                destinationsparam.append(point.getY()).append(",").append(point.getX()).append("|");
+                mechanicIds.add(mechanicid);
 
-                System.out.println(distance );
-                 reqDto.setDistance(distance);
-                 String destination = "/topic/nearbymechanics/" + mechanicid;
-                System.out.println(destination);
-                simpMessagingTemplate.convertAndSend(destination, reqDto);
 
-}
-             return ResponseEntity.ok(reqDto);
+
+}// last wla pipe nikalnay ki lie
+
+            if(destinationsparam.length()>0){
+                destinationsparam.setLength(destinationsparam.length()-1);
+            }
+             System.out.println(destinationsparam);
+             System.out.println("User latitude: "+ userlatitude);
+             System.out.println("User longitude: "+ userlongitude);
+// 3. API HIT karein (Ek hi baar)
+// Aapka Google distance service ek json return karega jismein utne hi results honge jitne mechanics bhejay.
+             GoogleDistance googleapi = new GoogleDistance();
+             String locname =     googleapi.getAddressFromLatLng(user.getLastLatitude() , user.getLastLongitude());
+
+            //wha say mujhay distance mila aur menay roadistances wkay list may object assign krdya
+             List<RoadInfo> roadDistances = googleapi.getBatchRoadDistances(
+                     userlatitude, userlongitude, destinationsparam.toString()
+             );
+Map<String , Double> distances = new HashMap<>();
+             // 4. Ab naye loop mein actual road distance set karke WebSocket pe bhejein!
+             for (int i = 0; i < mechanicIds.size(); i++) {
+                 long mechId = mechanicIds.get(i);
+                 RoadInfo info = roadDistances.get(i); // Road distance from Google Matrix
+                 // Naya object banayein taa ke concurrency ka issue na ho
+                 RequestUserDto reqDto = new RequestUserDto();
+                 reqDto.setUserlocname(locname);
+                 reqDto.setUserid(user.getUserid());
+                 reqDto.setPrice(1200);
+                 reqDto.setEta(info.getDistancetime());
+                 reqDto.setUsername(user.getUsername());
+                 reqDto.setUserimage(user.getUserimgurl());
+                 reqDto.setDistance(info.getDistance());
+                 String destination = "/topic/nearbymechanics/" + mechId;
+                 simpMessagingTemplate.convertAndSend(destination, reqDto);
+                 distances.put(info.getDistancetime(), info.getDistance());
+
+             }
+            return ResponseEntity.ok(distances);
  }
         return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
     }

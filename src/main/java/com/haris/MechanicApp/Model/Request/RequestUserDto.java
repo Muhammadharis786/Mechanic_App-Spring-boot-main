@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 public class RequestUserDto {
     private Long userid;
     private String username;
-    double distance ;
-    String userlocname;
-    double price;
+    private  double distance ;
+    private String userlocname;
+    private String eta;
+     private double price;
+    private String userimage;
 }

@@ -1,0 +1,57 @@
+package com.haris.MechanicApp.Model.RequestService;
+
+import com.haris.MechanicApp.Model.Mechanic.Mechanic;
+import com.haris.MechanicApp.Model.Verification.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "service_requests")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RequestService {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long requestId;
+    // ----- ACTUAL FOREIGN KEYS YAHAN HAIN -----
+
+    // Kis user ne request ki
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "userid", nullable = false) // user table se link karega
+    private User user;
+    // Kis mechanic ko request mili / kisnay accept ki
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mechanic_id", referencedColumnName = "id") // mechanic table se link karega (Nullable)
+    private Mechanic mechanic;
+    // -------------------------------------------
+    private Double userLatitude;
+    private Double userLongitude;
+    private String locationName;
+    @Column(nullable = false)
+    private String requestStatus = "PENDING";
+    private String serviceType;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiDiagnosticsNotes;
+
+    @Column(columnDefinition = "TEXT")
+    private String userNotes;
+    // Pricing & ETA
+    private String estimatedTimeOfArrival;
+    private Double estimatedPrice;
+    private Double finalAmount;
+    private String paymentStatus = "UNPAID";
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+}

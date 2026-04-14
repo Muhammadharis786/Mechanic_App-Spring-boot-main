@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private CustomUserDetailsService_Final userDetailsService;
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // 1. 'topic' wo jagah hai jahan server messages phenkega (Broadcasting)
+        // 1. 'topic' wo jagah hai jahan server messages phenkega (Broadcasting)s
         //yha data moojod hoga phir yha say /topic say data server phenkaiga client ko unko phenkaiga
         //jinho nay  /topic ko subscirbe kya hoga
         config.enableSimpleBroker("/topic");
