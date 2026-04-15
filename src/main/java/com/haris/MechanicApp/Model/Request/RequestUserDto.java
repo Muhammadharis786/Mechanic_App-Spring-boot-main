@@ -12,6 +12,8 @@ public class RequestUserDto {
     private String username;
     private  double distance ;
     private String userlocname;
+    private double lat;
+    private  double lon;
     private String eta;
      private double price;
     private String userimage;

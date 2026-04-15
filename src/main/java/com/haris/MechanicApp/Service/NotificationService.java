@@ -97,7 +97,7 @@ public class NotificationService {
 // 2. Sirf data jama karein loop mein
             for (GeoResult<RedisGeoCommands.GeoLocation<String>> result  : results){
                 long mechanicid =  Long.parseLong (result.getContent().getName());
-                Point point = result.getContent().getPoint();
+              Point   point = result.getContent().getPoint();
                 destinationsparam.append(point.getY()).append(",").append(point.getX()).append("|");
                 mechanicIds.add(mechanicid);
 
@@ -133,12 +133,15 @@ Map<String , Double> distances = new HashMap<>();
                  reqDto.setEta(info.getDistancetime());
                  reqDto.setUsername(user.getUsername());
                  reqDto.setUserimage(user.getUserimgurl());
+                 reqDto.setLat(userlatitude);
+                 reqDto.setLon(userlongitude);
                  reqDto.setDistance(info.getDistance());
                  String destination = "/topic/nearbymechanics/" + mechId;
                  simpMessagingTemplate.convertAndSend(destination, reqDto);
                  distances.put(info.getDistancetime(), info.getDistance());
 
              }
+
             return ResponseEntity.ok(distances);
  }
         return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
