@@ -354,10 +354,21 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         List<MechanicDTO > mechanics = new ArrayList<>();
 
         GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
-         double userlongitude =  user.getLastLongitude().doubleValue();
-         double userlatitude  = user.getLastLatitude().doubleValue();
-        System.out.println("user Latitude: " + userlatitude );
-        System.out.println("user Longitude: " + userlongitude );
+         double userlongitude ;
+         double userlatitude  ;
+
+        List<Point> usercordinates = geoOperations.position("user", String.valueOf(user.getUserid()));
+        //this is for search mechanic and calcute distance bw user and mechanic and give nearbymechanic
+        //that define specific range and save in results type object
+        if  ( usercordinates != null && ! usercordinates.isEmpty() &&  usercordinates.get(0) != null) {
+            userlongitude =  usercordinates.get(0).getX();
+            userlatitude =  usercordinates.get(0).getY();
+            System.out.println("Fetched User position from REDIS: " + userlatitude + ", " + userlongitude);
+        } else {
+            // Fallback if not in Redis
+            userlongitude = user.getLastLongitude().doubleValue();
+            userlatitude = user.getLastLatitude().doubleValue();
+        }
         GeoResults<GeoLocation<String>> results =
                 geoOperations.search(
                         "mechanic",

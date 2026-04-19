@@ -129,11 +129,11 @@ public class GoogleDistance {
 
     }
 
-    public String getAddressFromLatLng(BigDecimal mechLatitude, BigDecimal mechLongitude) {
+    public String getAddressFromLatLng(double latitude, double longitude) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
-                    + mechLatitude + "," + mechLongitude
+                    + latitude + "," + longitude
                     + "&key=" + API_KEY;
 
             String response = restTemplate.getForObject(url, String.class);
@@ -146,7 +146,7 @@ public class GoogleDistance {
                         .getString("formatted_address");
                 return address;
             } else {
-                System.out.println("No address found for: " + mechLatitude + "," + mechLongitude);
+                System.out.println("No address found for: " + latitude + "," + longitude);
                 return "Unknown Location";
             }
 

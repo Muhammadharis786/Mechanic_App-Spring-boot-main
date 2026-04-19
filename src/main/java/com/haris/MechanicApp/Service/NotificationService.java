@@ -73,10 +73,20 @@ public class NotificationService {
          if(checkuser.isPresent()){
             User user = checkuser.get();
             GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
-            double userlongitude =  user.getLastLongitude().doubleValue();
-            double userlatitude  = user.getLastLatitude().doubleValue();
+            double userlongitude ;
+            double userlatitude  ;
+            List<Point> usercordinates = geoOperations.position("user", String.valueOf(user.getUserid()));
             //this is for search mechanic and calcute distance bw user and mechanic and give nearbymechanic
              //that define specific range and save in results type object
+             if  ( usercordinates != null && ! usercordinates.isEmpty() &&  usercordinates.get(0) != null) {
+                 userlongitude =  usercordinates.get(0).getX();
+                 userlatitude =  usercordinates.get(0).getY();
+                 System.out.println("Fetched User position from REDIS: " + userlatitude + ", " + userlongitude);
+             } else {
+                 // Fallback if not in Redis
+                 userlongitude = user.getLastLongitude().doubleValue();
+                 userlatitude = user.getLastLatitude().doubleValue();
+             }
 
 // 1. Redis search with Coordinates
             GeoResults<RedisGeoCommands.GeoLocation<String>> results =
@@ -114,7 +124,8 @@ public class NotificationService {
 // 3. API HIT karein (Ek hi baar)
 // Aapka Google distance service ek json return karega jismein utne hi results honge jitne mechanics bhejay.
              GoogleDistance googleapi = new GoogleDistance();
-             String locname =     googleapi.getAddressFromLatLng(user.getLastLatitude() , user.getLastLongitude());
+             String locname =     googleapi.getAddressFromLatLng(
+                    userlatitude , userlongitude);
 
             //wha say mujhay distance mila aur menay roadistances wkay list may object assign krdya
              List<RoadInfo> roadDistances = googleapi.getBatchRoadDistances(

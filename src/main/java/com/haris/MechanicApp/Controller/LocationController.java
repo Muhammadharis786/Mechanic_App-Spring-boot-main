@@ -32,6 +32,12 @@ public class LocationController {
         String phonenumber = userDetails.getUsername();
          locationService.addMechanicLocations(location , phonenumber);
  }
+    @PostMapping ("api/user/currentlocation")
+    public void addUserLocation (@RequestBody  Location location,
+                                 @AuthenticationPrincipal UserDetails userDetails ){
+        String phonenumber = userDetails.getUsername();
+        locationService.addcUserLocations(location , phonenumber);
+    }
 
 
 }
