@@ -112,7 +112,8 @@ public class AppointmentService {
             }
             System.out.println(count + " mechanics mil gay hain");
             if(mechanicIds.isEmpty()){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No mechanics available");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("In your area  "+ mechanictyperequest + " mechanic not available");
             }
 
             for (Long mechanicids : mechanicIds){
