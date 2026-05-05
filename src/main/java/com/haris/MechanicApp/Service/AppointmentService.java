@@ -98,16 +98,18 @@ public class AppointmentService {
 
                     );
             List<Long> mechanicIds = new ArrayList<>();
+            int count =0 ;
             for (GeoResult<RedisGeoCommands.GeoLocation<String>> result  : results){
                 long mechanicid =  Long.parseLong (result.getContent().getName());
                  String mechanictype =   (String) redisTemplate.opsForHash()
                             .get("mechanic:details:" + mechanicid, "serviceType");
-
+                    count++;
                 // ✅ Sirf wahi mechanic add karo jiska service type match kare
                 if(mechanictyperequest.equalsIgnoreCase(mechanictype)){
                     mechanicIds.add(mechanicid);
                 }
             }
+            System.out.println(count + " mechanics mil gay hain");
             if(mechanicIds.isEmpty()){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No mechanics available");
             }
@@ -199,7 +201,7 @@ public class AppointmentService {
 
 
 
-        if(checkuser.isPresent()) {
+        if(checkuser.isPresent() &&  checkmechanic.isPresent()) {
             System.out.println("User hayga yrr phir"+ checkuser.get().getPhonenumber());
             User user = checkuser.get();
             Mechanic mechanic = checkmechanic.get();
