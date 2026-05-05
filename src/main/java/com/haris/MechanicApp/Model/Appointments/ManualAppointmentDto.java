@@ -11,14 +11,13 @@ import java.time.LocalTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AppointmentDto {
-
-   private String serviceType;
-   private BigDecimal latitude;
-   private BigDecimal longitude;
+public class ManualAppointmentDto {
+    private long id;
+    private String serviceType;
+    private BigDecimal latitude;
+    private BigDecimal longitude;
     private String problemDescription;
     private String address;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
-
 }

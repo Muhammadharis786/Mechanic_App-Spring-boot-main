@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Service;
 
 
+import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Verification.User;
@@ -53,6 +54,11 @@ public class LocationService {
         Mechanic currentMechanic = ismechanic.get();
         currentMechanic.setLongitude(location.getLongitude());
         currentMechanic.setLatitude(location.getLatitude());
+        // ✅ SIRF EK BAR CALL: Reverse Geocoding
+        GoogleDistance googleapi = new GoogleDistance();
+        String address = googleapi.getAddressFromLatLng(location.getLatitude().doubleValue()
+                , location.getLongitude().doubleValue());
+        currentMechanic.setLocationName(address);
         mechRepo.save(currentMechanic);
         String mechid = currentMechanic.getId().toString();
         double latitude  =   (location.getLatitude()).doubleValue()  ;

@@ -92,6 +92,9 @@ public class Mechanic {
     @Column(name = "isotpverified")
     private  boolean isotpverified =false;
 
+    @Column (name = "location_name")
+    private String locationName;
+
     @Column(name = "total_reviews")
     private int totalReviews = 0;
 

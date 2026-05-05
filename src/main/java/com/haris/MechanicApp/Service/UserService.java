@@ -3,8 +3,6 @@ package com.haris.MechanicApp.Service;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import com.haris.MechanicApp.Model.Appointments.AppointmentDto;
-import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
@@ -14,7 +12,6 @@ import com.haris.MechanicApp.Model.Verification.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Random;
 
 import com.haris.MechanicApp.Repository.AppointmentRepository;
@@ -429,9 +426,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             mechanicDTO.setIsengaged(mechanic.isIsengaged());
             mechanicDTO.setLatitude(mechanic.getLatitude());
             mechanicDTO.setLongitude(mechanic.getLongitude());
-
+            mechanicDTO.setMechaniclocname(mechanic.getLocationName());
             mechanicDTO.setDistance(BigDecimal.valueOf(distanceMap.get(mechanic.getId())));
-              mechanicDTOS.add(mechanicDTO);
+            mechanicDTOS.add(mechanicDTO);
 
 
         }

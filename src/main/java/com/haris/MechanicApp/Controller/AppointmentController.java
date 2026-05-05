@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Controller;
 
-import com.haris.MechanicApp.Model.Appointments.AppointmentDto;
+import com.haris.MechanicApp.Model.Appointments.AutoAppointmentDto;
+import com.haris.MechanicApp.Model.Appointments.ManualAppointmentDto;
 import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +31,26 @@ public class AppointmentController {
 
     }
 
-    @PostMapping("api/user/bookappointment")
-    public ResponseEntity<?> bookAppointment(
-            @RequestBody AppointmentDto appointmentDto ,
+    @PostMapping("api/user/auto/bookappointment")
+    public ResponseEntity<?> autoAppointment(
+            @RequestBody AutoAppointmentDto appointmentDto ,
             @AuthenticationPrincipal UserDetails userDetails
     ){
         String userphonenumber = userDetails.getUsername();
 
 
-        return appointmentService.bookappointment (userphonenumber ,appointmentDto);
+        return appointmentService.autobookappointment (userphonenumber ,appointmentDto);
+
+    }
+    @PostMapping ("api/user/manaul/bookappointment")
+    public ResponseEntity<?> manualAppointment(
+            @RequestBody ManualAppointmentDto appointmentDto ,
+            @AuthenticationPrincipal UserDetails userDetails
+    ){
+        String userphonenumber = userDetails.getUsername();
+
+
+        return appointmentService.manualbookappointment (userphonenumber ,appointmentDto);
 
     }
 }

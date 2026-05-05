@@ -1,8 +1,9 @@
 package com.haris.MechanicApp.Service;
 
-import com.haris.MechanicApp.Model.Appointments.AppointmentDto;
+import com.haris.MechanicApp.Model.Appointments.AutoAppointmentDto;
 import com.haris.MechanicApp.Model.Appointments.AppointmentStatus;
 import com.haris.MechanicApp.Model.Appointments.Appointments;
+import com.haris.MechanicApp.Model.Appointments.ManualAppointmentDto;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
@@ -55,8 +56,9 @@ public class AppointmentService {
         return formattedDate;
     }
 
-    public ResponseEntity<?> bookappointment(String userphonenumber  ,
-                                             AppointmentDto appointmentDto) {
+//this is call when user click auto book appointment
+    public ResponseEntity<?> autobookappointment(String userphonenumber  ,
+                                             AutoAppointmentDto appointmentDto) {
 
         Optional<User> checkuser = userRepo.findByPhonenumber(userphonenumber);
         if(checkuser.isPresent()){
@@ -144,7 +146,7 @@ public class AppointmentService {
 
                     );
             List<Long> mechanicIds = new ArrayList<>();
-            List<Mechanic>  mechanics = new ArrayList<>();
+
             for (GeoResult<RedisGeoCommands.GeoLocation<String>> result  : results){
                 long mechanicid =  Long.parseLong (result.getContent().getName());
                 Point   point = result.getContent().getPoint();
@@ -179,11 +181,40 @@ public class AppointmentService {
             dto.setExperience(mechanic.getExperienceyears());
             dto.setMechanicType(mechanic.getMechanictype());
             dto.setPhonenumber(mechanic.getPhonenumber());
+            dto.setLatitude(mechanic.getLatitude());
+            dto.setLongitude(mechanic.getLongitude());
+
             mechanicDTOs.add(dto);
         }
 
-return ResponseEntity.ok(mechanicDTOs);
+            return ResponseEntity.ok(mechanicDTOs);
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
         }
+
+    public ResponseEntity<?> manualbookappointment(String userphonenumber,
+                                                   ManualAppointmentDto appointmentDto) {
+        Optional<Mechanic> checkmechanic = mechanicrepo.findById(appointmentDto.getId());
+        Optional<User> checkuser = userRepo.findByPhonenumber(userphonenumber);
+        if(checkuser.isPresent() &&  checkmechanic.isPresent()) {
+            Mechanic mechanic = checkmechanic.get();
+            Appointments appointments = new Appointments();
+            appointments.setMechanic(mechanic);
+            appointments.setAppointmentDate(appointmentDto.getAppointmentDate());
+            appointments.setAppointmentTime(appointmentDto.getAppointmentTime());
+            appointments.setProblemDescription(appointmentDto.getProblemDescription());
+            appointments.setCreatedAt(modernDate());
+            appointments.setServiceType(appointmentDto.getServiceType());
+            appointments.setLatitude(appointmentDto.getLatitude());
+            appointments.setLongitude(appointmentDto.getLongitude());
+            appointments.setAddress(appointmentDto.getAddress());
+            appointments.setStatus(AppointmentStatus.PENDING);
+            appointmentRepository.save(appointments);
+            long mechanicid = mechanic.getId();
+            String destination = "/topic/bookappointment/nearbymechanics/" + mechanicid;
+            simpMessagingTemplate.convertAndSend(destination, appointments);
+
+ }
+        return   ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
+    }
 }

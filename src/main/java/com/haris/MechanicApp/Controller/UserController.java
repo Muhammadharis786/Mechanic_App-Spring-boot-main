@@ -1,6 +1,5 @@
 package com.haris.MechanicApp.Controller;
 
-import com.haris.MechanicApp.Model.Appointments.AppointmentDto;
 import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.DtoUser;
 import com.haris.MechanicApp.Model.Verification.ForgotNumber;
@@ -14,8 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 public class UserController {
