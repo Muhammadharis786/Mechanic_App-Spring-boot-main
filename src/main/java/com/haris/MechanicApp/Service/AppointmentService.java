@@ -196,10 +196,16 @@ public class AppointmentService {
                                                    ManualAppointmentDto appointmentDto) {
         Optional<Mechanic> checkmechanic = mechanicrepo.findById(appointmentDto.getId());
         Optional<User> checkuser = userRepo.findByPhonenumber(userphonenumber);
-        if(checkuser.isPresent() &&  checkmechanic.isPresent()) {
+
+
+
+        if(checkuser.isPresent()) {
+            System.out.println("User hayga yrr phir"+ checkuser.get().getPhonenumber());
+            User user = checkuser.get();
             Mechanic mechanic = checkmechanic.get();
             Appointments appointments = new Appointments();
             appointments.setMechanic(mechanic);
+            appointments.setUser(user);
             appointments.setAppointmentDate(appointmentDto.getAppointmentDate());
             appointments.setAppointmentTime(appointmentDto.getAppointmentTime());
             appointments.setProblemDescription(appointmentDto.getProblemDescription());
@@ -213,6 +219,8 @@ public class AppointmentService {
             long mechanicid = mechanic.getId();
             String destination = "/topic/bookappointment/nearbymechanics/" + mechanicid;
             simpMessagingTemplate.convertAndSend(destination, appointments);
+            return ResponseEntity.ok(appointments);
+
 
  }
         return   ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");

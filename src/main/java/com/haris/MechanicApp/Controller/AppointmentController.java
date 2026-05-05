@@ -42,7 +42,7 @@ public class AppointmentController {
         return appointmentService.autobookappointment (userphonenumber ,appointmentDto);
 
     }
-    @PostMapping ("api/user/manaul/bookappointment")
+    @PostMapping ("api/user/manual/bookappointment")
     public ResponseEntity<?> manualAppointment(
             @RequestBody ManualAppointmentDto appointmentDto ,
             @AuthenticationPrincipal UserDetails userDetails
