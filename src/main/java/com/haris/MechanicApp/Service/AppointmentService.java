@@ -78,7 +78,7 @@ public class AppointmentService {
             appointments.setStatus(AppointmentStatus.PENDING);
             String mechanictyperequest = appointmentDto.getServiceType().toUpperCase();
              mechanictyperequest=  mechanictyperequest.split(" ")[0];
-            System.out.println(mechanictyperequest);
+
 
             appointmentRepository.save(appointments);
 
@@ -103,10 +103,11 @@ public class AppointmentService {
                 long mechanicid =  Long.parseLong (result.getContent().getName());
                  String mechanictype =   (String) redisTemplate.opsForHash()
                             .get("mechanic:details:" + mechanicid, "serviceType");
-                    count++;
+
                 // ✅ Sirf wahi mechanic add karo jiska service type match kare
                 if(mechanictyperequest.equalsIgnoreCase(mechanictype)){
                     mechanicIds.add(mechanicid);
+                    count++;
                 }
             }
             System.out.println(count + " mechanics mil gay hain");
@@ -178,6 +179,7 @@ public class AppointmentService {
             MechanicDTO dto = new MechanicDTO();
             dto.setDistance(BigDecimal.valueOf(distanceMap.get(mechanic.getId())));
             dto.setName(mechanic.getName());
+            dto.setId(mechanic.getId());
             dto.setAveragerating(mechanic.getAverageRating());
             dto.setMechanicimgurl(mechanic.getMechanicimgurl());
             dto.setExperience(mechanic.getExperienceyears());

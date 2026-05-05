@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MechanicDTO {
+    private long id;
     private String name;
     private String MechanicType;
     private BigDecimal averagerating;
