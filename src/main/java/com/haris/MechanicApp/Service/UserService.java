@@ -3,6 +3,8 @@ package com.haris.MechanicApp.Service;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.haris.MechanicApp.Model.Appointments.AppointmentDto;
+import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Random;
 
+import com.haris.MechanicApp.Repository.AppointmentRepository;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import com.haris.MechanicApp.Repository.VerificationTokenRepository;
@@ -54,6 +57,10 @@ public class UserService  {
     private Storage storage;
     @Autowired
 
+
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
     private UserRepository userRepo;
 
     @Autowired
@@ -351,7 +358,6 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
         Map<String , Object> map = new HashMap<>();
         System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
-        List<MechanicDTO > mechanics = new ArrayList<>();
 
         GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
          double userlongitude ;
@@ -381,7 +387,6 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
                 );
         List<Long> mechanicIds = new ArrayList<>();
-        Map <Long , Double>  distanceMap= new HashMap<>();
         StringBuilder destinationparam = new StringBuilder();
 
         for (GeoResult<GeoLocation<String>> result  : results){
@@ -405,9 +410,14 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             map.put("mechanics", "Mechanic not available right now");
             return ResponseEntity.ok(map);
         }
-        int  i =0 ;
+
+        Map<Long, Double> distanceMap = new HashMap<>();
+        for (int i = 0; i < mechanicIds.size(); i++) {
+            distanceMap.put(mechanicIds.get(i), distancewithtime.get(i).getDistance());
+        }
+
+        List<MechanicDTO> mechanicDTOS = new ArrayList<>();
         for (Mechanic mechanic : allnearbymechanics) {
-            RoadInfo info = distancewithtime.get(i);
             MechanicDTO mechanicDTO = new MechanicDTO();
             mechanicDTO.setName(mechanic.getName());
             mechanicDTO.setMechanicType(mechanic.getMechanictype());
@@ -419,14 +429,14 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             mechanicDTO.setIsengaged(mechanic.isIsengaged());
             mechanicDTO.setLatitude(mechanic.getLatitude());
             mechanicDTO.setLongitude(mechanic.getLongitude());
-            BigDecimal distance = new BigDecimal(info.getDistance());
-            mechanicDTO.setDistance(distance);
-              mechanics.add(mechanicDTO);
+
+            mechanicDTO.setDistance(BigDecimal.valueOf(distanceMap.get(mechanic.getId())));
+              mechanicDTOS.add(mechanicDTO);
 
 
         }
 
-        map.put("mechanics", mechanics);
+        map.put("mechanics", mechanicDTOS);
         map.put("user", user);
 
         return  ResponseEntity.ok(map);
@@ -457,6 +467,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
     }
+
 
 
 }

@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Controller;
 
+import com.haris.MechanicApp.Model.Appointments.AppointmentDto;
 import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.DtoUser;
 import com.haris.MechanicApp.Model.Verification.ForgotNumber;
@@ -109,5 +110,6 @@ public class UserController {
       return userService.dashboard (identifier);
 
     }
+
 
 }

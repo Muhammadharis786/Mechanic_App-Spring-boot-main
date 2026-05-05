@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.core.GeoOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.swing.text.html.Option;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,7 +54,8 @@ public class MechanicService    {
     @Autowired
     private OtpTokenMechanicRepository otptokenrepo;
 
-
+    @Autowired
+    private RedisTemplate<String , String > redisTemplate;
 
 
     private  final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -117,6 +122,13 @@ public class MechanicService    {
                     newregisteredmechanic.setShoplatitude(mechanicdata.getLatitude());
                     newregisteredmechanic.setShoplongitude(mechanicdata.getLongitude());
 
+                    Double shoplat = mechanicdata.getLatitude().doubleValue(); //this is shop latitude
+                    Double shoplon = mechanicdata.getLongitude().doubleValue();  //this is shop longitude
+                    GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
+                    String mechid =  newregisteredmechanic.getId().toString();
+
+
+
                     newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
                     newregisteredmechanic.setMechanicimgurl(mechanicImageUrl);
                     newregisteredmechanic.setCnicfronturl(cnicFrontUrl);
@@ -125,6 +137,16 @@ public class MechanicService    {
 
                     System.out.println("hogya mechanic registered");
                     mechanicRepository.save(newregisteredmechanic);
+                    // Jab mechanic register ya login kare
+                    String  mechanictype= mechanicdata.getMechanictype().toUpperCase();
+                    geoOperations.add("mech", new Point(shoplon, shoplat), mechid);
+                    redisTemplate.opsForHash().put(
+                            "mechanic:details:" + mechid,
+                            "serviceType",
+                            mechanictype
+
+                            );
+
                     return ResponseEntity.ok("Mechanic is registered");
 
                 }
