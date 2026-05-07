@@ -1,16 +1,16 @@
 package com.haris.MechanicApp.Service;
 
-import com.haris.MechanicApp.Model.Appointments.AutoAppointmentDto;
-import com.haris.MechanicApp.Model.Appointments.AppointmentStatus;
-import com.haris.MechanicApp.Model.Appointments.Appointments;
-import com.haris.MechanicApp.Model.Appointments.ManualAppointmentDto;
+import com.haris.MechanicApp.Model.Appointments.*;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
+import com.haris.MechanicApp.Model.Notification.MechanicNotification;
+import com.haris.MechanicApp.Model.Notification.NotificationType;
 import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Repository.AppointmentRepository;
+import com.haris.MechanicApp.Repository.MechanicNotificationRepository;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,21 +29,24 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+
 @Service
 public class AppointmentService {
 
     @Autowired
     UserRepository  userRepo;
     @Autowired
-
-    private MechanicRepository mechanicrepo;
+     private MechanicRepository mechanicrepo;
     @Autowired
     private AppointmentRepository  appointmentRepository;
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
-
+    @Autowired
+    private MechanicNotificationRepository notificationRepository;
     @Autowired
     private RedisTemplate<String , String > redisTemplate;
+
+
     public String modernDate() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMM yyyy h:mm a", Locale.ENGLISH);
@@ -55,6 +58,7 @@ public class AppointmentService {
 
         return formattedDate;
     }
+
 
 //this is call when user click auto book appointment
     public ResponseEntity<?> autobookappointment(String userphonenumber  ,
@@ -78,9 +82,11 @@ public class AppointmentService {
             appointments.setStatus(AppointmentStatus.PENDING);
             String mechanictyperequest = appointmentDto.getServiceType().toUpperCase();
              mechanictyperequest=  mechanictyperequest.split(" ")[0];
-
-
             appointmentRepository.save(appointments);
+
+
+
+
 
             double  userlongitude  = appointmentDto.getLongitude().doubleValue();
             double  userlatitude  = appointmentDto.getLatitude().doubleValue();
@@ -110,18 +116,56 @@ public class AppointmentService {
                     count++;
                 }
             }
-            System.out.println(count + " mechanics mil gay hain");
+
+            System.out.println(count + " mechanics mil gay hain" +  mechanicIds);
             if(mechanicIds.isEmpty()){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("In your area  "+ mechanictyperequest + " mechanic not available");
             }
 
-            for (Long mechanicids : mechanicIds){
-                String destination = "/topic/bookappointment/nearbymechanics/" + mechanicids;
-                simpMessagingTemplate.convertAndSend(destination, appointments);
+            List<Mechanic> mechanics = mechanicrepo.findAllById(mechanicIds);
+            if (mechanics.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanics nh milay tu notifcation kessay jainga" );
+            }
+
+
+            List<BookingNotificationDto> notidto = new ArrayList<>();
+
+            for (Mechanic mechanic : mechanics){
+            long mechanicId = mechanic.getId();
+
+                MechanicNotification notification =  new MechanicNotification();
+                notification.setAppointments(appointments);
+                notification.setMechanic(mechanic);
+                notification.setMessage("You received a new appointment request");
+                notification.setTitle("New Booking");
+                notification.setType(NotificationType.APPOINTMENT_REQUEST);
+                notification.setCreatedAt(LocalDateTime.now() );
+                notificationRepository.save(notification);
+
+
+                //ye dto bnay ahay mechanic ko notication bhjnay k lie
+                BookingNotificationDto dto =  new BookingNotificationDto()  ;
+                dto.setAddress(appointmentDto.getAddress());
+                dto.setLatitude(appointmentDto.getLatitude());
+                dto.setLongitude(appointmentDto.getLongitude());
+                dto.setServiceType(appointmentDto.getServiceType());
+                dto.setAppointmentTime(appointmentDto.getAppointmentTime());
+                dto.setAppointmentDate(appointmentDto.getAppointmentDate());
+                dto.setProblemDescription(appointmentDto.getProblemDescription());
+                dto.setUserphonenumber(user.getPhonenumber());
+                dto.setUserimage(user.getUserimgurl());
+                dto.setUsername(user.getUsername());
+                dto.setMechshoplat(mechanic.getShoplatitude());
+                dto.setCreated_at(LocalDateTime.now());
+                dto.setMechshoplong(mechanic.getShoplongitude());
+                String destination = "/topic/bookappointment/nearbymechanics/" + mechanicId;
+                simpMessagingTemplate.convertAndSend(destination,dto);
+                notidto.add(dto);
 
             }
-            return ResponseEntity.status(200).body(appointments);
+
+            return ResponseEntity.status(200).body(notidto);
 
 
 
@@ -158,7 +202,7 @@ public class AppointmentService {
                     mechanicIds.add(mechanicid);
 
             }
-            if(destinationsparam.length()>0){
+            if(!destinationsparam.isEmpty()){
                 destinationsparam.setLength(destinationsparam.length()-1);
             }
             GoogleDistance googleapi = new GoogleDistance();
@@ -221,13 +265,67 @@ public class AppointmentService {
             appointments.setAddress(appointmentDto.getAddress());
             appointments.setStatus(AppointmentStatus.PENDING);
             appointmentRepository.save(appointments);
+
+            MechanicNotification notification =  new MechanicNotification();
+            notification.setAppointments(appointments);
+            notification.setMechanic(mechanic);
+            notification.setMessage("You received a new appointment request");
+            notification.setTitle("New Booking");
+            notification.setType(NotificationType.APPOINTMENT_REQUEST);
+            notification.setCreatedAt(LocalDateTime.now() );
+            notificationRepository.save(notification);
+
+            BookingNotificationDto dto =  new BookingNotificationDto() ;
+            dto.setAddress(appointmentDto.getAddress());
+            dto.setLatitude(appointmentDto.getLatitude());
+            dto.setLongitude(appointmentDto.getLongitude());
+            dto.setServiceType(appointmentDto.getServiceType());
+            dto.setAppointmentTime(appointmentDto.getAppointmentTime());
+            dto.setAppointmentDate(appointmentDto.getAppointmentDate());
+            dto.setProblemDescription(appointmentDto.getProblemDescription());
+            dto.setUserphonenumber(user.getPhonenumber());
+            dto.setUserimage(user.getUserimgurl());
+            dto.setUsername(user.getUsername());
+            dto.setMechshoplat(mechanic.getShoplatitude());
+            dto.setMechshoplong(mechanic.getShoplongitude());
+            dto.setCreated_at(LocalDateTime.now());
+
             long mechanicid = mechanic.getId();
             String destination = "/topic/bookappointment/nearbymechanics/" + mechanicid;
-            simpMessagingTemplate.convertAndSend(destination, appointments);
-            return ResponseEntity.ok(appointments);
+            simpMessagingTemplate.convertAndSend(destination, dto);
+            return ResponseEntity.ok(dto);
 
-
- }
+        }
         return   ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
+    }
+
+    public ResponseEntity<?> mechanicallnotifications(String phonenumber) {
+        Optional<Mechanic> checkmechanic = mechanicrepo.findByPhonenumber(phonenumber);
+        if(checkmechanic.isPresent()) {
+            Mechanic mechanic =  checkmechanic.get();
+            List<BookingNotificationDto> bookingNotificationDtos = new   ArrayList<>();
+               List<MechanicNotification> allnotifications =  notificationRepository.findByMechanicIdOrderByCreatedAtDesc(mechanic.getId());
+               for (MechanicNotification notification : allnotifications) {
+                   BookingNotificationDto dto =  new BookingNotificationDto();
+                    dto.setAddress(notification.getAppointments().getAddress());
+                    dto.setLatitude(notification.getAppointments().getLatitude());
+                    dto.setLongitude(notification.getAppointments().getLongitude());
+                    dto.setServiceType(notification.getAppointments().getServiceType());
+                    dto.setAppointmentTime(notification.getAppointments().getAppointmentTime());
+                    dto.setAppointmentDate(notification.getAppointments().getAppointmentDate());
+                    dto.setProblemDescription(notification.getAppointments().getProblemDescription());
+                    dto.setUserphonenumber(notification.getAppointments().getUser().getPhonenumber());
+                    dto.setUserimage(notification.getAppointments().getUser().getUserimgurl());
+                    dto.setUsername(notification.getAppointments().getUser().getUsername());
+                    dto.setMechshoplat(notification.getMechanic().getShoplatitude());
+                    dto.setMechshoplong(notification.getMechanic().getShoplongitude());
+                    dto.setCreated_at(notification.getCreatedAt());
+                    bookingNotificationDtos.add(dto);
+
+               }
+
+                    return  ResponseEntity.ok( bookingNotificationDtos);
+        }
+        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic not found");
     }
 }
