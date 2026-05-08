@@ -12,6 +12,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BookingNotificationDto {
+    private String appointmentid ;
     private String serviceType;
     private BigDecimal latitude;
     private BigDecimal longitude;
@@ -26,4 +27,11 @@ public class BookingNotificationDto {
     private String userphonenumber;
     private BigDecimal mechshoplat ;
     private BigDecimal mechshoplong;
+    private String mechname ;
+    private String mechimage ;
+    private BigDecimal mechrating ;
+    private int mechexperience ;
+    private String mechtype;
+    private int totalreviews ;
+    private boolean isread ;
 }

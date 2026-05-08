@@ -159,13 +159,23 @@ public class AppointmentService {
                 dto.setMechshoplat(mechanic.getShoplatitude());
                 dto.setCreated_at(LocalDateTime.now());
                 dto.setMechshoplong(mechanic.getShoplongitude());
+
+
+                dto.setMechname(mechanic.getName());
+                dto.setMechexperience(mechanic.getExperienceyears());
+                dto.setMechimage(mechanic.getMechanicimgurl());
+                dto.setMechtype(mechanic.getMechanictype());
+                dto.setTotalreviews(mechanic.getTotalReviews());
+                dto.setMechrating(mechanic.getAverageRating());
+                dto.setAppointmentid(appointments.getAppointmentId());
+
                 String destination = "/topic/bookappointment/nearbymechanics/" + mechanicId;
                 simpMessagingTemplate.convertAndSend(destination,dto);
                 notidto.add(dto);
 
             }
 
-            return ResponseEntity.status(200).body(notidto);
+            return ResponseEntity.status(200).body(appointments.getAppointmentId());
 
 
 
@@ -276,6 +286,7 @@ public class AppointmentService {
             notificationRepository.save(notification);
 
             BookingNotificationDto dto =  new BookingNotificationDto() ;
+            dto.setAppointmentid(appointments.getAppointmentId());
             dto.setAddress(appointmentDto.getAddress());
             dto.setLatitude(appointmentDto.getLatitude());
             dto.setLongitude(appointmentDto.getLongitude());
@@ -289,6 +300,13 @@ public class AppointmentService {
             dto.setMechshoplat(mechanic.getShoplatitude());
             dto.setMechshoplong(mechanic.getShoplongitude());
             dto.setCreated_at(LocalDateTime.now());
+
+            dto.setMechname(mechanic.getName());
+            dto.setMechexperience(mechanic.getExperienceyears());
+            dto.setMechimage(mechanic.getMechanicimgurl());
+            dto.setMechtype(mechanic.getMechanictype());
+            dto.setTotalreviews(mechanic.getTotalReviews());
+            dto.setMechrating(mechanic.getAverageRating());
 
             long mechanicid = mechanic.getId();
             String destination = "/topic/bookappointment/nearbymechanics/" + mechanicid;
