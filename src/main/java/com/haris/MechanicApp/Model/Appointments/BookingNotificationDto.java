@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -23,7 +24,7 @@ public class BookingNotificationDto {
     private LocalTime appointmentTime;
     private String userimage;
     private String username;
-    private LocalDateTime created_at ;
+    private Instant created_at ;
 
     private String userphonenumber;
     private BigDecimal mechshoplat ;

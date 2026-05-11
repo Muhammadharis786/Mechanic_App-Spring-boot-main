@@ -25,6 +25,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -74,7 +75,7 @@ public class AppointmentService {
             appointments.setAppointmentDate(appointmentDto.getAppointmentDate());
             appointments.setAppointmentTime(appointmentDto.getAppointmentTime());
             appointments.setProblemDescription(appointmentDto.getProblemDescription());
-            appointments.setCreatedAt(modernDate());
+            appointments.setCreatedAt(Instant.now());
             appointments.setServiceType(appointmentDto.getServiceType());
             appointments.setLatitude(appointmentDto.getLatitude());
             appointments.setLongitude(appointmentDto.getLongitude());
@@ -140,7 +141,7 @@ public class AppointmentService {
                 notification.setMessage("You received a new appointment request");
                 notification.setTitle("New Booking");
                 notification.setType(NotificationType.APPOINTMENT_REQUEST);
-                notification.setCreatedAt(LocalDateTime.now() );
+                notification.setCreatedAt(Instant.now());
                 notificationRepository.save(notification);
 
 
@@ -157,7 +158,7 @@ public class AppointmentService {
                 dto.setUserimage(user.getUserimgurl());
                 dto.setUsername(user.getUsername());
                 dto.setMechshoplat(mechanic.getShoplatitude());
-                dto.setCreated_at(LocalDateTime.now());
+                dto.setCreated_at(notification.getCreatedAt());
                 dto.setMechshoplong(mechanic.getShoplongitude());
 
 
@@ -270,7 +271,7 @@ public class AppointmentService {
             appointments.setAppointmentDate(appointmentDto.getAppointmentDate());
             appointments.setAppointmentTime(appointmentDto.getAppointmentTime());
             appointments.setProblemDescription(appointmentDto.getProblemDescription());
-            appointments.setCreatedAt(modernDate());
+            appointments.setCreatedAt(Instant.now());
             appointments.setServiceType(appointmentDto.getServiceType());
             appointments.setLatitude(appointmentDto.getLatitude());
             appointments.setLongitude(appointmentDto.getLongitude());
@@ -284,7 +285,7 @@ public class AppointmentService {
             notification.setMessage("You received a new appointment request");
             notification.setTitle("New Booking");
             notification.setType(NotificationType.APPOINTMENT_REQUEST);
-            notification.setCreatedAt(LocalDateTime.now() );
+            notification.setCreatedAt(Instant.now() );
             notificationRepository.save(notification);
 
             BookingNotificationDto dto =  new BookingNotificationDto() ;
@@ -301,7 +302,7 @@ public class AppointmentService {
             dto.setUsername(user.getUsername());
             dto.setMechshoplat(mechanic.getShoplatitude());
             dto.setMechshoplong(mechanic.getShoplongitude());
-            dto.setCreated_at(LocalDateTime.now());
+            dto.setCreated_at(notification.getCreatedAt());
 
             dto.setMechname(mechanic.getName());
             dto.setMechexperience(mechanic.getExperienceyears());

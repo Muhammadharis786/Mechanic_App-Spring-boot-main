@@ -5,6 +5,7 @@ import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -41,6 +42,6 @@ public class MechanicNotification {
     private boolean isRead = false;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
 }

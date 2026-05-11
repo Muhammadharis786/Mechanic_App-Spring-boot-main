@@ -5,6 +5,7 @@ import com.haris.MechanicApp.Model.Verification.User;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
@@ -44,7 +45,7 @@ public class Appointments {
     private BigDecimal amount = BigDecimal.ZERO;
 
     @Column(name = "created_at", updatable = false)
-    private String createdAt;
+    private Instant createdAt;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userid", nullable = false) // user table se link karega
     private User user;
