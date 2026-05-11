@@ -12,6 +12,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BookingNotificationDto {
+    private long notificationid;
     private String appointmentid ;
     private String serviceType;
     private BigDecimal latitude;

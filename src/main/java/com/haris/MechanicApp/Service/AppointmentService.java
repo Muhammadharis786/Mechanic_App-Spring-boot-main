@@ -161,6 +161,7 @@ public class AppointmentService {
                 dto.setMechshoplong(mechanic.getShoplongitude());
 
 
+
                 dto.setMechname(mechanic.getName());
                 dto.setMechexperience(mechanic.getExperienceyears());
                 dto.setMechimage(mechanic.getMechanicimgurl());
@@ -168,6 +169,7 @@ public class AppointmentService {
                 dto.setTotalreviews(mechanic.getTotalReviews());
                 dto.setMechrating(mechanic.getAverageRating());
                 dto.setAppointmentid(appointments.getAppointmentId());
+                dto.setNotificationid(notification.getId());
 
                 String destination = "/topic/bookappointment/nearbymechanics/" + mechanicId;
                 simpMessagingTemplate.convertAndSend(destination,dto);
@@ -307,6 +309,7 @@ public class AppointmentService {
             dto.setMechtype(mechanic.getMechanictype());
             dto.setTotalreviews(mechanic.getTotalReviews());
             dto.setMechrating(mechanic.getAverageRating());
+            dto.setNotificationid(notification.getId());
 
             long mechanicid = mechanic.getId();
             String destination = "/topic/bookappointment/nearbymechanics/" + mechanicid;
@@ -325,6 +328,7 @@ public class AppointmentService {
                List<MechanicNotification> allnotifications =  notificationRepository.findByMechanicIdOrderByCreatedAtDesc(mechanic.getId());
                for (MechanicNotification notification : allnotifications) {
                    BookingNotificationDto dto =  new BookingNotificationDto();
+                    dto.setNotificationid(notification.getId());
                     dto.setAddress(notification.getAppointments().getAddress());
                     dto.setLatitude(notification.getAppointments().getLatitude());
                     dto.setLongitude(notification.getAppointments().getLongitude());
@@ -345,5 +349,23 @@ public class AppointmentService {
                     return  ResponseEntity.ok( bookingNotificationDtos);
         }
         return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic not found");
+    }
+
+   public void isreadnotification(String userphonenumber, long notificationid) {
+        Optional<Mechanic> ismechanic = mechanicrepo.findByPhonenumber(userphonenumber);
+
+        if(ismechanic.isPresent()) {
+            Mechanic mechanic = ismechanic.get();
+            Optional<MechanicNotification> notification = notificationRepository.findByIdAndMechanic(notificationid,mechanic);
+            if(notification.isPresent()) {
+                MechanicNotification mechanicnotification = notification.get();
+                mechanicnotification.setRead(true);
+                notificationRepository.save(mechanicnotification);
+                System.out.println("may read hogya hn");
+
+            }
+
+        }
+
     }
 }
