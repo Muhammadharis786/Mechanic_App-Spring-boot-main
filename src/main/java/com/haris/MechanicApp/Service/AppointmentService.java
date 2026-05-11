@@ -342,6 +342,7 @@ public class AppointmentService {
                     dto.setMechshoplat(notification.getMechanic().getShoplatitude());
                     dto.setMechshoplong(notification.getMechanic().getShoplongitude());
                     dto.setCreated_at(notification.getCreatedAt());
+                    dto.setIsread(notification.isRead());
                     bookingNotificationDtos.add(dto);
 
                }
