@@ -65,4 +65,10 @@ public class AppointmentController {
         appointmentService.isreadnotification(userphonenumber , notificationid);
 
     }
+    @GetMapping("api/user/appointments/showuserappointments")
+    public ResponseEntity<?> showuserappointments(@AuthenticationPrincipal UserDetails userDetails){
+        String userphonenumber = userDetails.getUsername();
+       return appointmentService.showuserappointments(userphonenumber);
+
+    }
 }

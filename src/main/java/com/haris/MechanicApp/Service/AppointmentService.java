@@ -171,6 +171,7 @@ public class AppointmentService {
                 dto.setMechrating(mechanic.getAverageRating());
                 dto.setAppointmentid(appointments.getAppointmentId());
                 dto.setNotificationid(notification.getId());
+                dto.setVisitcharge(appointments.getVisitingCharge());
 
                 String destination = "/topic/bookappointment/nearbymechanics/" + mechanicId;
                 simpMessagingTemplate.convertAndSend(destination,dto);
@@ -311,6 +312,8 @@ public class AppointmentService {
             dto.setTotalreviews(mechanic.getTotalReviews());
             dto.setMechrating(mechanic.getAverageRating());
             dto.setNotificationid(notification.getId());
+            dto.setVisitcharge(appointments.getVisitingCharge());
+
 
             long mechanicid = mechanic.getId();
             String destination = "/topic/bookappointment/nearbymechanics/" + mechanicid;
@@ -344,6 +347,7 @@ public class AppointmentService {
                     dto.setMechshoplong(notification.getMechanic().getShoplongitude());
                     dto.setCreated_at(notification.getCreatedAt());
                     dto.setIsread(notification.isRead());
+                    dto.setVisitcharge(notification.getAppointments().getVisitingCharge());
                     bookingNotificationDtos.add(dto);
 
                }
@@ -370,4 +374,53 @@ public class AppointmentService {
         }
 
     }
-}
+
+    public ResponseEntity<?> showuserappointments(String userphonenumber) {
+        Optional<User> checkuser = userRepo.findByPhonenumber(userphonenumber);
+        if(checkuser.isPresent()) {
+            User user = checkuser.get();
+            List<Appointments> usersappointments = appointmentRepository.findByUser(user);
+            List<UserAppointmentDto>listofappointments =  new ArrayList<>();
+            if(usersappointments.isEmpty()) {
+                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Appointments ");
+            }
+            for(Appointments appointments : usersappointments) {
+                UserAppointmentDto dto = new UserAppointmentDto();
+
+                // 1. Common Details (Jo dono cases mein hongi)
+                dto.setAppointmentid(appointments.getAppointmentId());
+                dto.setStatus(appointments.getStatus());
+                dto.setAppointmentDate(appointments.getAppointmentDate());
+                dto.setAppointmentTime(appointments.getAppointmentTime());
+                dto.setProblemDescription(appointments.getProblemDescription());
+                dto.setLatitude(appointments.getLatitude());
+                dto.setLongitude(appointments.getLongitude());
+                dto.setServiceType(appointments.getServiceType());
+                dto.setVisitingcharges(appointments.getVisitingCharge()); // Visiting charge hamesha dikhayein
+
+                // 2. Mechanic Details (Sirf tab jab mechanic assigned ho)
+                if(appointments.getMechanic() != null) {
+                    dto.setMechanicid(appointments.getMechanic().getId());
+                    dto.setMechimage(appointments.getMechanic().getMechanicimgurl());
+                    dto.setMechname(appointments.getMechanic().getName());
+                    dto.setMechexperience(appointments.getMechanic().getExperienceyears());
+                    dto.setMechrating(appointments.getMechanic().getAverageRating());
+                    dto.setMechanicshopaddress(appointments.getMechanic().getShopaddress());
+                    dto.setMechshoplat(appointments.getMechanic().getShoplatitude());
+                    dto.setMechshoplong(appointments.getMechanic().getShoplongitude());
+                    dto.setMechnumber(appointments.getMechanic().getPhonenumber());
+                }
+
+                // 3. List mein sirf EK BAAR add karein
+                listofappointments.add(dto);
+            }
+
+
+            return  ResponseEntity.ok(listofappointments);
+            }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User nh mila");
+        }
+
+    }
+

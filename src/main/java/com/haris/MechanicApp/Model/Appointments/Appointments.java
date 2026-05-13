@@ -50,6 +50,12 @@ public class Appointments {
     @JoinColumn(name = "user_id", referencedColumnName = "userid", nullable = false) // user table se link karega
     private User user;
 
+    @Column(name = "repair_amount")
+    private   Integer  repairAmount=0;
+
+    @Column(name = "visiting_charge")
+    private Integer visitingCharge = 300 ;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mechanic_id", referencedColumnName = "id") // mechanic table se link karega (Nullable)
     private Mechanic mechanic;

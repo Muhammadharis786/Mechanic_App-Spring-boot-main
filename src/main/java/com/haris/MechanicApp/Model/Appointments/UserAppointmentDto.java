@@ -7,15 +7,15 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BookingNotificationDto {
-    private long notificationid;
+
+public class UserAppointmentDto {
+
     private String appointmentid ;
-    private long mechanicid;
     private String serviceType;
     private BigDecimal latitude;
     private BigDecimal longitude;
@@ -23,11 +23,12 @@ public class BookingNotificationDto {
     private String address;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
-    private String userimage;
-    private String username;
+    private Integer visitingcharges;
     private Instant created_at ;
 
-    private String userphonenumber;
+
+
+    private long mechanicid;
     private BigDecimal mechshoplat ;
     private BigDecimal mechshoplong;
     private String mechname ;
@@ -38,7 +39,5 @@ public class BookingNotificationDto {
     private String mechnumber;
     private int totalreviews ;
     private String mechanicshopaddress;
-    private boolean isread ;
     private AppointmentStatus status;
-    private int visitcharge ;
 }
