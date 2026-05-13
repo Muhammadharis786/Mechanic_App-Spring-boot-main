@@ -8,37 +8,28 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
-public class UserAppointmentDto {
-
+public class MechanicAppointmentDTO {
     private String appointmentid ;
     private String serviceType;
     private BigDecimal latitude;
     private BigDecimal longitude;
     private String problemDescription;
-    private String address;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private Integer visitingcharges;
     private Instant created_at ;
     private AppointmentStatus status;
 
+    private String useraddress;
+    private String userimage ;
+    private String username;
+    private String userphonenumber;
 
-
-    private long mechanicid;
-    private BigDecimal mechshoplat ;
+    private BigDecimal mechshoplat;
     private BigDecimal mechshoplong;
-    private String mechname ;
-    private String mechimage ;
-    private BigDecimal mechrating ;
-    private int mechexperience ;
-    private String mechtype;
-    private String mechnumber;
-    private float rating ;
-    private String mechanicshopaddress;
+
 
 }

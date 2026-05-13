@@ -71,4 +71,11 @@ public class AppointmentController {
        return appointmentService.showuserappointments(userphonenumber);
 
     }
+
+    @GetMapping("api/mechanic/appointments/showmechanicappointments")
+    public ResponseEntity<?> showmechanicappointments(@AuthenticationPrincipal UserDetails userDetails){
+        String userphonenumber = userDetails.getUsername();
+        return appointmentService.showmechanicappointments(userphonenumber);
+
+    }
 }

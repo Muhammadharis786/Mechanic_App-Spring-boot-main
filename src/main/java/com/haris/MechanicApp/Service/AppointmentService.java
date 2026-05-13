@@ -425,5 +425,44 @@ public class AppointmentService {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User nh mila");
         }
 
+    public ResponseEntity<?> showmechanicappointments(String mechphonenumber) {
+        Optional<Mechanic> checkmechanic = mechanicrepo.findByPhonenumber(mechphonenumber);
+        if(checkmechanic.isPresent()) {
+            Mechanic mechanic = checkmechanic.get();
+            List<Appointments> mechappointments = appointmentRepository.findByMechanic(mechanic);
+            if(mechappointments.isEmpty()) {
+                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Appointments ");
+            }
+            List<MechanicAppointmentDTO>listofappointments =  new ArrayList<>();
+            for(Appointments appointments : mechappointments) {
+                MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
+                dto.setAppointmentid(appointments.getAppointmentId());
+                //this is user address wo address hay jha per isko service chie
+
+                dto.setStatus(appointments.getStatus());
+                dto.setAppointmentDate(appointments.getAppointmentDate());
+                dto.setAppointmentTime(appointments.getAppointmentTime());
+                dto.setProblemDescription(appointments.getProblemDescription());
+                dto.setLatitude(appointments.getLatitude());
+                dto.setLongitude(appointments.getLongitude());
+                dto.setServiceType(appointments.getServiceType());
+                dto.setCreated_at(appointments.getCreatedAt());
+                dto.setVisitingcharges(appointments.getVisitingCharge());
+
+                dto.setUseraddress(appointments.getAddress());
+                dto.setUsername(appointments.getUser().getUsername());
+                dto.setUserimage(appointments.getUser().getUserimgurl());
+                dto.setMechshoplat(appointments.getMechanic().getShoplatitude());
+                dto.setMechshoplong(appointments.getMechanic().getShoplongitude());
+                dto.setUserphonenumber(appointments.getUser().getPhonenumber());
+                listofappointments.add(dto);
+
+            }
+            return  ResponseEntity.ok(listofappointments);
+
+
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic nh mila");
     }
+}
 

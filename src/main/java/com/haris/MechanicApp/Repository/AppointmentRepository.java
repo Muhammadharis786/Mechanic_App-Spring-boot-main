@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Repository;
 
 import com.haris.MechanicApp.Model.Appointments.Appointments;
+import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Verification.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,4 +20,5 @@ public interface AppointmentRepository  extends JpaRepository<Appointments , Lon
     @Query("UPDATE Appointments a SET a.status = 'EXPIRED' WHERE a.status = 'PENDING' AND a.createdAt < :cutoff")
     void expirePendingAppointments(Instant cutoff);
 
+    List<Appointments> findByMechanic(Mechanic mechanic);
 }
