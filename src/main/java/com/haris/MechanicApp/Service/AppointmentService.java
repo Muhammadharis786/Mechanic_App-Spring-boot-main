@@ -389,6 +389,8 @@ public class AppointmentService {
 
                 // 1. Common Details (Jo dono cases mein hongi)
                 dto.setAppointmentid(appointments.getAppointmentId());
+                //this is user address wo address hay jha per isko service chie
+                dto.setAddress(appointments.getAddress());
                 dto.setStatus(appointments.getStatus());
                 dto.setAppointmentDate(appointments.getAppointmentDate());
                 dto.setAppointmentTime(appointments.getAppointmentTime());
@@ -410,6 +412,7 @@ public class AppointmentService {
                     dto.setMechshoplong(appointments.getMechanic().getShoplongitude());
                     dto.setMechnumber(appointments.getMechanic().getPhonenumber());
                 }
+
 
                 // 3. List mein sirf EK BAAR add karein
                 listofappointments.add(dto);

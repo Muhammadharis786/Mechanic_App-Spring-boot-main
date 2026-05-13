@@ -37,7 +37,7 @@ public class UserAppointmentDto {
     private int mechexperience ;
     private String mechtype;
     private String mechnumber;
-    private int totalreviews ;
+    private float rating ;
     private String mechanicshopaddress;
     private AppointmentStatus status;
 }
