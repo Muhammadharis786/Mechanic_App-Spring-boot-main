@@ -75,6 +75,15 @@ public class AppointmentController {
         appointmentService.isreadnotification(userphonenumber , notificationid);
 
     }
+
+    @GetMapping("api/user/appointments/isread/{notificationid}")
+    public void isreaduser(
+            @PathVariable("notificationid") long notificationid,
+                       @AuthenticationPrincipal UserDetails userDetails){
+        String userphonenumber = userDetails.getUsername();
+        appointmentService.isreadnotificationuser(userphonenumber , notificationid);
+
+    }
     @GetMapping("api/user/appointments/showuserappointments")
     public ResponseEntity<?> showuserappointments(@AuthenticationPrincipal UserDetails userDetails){
         String userphonenumber = userDetails.getUsername();

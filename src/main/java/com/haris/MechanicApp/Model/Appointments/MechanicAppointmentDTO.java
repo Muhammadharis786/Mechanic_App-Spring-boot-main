@@ -21,7 +21,7 @@ public class MechanicAppointmentDTO {
     private LocalTime appointmentTime;
     private Integer visitingcharges;
     private Instant created_at ;
-    private AppointmentStatus status;
+    private RequestStatus status;
 
     private String useraddress;
     private String userimage ;

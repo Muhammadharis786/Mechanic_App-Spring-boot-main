@@ -4,6 +4,7 @@ import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Notification.Notification;
 import com.haris.MechanicApp.Model.Notification.NotificationType;
+import com.haris.MechanicApp.Model.Verification.User;
 import org.springframework.data.jpa.repository.*;
 
 import java.util.List;
@@ -28,4 +29,6 @@ public interface MechanicNotificationRepository extends JpaRepository<Notificati
     List<Notification> findByMechanic_IdAndTypeInOrderByCreatedAtDesc(Long id, List<NotificationType> notificationTypes);
 
     List<Notification> findByUser_UseridAndTypeInOrderByCreatedAtDesc(long userid, List<NotificationType> notificationTypes);
+
+    Optional<Notification> findByIdAndUser(long notificationid, User user);
 }

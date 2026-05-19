@@ -433,7 +433,24 @@ public class AppointmentService {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
+    public void isreadnotificationuser(String userphonenumber, long notificationid) {
+        Optional<User>  checkuser= userRepo.findByPhonenumber(userphonenumber);
 
+        if(checkuser.isPresent()) {
+            User user = checkuser.get();
+            Optional<Notification> notification = notificationRepository.findByIdAndUser(notificationid,user);
+            if(notification.isPresent()) {
+                Notification mechanicnotification = notification.get();
+                mechanicnotification.setRead(true);
+                notificationRepository.save(mechanicnotification);
+                System.out.println("may read hogya hn");
+
+            }
+
+
+        }
+
+    }
 
     public void isreadnotification(String userphonenumber, long notificationid) {
         Optional<Mechanic> ismechanic = mechanicrepo.findByPhonenumber(userphonenumber);
@@ -517,19 +534,20 @@ public class AppointmentService {
             }
             List<MechanicAppointmentDTO>listofappointments =  new ArrayList<>();
             for(AppointmentRequest appointments : mechappointments) {
+
                 MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
 
                 //this is user address wo address hay jha per isko service chie
                 dto.setAppointmentid(appointments.getAppointment().getAppointmentId());
-                dto.setStatus(appointments.getAppointment().getStatus());
+                dto.setStatus(appointments.getStatus());
                 dto.setAppointmentDate(appointments.getAppointment().getAppointmentDate());
                 dto.setAppointmentTime(appointments.getAppointment().getAppointmentTime());
                 dto.setProblemDescription(appointments.getAppointment().getProblemDescription());
                 dto.setLatitude(appointments.getAppointment().getLatitude());
                 dto.setLongitude(appointments.getAppointment().getLongitude());
                 dto.setServiceType(appointments.getAppointment().getServiceType());
-                dto.setCreated_at(appointments.getAppointment().getCreatedAt());
-                dto.setReason(appointments.getAppointment().getReason());
+                dto.setCreated_at(appointments.getCreatedAt());
+                dto.setReason(appointments.getReason());
                 dto.setVisitingcharges(appointments.getAppointment().getVisitingCharge());
 
                 dto.setUseraddress(appointments.getAppointment().getAddress());
