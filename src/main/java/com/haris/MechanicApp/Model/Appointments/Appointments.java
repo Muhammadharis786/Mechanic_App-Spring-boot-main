@@ -60,5 +60,9 @@ public class Appointments {
     @JoinColumn(name = "mechanic_id", referencedColumnName = "id") // mechanic table se link karega (Nullable)
     private Mechanic mechanic;
 
+    @Column(name = "reason")
+    private String reason;
+
+
 
 }

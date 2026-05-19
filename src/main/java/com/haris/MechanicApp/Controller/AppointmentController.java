@@ -2,6 +2,7 @@ package com.haris.MechanicApp.Controller;
 
 import com.haris.MechanicApp.Model.Appointments.AutoAppointmentDto;
 import com.haris.MechanicApp.Model.Appointments.ManualAppointmentDto;
+import com.haris.MechanicApp.Model.Appointments.ReasonDTO;
 import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,13 +52,22 @@ public class AppointmentController {
         return appointmentService.manualbookappointment (userphonenumber ,appointmentDto);
 
     }
-    @GetMapping ("api/mechanic/appointments/allnotifications")
+        @GetMapping ("api/mechanic/appointments/allnotifications")
     public ResponseEntity<?> allnotifications(
             @AuthenticationPrincipal UserDetails userDetails
     ){
         String userphonenumber = userDetails.getUsername();
         return appointmentService.mechanicallnotifications (userphonenumber);
     }
+    @GetMapping ("api/user/appointments/allnotifications")
+    public ResponseEntity<?> allnotificationsusers(
+            @AuthenticationPrincipal UserDetails userDetails
+    ){
+        String userphonenumber = userDetails.getUsername();
+        return appointmentService.userallnotifications (userphonenumber);
+    }
+
+
     @GetMapping("api/mechanic/appointments/isread/{notificationid}")
     public void isread(@PathVariable("notificationid") long notificationid,
                                     @AuthenticationPrincipal UserDetails userDetails){
@@ -78,4 +88,38 @@ public class AppointmentController {
         return appointmentService.showmechanicappointments(userphonenumber);
 
     }
+    @PostMapping ("api/mechanic/appointment/rejectappointment/{appointmentid}")
+    public ResponseEntity<?> rejectappointment(@AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable ("appointmentid") String appointmentid,
+                                           @RequestBody    ReasonDTO reasonDTO){
+        String mechanicphonenumber = userDetails.getUsername();
+        return appointmentService.rejectappointment(mechanicphonenumber ,appointmentid ,reasonDTO);
+    }
+
+    @PostMapping ("api/user/appointment/cancelappointment/{appointmentid}")
+    public ResponseEntity<?> cancelappointment(@AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable ("appointmentid") String appointmentid,
+                                               @RequestBody    ReasonDTO reasonDTO){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.cancelappointment(phonenumber ,appointmentid ,reasonDTO);
+    }
+
+    @GetMapping ("api/user/appointment/acceptappointment/{appointmentid}")
+    public ResponseEntity<?> acceptappointment(
+                                                @AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable ("appointmentid") String appointmentid
+                                             ){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.acceptappointment(phonenumber ,appointmentid );
+    }
+
+    @GetMapping ("api/mechanic/appointment/startappointment/{appointmentid}")
+    public ResponseEntity<?> startappointment(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable ("appointmentid") String appointmentid
+    ){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.startappointment(phonenumber ,appointmentid );
+    }
+
 }

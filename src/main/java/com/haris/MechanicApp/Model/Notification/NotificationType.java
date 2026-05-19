@@ -2,5 +2,30 @@ package com.haris.MechanicApp.Model.Notification;
 
 public enum NotificationType {
     ROAD_REQUEST,
-    APPOINTMENT_REQUEST
+    APPOINTMENT_REQUEST,
+    // Mechanic accepted appointment
+    APPOINTMENT_ACCEPTED,
+
+    // Mechanic rejected appointment
+    APPOINTMENT_REJECTED,
+
+    // User cancelled appointment
+    APPOINTMENT_CANCELLED,
+
+    // Mechanic completed work
+    APPOINTMENT_COMPLETED,
+
+    APPOINTMENT_EXPIRED,
+    APPOINTMENT_REMINDER,
+
+    MECHANIC_ON_THE_WAY,
+    // Payment related
+    PAYMENT_SUCCESS,
+    PAYMENT_FAILED,
+
+    // Review & Rating
+    REVIEW_RECEIVED,
+
+    // General notifications
+    GENERAL_NOTIFICATION
 }

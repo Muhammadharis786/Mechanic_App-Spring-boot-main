@@ -2,23 +2,26 @@ package com.haris.MechanicApp.Model.Notification;
 
 import com.haris.MechanicApp.Model.Appointments.AutoAppointmentDto;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
-@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class MechanicNotificationDto {
     private Long notificationId;
-    private Long mechanicId;
-    private Long appointmentId;
-    private String type;
-    private String title;
+    private String appointmentId;
+    private NotificationType type;
     private String message;
     private boolean isRead;
-    private LocalDateTime createdAt;
-    private AutoAppointmentDto  autoAppointmentDto;
-    private MechanicDTO mechanicDTO;
+    private Instant createdAt;
+
+
 
 }

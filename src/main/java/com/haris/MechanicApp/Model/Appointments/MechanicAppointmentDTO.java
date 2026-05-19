@@ -31,5 +31,7 @@ public class MechanicAppointmentDTO {
     private BigDecimal mechshoplat;
     private BigDecimal mechshoplong;
 
+    private String reason;
+
 
 }

@@ -10,8 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
-public interface AppointmentRepository  extends JpaRepository<Appointments , Long> {
+public interface AppointmentRepository  extends JpaRepository<Appointments , String> {
 
     List<Appointments> findByUser(User user);
 
@@ -21,4 +22,12 @@ public interface AppointmentRepository  extends JpaRepository<Appointments , Lon
     void expirePendingAppointments(Instant cutoff);
 
     List<Appointments> findByMechanic(Mechanic mechanic);
+
+
+
+    Optional<Appointments> findByAppointmentIdAndUser(String appointmentid, User user);
+
+    Optional<Appointments> findByAppointmentId(String appointmentid);
+
+    Optional<Appointments> findByMechanicAndAppointmentId(Mechanic mechanic, String appointmentid);
 }

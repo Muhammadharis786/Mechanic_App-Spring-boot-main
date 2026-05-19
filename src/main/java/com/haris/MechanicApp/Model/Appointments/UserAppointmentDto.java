@@ -41,4 +41,7 @@ public class UserAppointmentDto {
     private float rating ;
     private String mechanicshopaddress;
 
+
+    private String reason;
+
 }
