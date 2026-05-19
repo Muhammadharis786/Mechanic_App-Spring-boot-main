@@ -549,6 +549,7 @@ public class AppointmentService {
                 dto.setCreated_at(appointments.getCreatedAt());
                 dto.setReason(appointments.getReason());
                 dto.setVisitingcharges(appointments.getAppointment().getVisitingCharge());
+                dto.setRespondedat(appointments.getRespondedAt());
 
                 dto.setUseraddress(appointments.getAppointment().getAddress());
                 dto.setUsername(appointments.getAppointment().getUser().getUsername());
