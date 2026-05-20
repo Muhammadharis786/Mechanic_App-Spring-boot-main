@@ -27,7 +27,7 @@ public class UserAppointmentDto {
     private Instant created_at ;
     private AppointmentStatus status;
 
-
+    private Instant respondedat;
 
     private long mechanicid;
     private BigDecimal mechshoplat ;

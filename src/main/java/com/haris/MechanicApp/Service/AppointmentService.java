@@ -496,6 +496,7 @@ public class AppointmentService {
                 dto.setVisitingcharges(appointments.getVisitingCharge()); // Visiting charge hamesha dikhayein
                 dto.setReason(appointments.getReason());
 
+
                 // 2. Mechanic Details (Sirf tab jab mechanic assigned ho)
                 if(appointments.getMechanic() != null) {
                     dto.setMechanicid(appointments.getMechanic().getId());
@@ -507,6 +508,7 @@ public class AppointmentService {
                     dto.setMechshoplat(appointments.getMechanic().getShoplatitude());
                     dto.setMechshoplong(appointments.getMechanic().getShoplongitude());
                     dto.setMechnumber(appointments.getMechanic().getPhonenumber());
+
 
                     dto.setReason(appointments.getReason());
 
@@ -619,13 +621,16 @@ public class AppointmentService {
         List<AppointmentRequest> allRequests =
                 appointmentRequestRepository.findByAppointment(appointment);
 
+
         boolean anyAccepted = allRequests.stream()
                 .anyMatch(r -> r.getStatus() == RequestStatus.ACCEPTED);
-
-        // ⚠️ If already accepted by someone → stop
         if (anyAccepted) {
             return ResponseEntity.ok("Already accepted by another mechanic");
         }
+        // ⚠️ If already accepted by someone → stop
+
+
+
 
         boolean allRejected = allRequests.stream()
                 .allMatch(r -> r.getStatus() == RequestStatus.REJECTED);
