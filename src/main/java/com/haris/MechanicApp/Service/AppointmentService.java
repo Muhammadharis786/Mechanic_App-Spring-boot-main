@@ -48,6 +48,8 @@ public class AppointmentService {
     private RedisTemplate<String , String > redisTemplate;
     @Autowired
     private AppointmentRequestRepository appointmentRequestRepository ;
+    @Autowired
+    private FcmService fcmService;
 
 
     public String modernDate() {
@@ -190,6 +192,18 @@ public class AppointmentService {
                 String destination = "/topic/bookappointment/nearbymechanics/" + mechanicId;
                 simpMessagingTemplate.convertAndSend(destination,dto);
                 notidto.add(dto);
+            //THIS IS FOR FIREBASE FCM NOTIFCATION JO MOBILE KAY SYSTEM PER SHOW HOGA APPLICATION K BAHIR
+                Map<String, String> fcmData = new HashMap<>();
+                fcmData.put("type",NotificationType.APPOINTMENT_REQUEST.toString());
+                fcmData.put("appointmentId", appointments.getAppointmentId());
+                fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+                fcmService.sendToMechanic(
+                        mechanic,
+                        "New Booking",
+                        "You received a new appointment request",
+                        fcmData
+                );
 
             }
 
@@ -366,6 +380,17 @@ public class AppointmentService {
                 "/topic/bookappointment/nearbymechanics/" + mechanic.getId();
 
         simpMessagingTemplate.convertAndSend(destination, dto);
+        Map<String, String> fcmData = new HashMap<>();
+        fcmData.put("type", NotificationType.APPOINTMENT_REQUEST.toString());
+        fcmData.put("appointmentId", appointment.getAppointmentId());
+        fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+        fcmService.sendToMechanic(
+                mechanic,
+                "New Booking",
+                "You received a new appointment request",
+                fcmData
+        );
 
         return ResponseEntity.ok(appointment.getAppointmentId());
     }
@@ -667,6 +692,17 @@ public class AppointmentService {
                     "/topic/appointment/final-reject/" + appointment.getUser().getUserid(),
                     dto
             );
+            Map<String, String> fcmData = new HashMap<>();
+            fcmData.put("type", NotificationType.APPOINTMENT_REJECTED .toString());
+            fcmData.put("appointmentId", appointment.getAppointmentId());
+            fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+            fcmService.sendToUser(
+                    appointment.getUser(),
+                    "Appointment Rejected",
+                    "No mechanic accepted your request",
+                    fcmData
+            );
             System.out.println("Ab gya hay notifcation");
         }
 
@@ -794,6 +830,17 @@ public class AppointmentService {
             String destination = "/topic/appointment/cancelappointment/" + request.getMechanic().getId();
 
             simpMessagingTemplate.convertAndSend(destination, dto);
+            Map<String, String> fcmData = new HashMap<>();
+            fcmData.put("type", NotificationType.APPOINTMENT_CANCELLED.toString());
+            fcmData.put("appointmentId", appointment.getAppointmentId());
+            fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+            fcmService.sendToMechanic(
+                    request.getMechanic(),
+                    "Appointment Cancelled",
+                    reasonDTO.getReason(),
+                    fcmData
+            );
         }
 
         // =====================================
@@ -844,6 +891,38 @@ public class AppointmentService {
                             req.setAcceptedByMechanicId(mechanic.getId()); // optional tracking
                             appointmentRequestRepository.save(req);
 
+                            Notification notification = new Notification();
+                            notification.setType(NotificationType.APPOINTMENT_EXPIRED);
+                            notification.setAppointments(appointment);
+                            notification.setTitle("Appointment Expired");
+                            notification.setMessage("Appointment has been accepted by " + mechanic.getName());
+                            notification.setMechanic(req.getMechanic());
+                            notification.setUser(appointment.getUser());
+                            notification.setCreatedAt(Instant.now());
+                            notificationRepository.save(notification);
+
+
+                            AppointmentResponseDTO responseDTO = new AppointmentResponseDTO();
+                            responseDTO.setImage(req.getMechanic().getMechanicimgurl());
+                            responseDTO.setMessage("Appointment has been accepted by " + mechanic.getName());
+                            responseDTO.setTitle("Appointment Expired");
+                            responseDTO.setCreatedAt(Instant.now());
+                            String destination = "/topic/appointment/expired/" + mechanic.getId();
+                            simpMessagingTemplate.convertAndSend(destination , responseDTO);
+
+                            Map<String, String> fcmData = new HashMap<>();
+                            fcmData.put("type", NotificationType.APPOINTMENT_EXPIRED.toString());
+                            fcmData.put("appointmentId", req.getAppointment().getAppointmentId());
+                            fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+                            fcmService.sendToMechanic(
+                                    request.getMechanic(),
+                                    "Appointment Expired",
+                                    "Appointment has been accepted by " + mechanic.getName(),
+                                    fcmData
+                            );
+
+
                         }
                     }
 
@@ -866,6 +945,18 @@ public class AppointmentService {
                     long userid = appointment.getUser().getUserid();
                     String destination = "/topic/appointment/acceptappointment/" + userid;
                     simpMessagingTemplate.convertAndSend(destination , responseDTO);
+
+                    Map<String, String> fcmData = new HashMap<>();
+                    fcmData.put("type", NotificationType.APPOINTMENT_ACCEPTED.toString());
+                    fcmData.put("appointmentId", appointment.getAppointmentId());
+                    fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+                    fcmService.sendToUser(
+                            appointment.getUser(),
+                            "Appointment Accepted",
+                            "Appointment Accepted Successfully",
+                            fcmData
+                    );
                     return ResponseEntity.ok("Appointment Accepted Successfully");
 
                 }
@@ -931,6 +1022,17 @@ public class AppointmentService {
         dto.setCreatedAt(Instant.now());
 
         simpMessagingTemplate.convertAndSend("/topic/appointment/on-the-way/" + appointments.getUser().getUserid(), dto);
+        Map<String, String> fcmData = new HashMap<>();
+        fcmData.put("type",NotificationType.MECHANIC_ON_THE_WAY.toString());
+        fcmData.put("appointmentId", appointments.getAppointmentId());
+        fcmData.put("notificationId", String.valueOf(notification.getId()));
+
+        fcmService.sendToUser(
+                appointments.getUser(),
+                "Mechanic On The Way",
+                "Your mechanic is on the way to your location",
+                fcmData
+        );
   return ResponseEntity.ok("Appointment Started Successfully");
     }
 

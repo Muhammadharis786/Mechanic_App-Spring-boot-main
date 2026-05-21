@@ -46,6 +46,7 @@ public class AppointmentCleanupTask {
         // Instant.now() hamesha UTC time dega
         Instant cutoff = Instant.now().minus(1, ChronoUnit.DAYS);
         appointmentRepository.expirePendingAppointments(cutoff);
+        appointmentRequestRepository.expirePendingAppointments(cutoff);
     }
     @Transactional
 
