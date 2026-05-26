@@ -105,11 +105,14 @@ public class FcmService {
                                 .setNotification(AndroidNotification.builder()
                                         .setChannelId("onfix_high_importance")
                                         .setSound("default")
+                                        .setIcon("ic_launcher")
                                         .build())
                                 .build())
                         .build();
 
-                FirebaseMessaging.getInstance().send(message);
+
+                String response = FirebaseMessaging.getInstance().send(message);
+                System.out.println("FCM sent successfully: " + response);
             } catch (FirebaseMessagingException e) {
                 System.out.println("FCM send failed: " + e.getMessagingErrorCode() + " token=" + fcmToken.getToken());
 

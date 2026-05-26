@@ -3,7 +3,6 @@ package com.haris.MechanicApp.Service;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import com.haris.MechanicApp.Model.Mechanic.*;
 import com.haris.MechanicApp.Model.Verification.*;
 import com.haris.MechanicApp.Repository.MechanicRepository;
@@ -11,8 +10,6 @@ import com.haris.MechanicApp.Repository.OtpTokenMechanicRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,19 +19,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -339,4 +328,37 @@ public class MechanicService    {
 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please enter correct OTP!");
 
     }
+
+    public ResponseEntity<?> onlinestatus (String mechanicphonenumber, IsOnlineDto isOnlineDto){
+            Optional<Mechanic> ismechanic = mechanicRepository.findByPhonenumber(mechanicphonenumber);
+            if(ismechanic.isEmpty()){
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+
+            }
+             Mechanic mech =  ismechanic.get();
+            if(isOnlineDto.isIsonline()){
+                mech.setIsactive(true);
+                mechanicRepository.save(mech);
+
+                redisTemplate.opsForValue().set("mechanic:online:" + mech.getId(), "true");
+
+                redisTemplate.opsForHash().put(
+                        "mechanic:details:" + mech.getId(),
+                        "isOnline",
+                        "true"
+                );
+                return ResponseEntity.status(HttpStatus.OK).body("Mechanic Online Successfully");
+            }
+            mech.setIsactive(false);
+        mechanicRepository.save(mech);
+
+        redisTemplate.delete("mechanic:online:" +mech.getId());
+
+        redisTemplate.opsForHash().put(
+                "mechanic:details:" + mech.getId(),
+                "isOnline",
+                "false"
+        );
+        return ResponseEntity.status(HttpStatus.OK).body("Mechanic Offline Successfully");
+ }
 }

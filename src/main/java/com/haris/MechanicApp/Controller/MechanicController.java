@@ -111,7 +111,13 @@ public class MechanicController {
 
     }
 
+@PostMapping("api/mechanic/isactive")
+    public ResponseEntity<?> isactive ( @RequestBody IsOnlineDto isOnlineDto ,
+            @AuthenticationPrincipal UserDetails userDetails){
 
+        String phonenumber  = userDetails.getUsername();
+      return  mechanicService.onlinestatus(phonenumber , isOnlineDto);
+}
 
 
 

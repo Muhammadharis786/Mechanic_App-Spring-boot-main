@@ -32,18 +32,18 @@ public class RequestService {
     private Double userLatitude;
     private Double userLongitude;
     private String locationName;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String requestStatus = "PENDING";
+    private ServiceRequestStatus requestStatus = ServiceRequestStatus.PENDING;
     private String serviceType;
-
-    @Column(columnDefinition = "TEXT")
-    private String aiDiagnosticsNotes;
 
     @Column(columnDefinition = "TEXT")
     private String userNotes;
     // Pricing & ETA
     private String estimatedTimeOfArrival;
-    private Double estimatedPrice;
+    @Column(name = "inspection_price")
+    private Double inspectionPrice;
+
     private Double finalAmount;
     private String paymentStatus = "UNPAID";
     @Column(updatable = false)
