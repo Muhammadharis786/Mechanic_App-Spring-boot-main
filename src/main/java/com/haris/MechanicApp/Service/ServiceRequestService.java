@@ -179,7 +179,7 @@ public class ServiceRequestService {
                 request.getUserLongitude(),
                 destinationsparam.toString()
         );
-
+            List< MechanicRequestNotificationDto> dto =  new ArrayList<>();
         for (int i = 0; i < orderedMechanicIds.size(); i++) {
             Long mechanicId = orderedMechanicIds.get(i);
 
@@ -215,15 +215,12 @@ public class ServiceRequestService {
                     "/topic/mechanic/requests/" + mechanicId,
                     notificationDto
             );
-            return  ResponseEntity.status(HttpStatus.OK).body(notificationDto);
+            System.out.println("is id wly kay pass jaiga request :"+ mechanicId);
+            dto.add(notificationDto);
+
         }
-
-
-
-
-
-        return  ResponseEntity.status(HttpStatus.OK).body(nearbyMechanics);
-    }
+        return  ResponseEntity.status(HttpStatus.OK).body(dto);
+}
 
     public ResponseEntity<?> nearbyOnlineMechanics(String phonenumber  , LocationDTO location) {
 

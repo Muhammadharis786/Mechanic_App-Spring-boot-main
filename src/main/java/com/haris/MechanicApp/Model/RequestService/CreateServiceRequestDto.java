@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class CreateServiceRequestDto {
     private String serviceType;
     private String userNotes;
-    private String userphonenumber;
 
     private Double userLatitude;
     private Double userLongitude;
