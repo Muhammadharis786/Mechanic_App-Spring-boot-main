@@ -208,7 +208,9 @@ public class ServiceRequestService {
                             request.getLocationName(),
                             distanceKm,
                             eta,
-                            request.getRequestStatus()
+                            request.getRequestStatus(),
+                            request.getUser().getUsername() ,
+                            request.getUser().getUserimgurl()
                     );
 
             simpMessagingTemplate.convertAndSend(

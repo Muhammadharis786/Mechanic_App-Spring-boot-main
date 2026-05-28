@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -35,6 +36,16 @@ public class ServiceRequestController {
 
     {
         return serviceRequestService.nearbyOnlineMechanics( userDetails.getUsername() , dto);
+    }
+
+    @PostMapping("/api/service-request/accept/{requestId}")
+    public ResponseEntity<?> acceptRequest(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.acceptRequest(requestId, userDetails.getUsername());
     }
 
 }

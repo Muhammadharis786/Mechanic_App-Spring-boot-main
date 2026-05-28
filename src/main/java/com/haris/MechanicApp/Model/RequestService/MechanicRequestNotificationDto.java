@@ -18,13 +18,20 @@ public class MechanicRequestNotificationDto {
     private Double userLatitude;
     private Double userLongitude;
     private String locationName;
-
+    private String userimage ;
+    private String username;
     private Double distanceKm;
 
     private String requestStatus;
 
 
     public MechanicRequestNotificationDto(Long requestId, long userid, String serviceType, String userNotes, Double userLatitude, Double userLongitude, String locationName, Double distanceKm, String eta, ServiceRequestStatus requestStatus) {
+
+
+
+    }
+
+    public MechanicRequestNotificationDto(Long requestId, long userid, String serviceType, String userNotes, Double userLatitude, Double userLongitude, String locationName, Double distanceKm, String eta, ServiceRequestStatus requestStatus, String username, String userimgurl) {
 
         this.requestId = requestId;
         this.userId = userid;
@@ -36,6 +43,8 @@ public class MechanicRequestNotificationDto {
         this.distanceKm = distanceKm;
         this.eta = eta;
         this.requestStatus = requestStatus.name();
+        this.userimage = userimgurl;
+        this.username = username;
 
     }
 }
