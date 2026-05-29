@@ -434,7 +434,9 @@ public class ServiceRequestService {
                 mechanicPoint == null ? null : mechanicPoint.getY(),
                 mechanicPoint == null ? null : mechanicPoint.getX(),
                 distance,
-                eta
+                eta,
+                requestService.getUserLatitude(),
+                requestService.getUserLongitude()
         );
     }
 
@@ -488,5 +490,23 @@ public class ServiceRequestService {
         }
 
         return null;
+    }
+
+    public ResponseEntity<?> cancelservicerequest (Long requestid , String phonenumber){
+        Optional<User> checkuser = userRepository.findByPhonenumber(phonenumber);
+        Optional<RequestService> checkrequest = serviceRequestRepository.findById(requestid);
+        if (checkuser.isEmpty() || checkrequest.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User  or Request not found");
+        }
+            User user = checkuser.get();
+          RequestService service =  checkrequest.get();
+          if(service.getRequestStatus()==ServiceRequestStatus.ACCEPTED || service.getRequestStatus()==ServiceRequestStatus.PENDING)  {
+
+              service.setRequestStatus(ServiceRequestStatus.CANCELLED);
+              serviceRequestRepository.delete(service);
+
+
+          }
+        return  ResponseEntity.ok("Cancelled");
     }
 }
