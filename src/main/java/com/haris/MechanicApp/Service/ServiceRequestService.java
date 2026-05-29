@@ -398,7 +398,7 @@ public class ServiceRequestService {
                 acceptedMechanicDto
         );
         System.out.println(acceptedMechanicDto);
-        return ResponseEntity.ok("Request Accepted Successfully");
+        return ResponseEntity.ok(acceptedMechanicDto);
     }
 
     private AcceptedUserMechanicDto buildAcceptedMechanicDto(
