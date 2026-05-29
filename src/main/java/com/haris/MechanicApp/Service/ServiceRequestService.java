@@ -71,7 +71,7 @@ public class ServiceRequestService {
 
         RequestService savedRequest = serviceRequestRepository.save(request);
 
-       return ResponseEntity.ok(sendRequestToNearbyOnlineMechanics(savedRequest)) ;
+       return sendRequestToNearbyOnlineMechanics(savedRequest);
 
 //        return ResponseEntity.status(HttpStatus.CREATED).body(savedRequest);
     }
