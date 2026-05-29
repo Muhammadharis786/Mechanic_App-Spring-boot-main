@@ -22,11 +22,13 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
     """)
     int acceptRequest(Long requestId, Mechanic mechanic);
 
-    @Query("""
-        SELECT r FROM RequestService r
-        WHERE r.mechanic.id = :mechanicId
-        AND r.requestStatus IN ('ACCEPTED', 'MECHANIC_ON_WAY')
-    """)
+    @Query(value = """
+        SELECT * FROM service_requests r
+        WHERE r.mechanic_id = :mechanicId
+        AND r.request_status IN ('ACCEPTED', 'MECHANIC_ON_WAY')
+        ORDER BY r.request_id DESC
+        LIMIT 1
+    """, nativeQuery = true)
     Optional<RequestService> findActiveAcceptedRequestByMechanicId(
             @Param("mechanicId") Long mechanicId
     );
