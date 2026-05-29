@@ -1,8 +1,13 @@
 package com.haris.MechanicApp.Controller;
 
+import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.MechanicLiveLocationDto;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicLocationDto;
 import com.haris.MechanicApp.Model.Request.LiveLocationDto;
+import com.haris.MechanicApp.Model.RequestService.AcceptedMechanicLiveLocationDto;
+import com.haris.MechanicApp.Model.RequestService.RequestService;
+import com.haris.MechanicApp.Model.RoadInfo;
+import com.haris.MechanicApp.Repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,6 +16,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.List;
 import java.util.Set;
 
 @Controller
@@ -18,6 +24,9 @@ public class LiveLocationController {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Autowired
+    private ServiceRequestRepository serviceRequestRepository;
 
     /**
      * Flutter Client bhejega: /app/livelocation/{trackingId}
@@ -77,36 +86,222 @@ public class LiveLocationController {
 
         if (mapSessionIds == null || mapSessionIds.isEmpty()) {
             System.out.println("Mujhay session id nh mili");
-            return;
+        }
+        else {
+            for (String mapSessionId : mapSessionIds) {
+
+                Boolean isStillInSession = redisTemplate.opsForSet().isMember(
+                        "map-session:mechanics:" + mapSessionId,
+                        mechanicId
+                );
+
+                if (!Boolean.TRUE.equals(isStillInSession)) {
+                    continue;
+                }
+
+                NearbyMechanicLocationDto locationDto =
+                        new NearbyMechanicLocationDto(
+                                mapSessionId,
+                                dto.getMechanicId(),
+                                dto.getLatitude(),
+                                dto.getLongitude(),
+                                dto.getBearing(),
+                                dto.getSpeed()
+                        );
+
+                simpMessagingTemplate.convertAndSend(
+                        "/topic/nearby-mechanics/" + mapSessionId,
+                        locationDto
+                );
+                System.out.println(mapSessionId);
+
+            }
         }
 
-        for (String mapSessionId : mapSessionIds) {
+        sendAcceptedRequestLiveLocation(dto);
+    }
 
-            Boolean isStillInSession = redisTemplate.opsForSet().isMember(
-                    "map-session:mechanics:" + mapSessionId,
-                    mechanicId
-            );
+    private void sendAcceptedRequestLiveLocation(MechanicLiveLocationDto dto) {
+        serviceRequestRepository
+                .findActiveAcceptedRequestByMechanicId(dto.getMechanicId())
+                .ifPresent(request -> {
 
-            if (!Boolean.TRUE.equals(isStillInSession)) {
-                continue;
-            }
+                    AcceptedMechanicLiveLocationDto payload =
+                            buildAcceptedLiveLocationPayload(request, dto);
 
-            NearbyMechanicLocationDto locationDto =
-                    new NearbyMechanicLocationDto(
-                            mapSessionId,
-                            dto.getMechanicId(),
-                            dto.getLatitude(),
-                            dto.getLongitude(),
-                            dto.getBearing(),
-                            dto.getSpeed()
+                    simpMessagingTemplate.convertAndSend(
+                            "/topic/request/"
+                                    + request.getRequestId()
+                                    + "/live-location",
+                            payload
+                    );
+                });
+    }
+
+
+    private AcceptedMechanicLiveLocationDto buildAcceptedLiveLocationPayload(
+            RequestService request,
+            MechanicLiveLocationDto dto
+    ) {
+        String etaKey = "request:eta:" + request.getRequestId();
+
+        Double oldLat = getRedisDouble(etaKey, "lastLat");
+        Double oldLng = getRedisDouble(etaKey, "lastLng");
+        Long lastCalculatedAt = getRedisLong(etaKey, "lastCalculatedAt");
+
+        Double distance = getRedisDouble(etaKey, "distance");
+        String eta = getRedisString(etaKey, "eta");
+
+        boolean shouldRecalculate = shouldRecalculateEta(
+                oldLat,
+                oldLng,
+                lastCalculatedAt,
+                dto.getLatitude(),
+                dto.getLongitude()
+        );
+
+        if (shouldRecalculate) {
+            String destination = dto.getLatitude() + "," + dto.getLongitude();
+
+            List<RoadInfo> roadInfos =
+                    new GoogleDistance().getBatchRoadDistances(
+                            request.getUserLatitude(),
+                            request.getUserLongitude(),
+                            destination
                     );
 
-            simpMessagingTemplate.convertAndSend(
-                    "/topic/nearby-mechanics/" + mapSessionId,
-                    locationDto
-            );
-            System.out.println(mapSessionId);
+            if (!roadInfos.isEmpty() && roadInfos.get(0).getDistance() >= 0) {
+                distance = roadInfos.get(0).getDistance();
+                eta = roadInfos.get(0).getDistancetime();
 
+                redisTemplate.opsForHash().put(
+                        etaKey,
+                        "lastLat",
+                        dto.getLatitude().toString()
+                );
+
+                redisTemplate.opsForHash().put(
+                        etaKey,
+                        "lastLng",
+                        dto.getLongitude().toString()
+                );
+
+                redisTemplate.opsForHash().put(
+                        etaKey,
+                        "lastCalculatedAt",
+                        String.valueOf(System.currentTimeMillis())
+                );
+
+                redisTemplate.opsForHash().put(
+                        etaKey,
+                        "distance",
+                        distance.toString()
+                );
+
+                redisTemplate.opsForHash().put(
+                        etaKey,
+                        "eta",
+                        eta
+                );
+            }
+        }
+
+        return new AcceptedMechanicLiveLocationDto(
+                request.getRequestId(),
+                dto.getMechanicId(),
+                dto.getLatitude(),
+                dto.getLongitude(),
+                dto.getBearing(),
+                dto.getSpeed(),
+                distance,
+                eta
+        );
+    }
+
+    private boolean shouldRecalculateEta(
+            Double oldLat,
+            Double oldLng,
+            Long lastCalculatedAt,
+            Double newLat,
+            Double newLng
+    ) {
+        if (oldLat == null || oldLng == null || lastCalculatedAt == null) {
+            return true;
+        }
+
+        long now = System.currentTimeMillis();
+
+        boolean twentySecondsPassed =
+                now - lastCalculatedAt >= 20_000;
+
+        double movedMeters = calculateHaversineMeters(
+                oldLat,
+                oldLng,
+                newLat,
+                newLng
+        );
+
+        boolean movedHundredMeters =
+                movedMeters >= 100;
+
+        return twentySecondsPassed || movedHundredMeters;
+    }
+
+    private double calculateHaversineMeters(
+            double lat1,
+            double lon1,
+            double lat2,
+            double lon2
+    ) {
+        final int earthRadiusMeters = 6371000;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                        + Math.cos(Math.toRadians(lat1))
+                        * Math.cos(Math.toRadians(lat2))
+                        * Math.sin(dLon / 2)
+                        * Math.sin(dLon / 2);
+
+        double c =
+                2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return earthRadiusMeters * c;
+    }
+
+    private Double getRedisDouble(String key, String field) {
+        Object value = redisTemplate.opsForHash().get(key, field);
+
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (Exception e) {
+            return null;
         }
     }
+
+    private Long getRedisLong(String key, String field) {
+        Object value = redisTemplate.opsForHash().get(key, field);
+
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(value.toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getRedisString(String key, String field) {
+        Object value = redisTemplate.opsForHash().get(key, field);
+        return value == null ? null : value.toString();
+    }
+
 }

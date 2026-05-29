@@ -6,6 +6,7 @@ import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicDTO;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicMapResponseDto;
+import com.haris.MechanicApp.Model.RequestService.AcceptedMechanicDto;
 import com.haris.MechanicApp.Model.RequestService.CreateServiceRequestDto;
 import com.haris.MechanicApp.Model.RequestService.MechanicRequestNotificationDto;
 import com.haris.MechanicApp.Model.RequestService.RequestService;
@@ -363,14 +364,18 @@ public class ServiceRequestService {
     }
     @Transactional
     public ResponseEntity<?> acceptRequest(Long requestId, String mechanicPhoneNumber) {
+        Optional<RequestService> checkrequestservice = serviceRequestRepository.findById(requestId);
 
         Optional<Mechanic> mechanicOptional = mechanicRepository.findByPhonenumber(mechanicPhoneNumber);
-
+        if (checkrequestservice.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Request Not Found");
+        }
         if (mechanicOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
         }
 
         Mechanic mechanic = mechanicOptional.get();
+        RequestService requestService = checkrequestservice.get();
 
         if (mechanic.isIsengaged()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic Already Engaged");
@@ -385,11 +390,101 @@ public class ServiceRequestService {
         mechanic.setIsengaged(true);
         mechanicRepository.save(mechanic);
 
+        AcceptedMechanicDto acceptedMechanicDto = buildAcceptedMechanicDto(
+                mechanic,
+                requestService
+        );
+// jab mechanic accept kraiga tu user ko mechanic ka data show hojaiga with distance and eta
         simpMessagingTemplate.convertAndSend(
                 "/topic/request/" + requestId,
-                mechanic
+                acceptedMechanicDto
+        );
+        System.out.println(acceptedMechanicDto);
+        return ResponseEntity.ok("Request Accepted Successfully");
+    }
+
+    private AcceptedMechanicDto buildAcceptedMechanicDto(
+            Mechanic mechanic,
+            RequestService requestService
+    ) {
+        RoadInfo roadInfo = getAcceptedMechanicRoadInfo(mechanic, requestService);
+
+        Double distance = null;
+        String eta = null;
+        if (roadInfo != null && roadInfo.getDistance() >= 0) {
+            distance = roadInfo.getDistance();
+            eta = roadInfo.getDistancetime();
+        }
+
+        Point mechanicPoint = getMechanicCurrentPoint(mechanic);
+
+        return new AcceptedMechanicDto(
+                requestService.getRequestId(),
+                mechanic.getId(),
+                mechanic.getName(),
+                mechanic.getPhonenumber(),
+                mechanic.getMechanicimgurl(),
+                mechanic.getAverageRating(),
+                mechanic.getTotalReviews(),
+                mechanic.getShopaddress(),
+                mechanic.getMechanictype(),
+                mechanic.getExperienceyears(),
+                mechanicPoint == null ? null : mechanicPoint.getY(),
+                mechanicPoint == null ? null : mechanicPoint.getX(),
+                distance,
+                eta
+        );
+    }
+
+    private RoadInfo getAcceptedMechanicRoadInfo(
+            Mechanic mechanic,
+            RequestService requestService
+    ) {
+        Point mechanicPoint = getMechanicCurrentPoint(mechanic);
+        if (mechanicPoint == null) {
+            return null;
+        }
+
+        String destinationsParam =
+                mechanicPoint.getY() + "," + mechanicPoint.getX();
+
+        List<RoadInfo> roadDistances = new GoogleDistance().getBatchRoadDistances(
+                requestService.getUserLatitude(),
+                requestService.getUserLongitude(),
+                destinationsParam
         );
 
-        return ResponseEntity.ok("Request Accepted Successfully");
+        if (roadDistances.isEmpty()) {
+            return null;
+        }
+        return roadDistances.get(0);
+    }
+
+    private Point getMechanicCurrentPoint(Mechanic mechanic) {
+        List<Point> redisPositions = redisTemplate.opsForGeo()
+                .position("mechanic", mechanic.getId().toString());
+
+        if (redisPositions != null &&
+                !redisPositions.isEmpty() &&
+                redisPositions.get(0) != null) {
+            return redisPositions.get(0);
+        }
+
+        if (mechanic.getLatitude() != null && mechanic.getLongitude() != null) {
+            return new Point(
+                    mechanic.getLongitude().doubleValue(),
+                    mechanic.getLatitude().doubleValue()
+            );
+        }
+
+        if (mechanic.getShoplatitude() != null &&
+                mechanic.getShoplongitude() != null) {
+            return new Point(
+                    mechanic.getShoplongitude().doubleValue(),
+                    mechanic.getShoplatitude().doubleValue()
+            );
+        }
+
+        return null;
     }
 }
