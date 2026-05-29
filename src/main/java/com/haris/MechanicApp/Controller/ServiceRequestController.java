@@ -48,4 +48,14 @@ public class ServiceRequestController {
         return serviceRequestService.acceptRequest(requestId, userDetails.getUsername());
     }
 
+    @PostMapping("/api/service-request/cancel/{requestId}")
+    public ResponseEntity<?> cancelRequest(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.cancelRequest(requestId, userDetails.getUsername());
+    }
+
 }

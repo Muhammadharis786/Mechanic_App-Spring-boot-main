@@ -139,6 +139,18 @@ public class ServiceRequestService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic not available");
 
         }
+
+        String redisKey = "request:mechanics:" + request.getRequestId();
+
+        for (Long mechanicId : validMechanicIds) {
+            redisTemplate.opsForSet().add(
+                    redisKey,
+                    mechanicId.toString()
+            );
+            System.out.println("acha ye"+  mechanicId + " id redis may jarhi hay is key per request:mechanics:" + request.getRequestId());
+        }
+
+
         StringBuilder destinationsparam = new StringBuilder();
         List<Long> orderedMechanicIds = new ArrayList<>();
 
@@ -293,6 +305,7 @@ public class ServiceRequestService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic not available");
 
         }
+
 
 
         //may yha loop chala rha hn jokay mechanicpoints means ye wo mechanic hay
@@ -492,21 +505,62 @@ public class ServiceRequestService {
         return null;
     }
 
-    public ResponseEntity<?> cancelservicerequest (Long requestid , String phonenumber){
-        Optional<User> checkuser = userRepository.findByPhonenumber(phonenumber);
-        Optional<RequestService> checkrequest = serviceRequestRepository.findById(requestid);
-        if (checkuser.isEmpty() || checkrequest.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User  or Request not found");
+    @Transactional
+    public ResponseEntity<?> cancelRequest(Long requestId, String userPhoneNumber) {
+        Optional<RequestService> requestOpt = serviceRequestRepository.findById(requestId);
+        if (requestOpt.isEmpty()) return ResponseEntity.badRequest().body("Not Found");
+
+        RequestService request = requestOpt.get();
+
+        // Status update
+        request.setRequestStatus(ServiceRequestStatus.CANCELLED);
+
+        Map<String, Object> cancelPayload = new HashMap<>();
+        cancelPayload.put("requestId", request.getRequestId());
+        cancelPayload.put("type", "ROAD_REQUEST_CANCELLED");
+        cancelPayload.put("message", "The user has cancelled the request.");
+
+        if (request.getMechanic() == null) {
+            System.out.println("Mechanic is null");
+            // SCENARIO 1: BEFORE ACCEPT
+            // Yahan par aap un mechanics ki list nikalenge jinhe message bheja tha
+            // aur un sab ko loop chala kar cancel message bhej denge.
+                List<String> ids = new ArrayList<>();
+            Set<String> nearbyMechanicsList =
+                    redisTemplate.opsForSet().members(
+                            "request:mechanics:" + requestId
+                    );
+            if (nearbyMechanicsList != null) {
+
+                for (String mechanicId : nearbyMechanicsList) {
+                    ids.add(mechanicId);
+                    simpMessagingTemplate.convertAndSend(
+                            "/topic/mechanic/requests/" + mechanicId,
+                            (Object) cancelPayload
+                    );
+
+                }
+                redisTemplate.delete(
+                        "request:mechanics:" + requestId
+                );
+            }
+
         }
-            User user = checkuser.get();
-          RequestService service =  checkrequest.get();
-          if(service.getRequestStatus()==ServiceRequestStatus.ACCEPTED || service.getRequestStatus()==ServiceRequestStatus.PENDING)  {
+        else {
+            // SCENARIO 2: AFTER ACCEPT
+            Mechanic assignedMechanic = request.getMechanic();
+            assignedMechanic.setIsengaged(false); // Mechanic ko free kar diya
+            mechanicRepository.save(assignedMechanic);
 
-              service.setRequestStatus(ServiceRequestStatus.CANCELLED);
-              serviceRequestRepository.delete(service);
+            // Sirf is ek mechanic ko message bhejain jo tracking map par hai
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/request/" + request.getRequestId(),
+                    (Object)  cancelPayload
+            );
+        }
 
-
-          }
-        return  ResponseEntity.ok("Cancelled");
+        serviceRequestRepository.save(request);
+        return ResponseEntity.ok("Request Cancelled");
     }
+
 }
