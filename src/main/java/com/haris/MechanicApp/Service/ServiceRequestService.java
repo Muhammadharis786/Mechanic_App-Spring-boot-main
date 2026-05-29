@@ -1,12 +1,11 @@
 package com.haris.MechanicApp.Service;
 
 import com.haris.MechanicApp.Model.GoogleDistance;
-import com.haris.MechanicApp.Model.Location.Location;
 import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicDTO;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicMapResponseDto;
-import com.haris.MechanicApp.Model.RequestService.AcceptedMechanicDto;
+import com.haris.MechanicApp.Model.RequestService.AcceptedUserMechanicDto;
 import com.haris.MechanicApp.Model.RequestService.CreateServiceRequestDto;
 import com.haris.MechanicApp.Model.RequestService.MechanicRequestNotificationDto;
 import com.haris.MechanicApp.Model.RequestService.RequestService;
@@ -16,7 +15,6 @@ import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.ServiceRequestRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
-import io.opentelemetry.api.common.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
@@ -390,11 +388,11 @@ public class ServiceRequestService {
         mechanic.setIsengaged(true);
         mechanicRepository.save(mechanic);
 
-        AcceptedMechanicDto acceptedMechanicDto = buildAcceptedMechanicDto(
+        AcceptedUserMechanicDto acceptedMechanicDto = buildAcceptedMechanicDto(
                 mechanic,
                 requestService
         );
-// jab mechanic accept kraiga tu user ko mechanic ka data show hojaiga with distance and eta
+// jab mechanic accept kraiga tu user ko mechanic ka data show hojaiga with distance and eta and vice verse
         simpMessagingTemplate.convertAndSend(
                 "/topic/request/" + requestId,
                 acceptedMechanicDto
@@ -403,7 +401,7 @@ public class ServiceRequestService {
         return ResponseEntity.ok("Request Accepted Successfully");
     }
 
-    private AcceptedMechanicDto buildAcceptedMechanicDto(
+    private AcceptedUserMechanicDto buildAcceptedMechanicDto(
             Mechanic mechanic,
             RequestService requestService
     ) {
@@ -418,9 +416,13 @@ public class ServiceRequestService {
 
         Point mechanicPoint = getMechanicCurrentPoint(mechanic);
 
-        return new AcceptedMechanicDto(
+        return new AcceptedUserMechanicDto(
                 requestService.getRequestId(),
                 mechanic.getId(),
+                requestService.getUser().getUserid() ,
+                requestService.getUser().getUsername(),
+                requestService.getUser().getUserimgurl() ,
+                requestService.getLocationName() ,
                 mechanic.getName(),
                 mechanic.getPhonenumber(),
                 mechanic.getMechanicimgurl(),
