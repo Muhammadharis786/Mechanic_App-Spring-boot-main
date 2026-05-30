@@ -505,6 +505,37 @@ public class ServiceRequestService {
         return null;
     }
 
+    public ResponseEntity<?> getRequestTracking(Long requestId, String userPhoneNumber) {
+        Optional<RequestService> requestOpt = serviceRequestRepository.findById(requestId);
+        if (requestOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
+        }
+
+        RequestService request = requestOpt.get();
+        if (!request.getUser().getPhonenumber().equals(userPhoneNumber)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not allowed");
+        }
+
+        if (request.getMechanic() != null) {
+            AcceptedUserMechanicDto dto = buildAcceptedMechanicDto(
+                    request.getMechanic(),
+                    request
+            );
+            dto.setRequestStatus(request.getRequestStatus().name());
+            return ResponseEntity.ok(dto);
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("requestId", request.getRequestId());
+        payload.put("requestStatus", request.getRequestStatus().name());
+        payload.put("serviceType", request.getServiceType());
+        payload.put("userNotes", request.getUserNotes());
+        payload.put("userLatitude", request.getUserLatitude());
+        payload.put("userLongitude", request.getUserLongitude());
+        payload.put("locationName", request.getLocationName());
+        return ResponseEntity.ok(payload);
+    }
+
     @Transactional
     public ResponseEntity<?> cancelRequest(Long requestId, String userPhoneNumber) {
         Optional<RequestService> requestOpt = serviceRequestRepository.findById(requestId);

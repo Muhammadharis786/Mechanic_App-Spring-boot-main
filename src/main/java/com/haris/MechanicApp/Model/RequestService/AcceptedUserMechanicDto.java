@@ -28,6 +28,7 @@ public class AcceptedUserMechanicDto {
     private String userlocationname;
     private Long userid;
     private String eta;
+    private String requestStatus;
     // User location coordinates - needed for mechanic-side map
     private Double userLatitude;
     private Double userLongitude;
