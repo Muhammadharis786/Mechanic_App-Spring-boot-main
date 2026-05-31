@@ -49,6 +49,11 @@ public class RequestService {
     @Column(updatable = false)
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
+
+
+    @Column(nullable = false , name = "is_fixed_charge_accepted")
+    private Boolean isFixedChargeAccepted = false;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

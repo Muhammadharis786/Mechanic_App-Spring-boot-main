@@ -65,6 +65,7 @@ public class ServiceRequestService {
         request.setLocationName(dto.getLocationName());
         request.setServiceType(dto.getServiceType());
         request.setUserNotes(dto.getUserNotes());
+        request.setIsFixedChargeAccepted(dto.isIsfixedchargeaccepted());
         request.setRequestStatus(ServiceRequestStatus.PENDING);
         request.setPaymentStatus("UNPAID");
 

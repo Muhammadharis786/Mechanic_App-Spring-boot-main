@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class CreateServiceRequestDto {
     private String serviceType;
     private String userNotes;
-
+    private boolean isfixedchargeaccepted ;
     private Double userLatitude;
     private Double userLongitude;
 
