@@ -179,6 +179,8 @@ public class LiveLocationController {
                         "lastLat",
                         dto.getLatitude().toString()
                 );
+                System.out.println("this is mechanic latitude: "+dto.getLatitude() +" and this is longitude "+ dto.getLongitude());
+
 
                 redisTemplate.opsForHash().put(
                         etaKey,
@@ -247,7 +249,7 @@ public class LiveLocationController {
         return twentySecondsPassed || movedHundredMeters;
     }
 
-    private double calculateHaversineMeters(
+    public double calculateHaversineMeters(
             double lat1,
             double lon1,
             double lat2,

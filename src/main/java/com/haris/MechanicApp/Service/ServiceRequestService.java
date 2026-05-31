@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Service;
 
+import com.haris.MechanicApp.Controller.LiveLocationController;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
@@ -391,7 +392,22 @@ public class ServiceRequestService {
         if (mechanic.isIsengaged()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic Already Engaged");
         }
+//iskay ander nearby mechanics hain
+        Set<String> nearbyMechanicsList =
+                redisTemplate.opsForSet().members(
+                        "request:mechanics:" + requestId
+                );
+        boolean flag = true ;
+        for(String id : nearbyMechanicsList){
+            System.out.println("This is my id: " + id);
+            if(id.equals(mechanic.getId().toString())){
+                flag = false ;
 
+            }
+        }
+        if(flag){
+            return  ResponseEntity.status(HttpStatus.CONFLICT).body("This is not your request "+ requestId);
+        }
         int updatedRows = serviceRequestRepository.acceptRequest(requestId, mechanic);
 
         if (updatedRows == 0) {
@@ -410,7 +426,32 @@ public class ServiceRequestService {
                 "/topic/request/" + requestId,
                 acceptedMechanicDto
         );
-        System.out.println(acceptedMechanicDto);
+
+        List<String > ids =  new ArrayList<>();
+
+        Map<String, Object> expirePayload = new HashMap<>();
+        expirePayload.put("requestId", requestId);
+        expirePayload.put("type", "ROAD_REQUEST_EXPIRED");
+        expirePayload.put("message", "The request accepted by another mechanic "+ mechanic.getName());
+
+        //check krnga phly ids null tu nh hay
+        if (nearbyMechanicsList != null) {
+       // phir may nearby mechanics ki ek ek kray k list nikalnga
+            for (String mechanicId : nearbyMechanicsList) {
+
+                if (!mechanicId.equals(mechanic.getId().toString())){
+                    simpMessagingTemplate.convertAndSend(
+                            "/topic/mechanic/requests/" + mechanicId,
+                            (Object) expirePayload
+                    );
+                    ids.add(mechanicId);
+                }
+              }
+
+        }
+        System.out.println("ye hay mechanic jab request accept hogi tu inki pass say page gayab "+ ids);
+
+
         return ResponseEntity.ok(acceptedMechanicDto);
     }
 
@@ -594,4 +635,70 @@ public class ServiceRequestService {
         return ResponseEntity.ok("Request Cancelled");
     }
 
+    public ResponseEntity<?> checkarrived(Long requestId, String phonenumber) {
+
+        Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
+        if(checkmechanic.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+        Mechanic mechanic = checkmechanic.get();
+        Optional<RequestService> requestOpt = serviceRequestRepository.findByRequestIdAndMechanic(requestId , mechanic);
+        if(requestOpt.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request with this mechanic" +mechanic.getId()+"Not Found");
+        }
+        RequestService request = requestOpt.get();
+
+        double  userlatitude =  request.getUserLatitude();
+        double  userlongitude = request.getUserLongitude() ;
+
+        String etaKey = "request:eta:" + request.getRequestId();
+
+        Object mechaniclatitude = redisTemplate.opsForHash().get(
+                etaKey,
+                "lastLat"
+
+        );
+
+        Object mechaniclongitude = redisTemplate.opsForHash().get(
+                etaKey,
+                "lastLng"
+
+        );
+
+        if(mechaniclatitude == null || mechaniclongitude == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Mechanic live location not available");
+        }
+        String mechaniclat = mechaniclatitude.toString();
+        String mechaniclong = mechaniclongitude.toString();
+
+        double mechLat = Double.parseDouble(mechaniclat);
+        double mechLng = Double.parseDouble(mechaniclong);
+        LiveLocationController locationController = new LiveLocationController();
+
+        double distance = locationController.calculateHaversineMeters(
+                userlatitude,
+                userlongitude,
+                mechLat,
+                mechLng
+        );
+
+        System.out.println("Distance between user and mechanic: " + distance);
+        //ager distance 80m say kam hay tu wo phnch gya hay mechanic user kay pass
+        if(distance <= 80) {   // threshold
+            request.setRequestStatus(ServiceRequestStatus.ARRIVED);
+            serviceRequestRepository.save(request);
+
+            return ResponseEntity.ok("ARRIVED");
+        }
+
+
+
+        System.out.println("this is user latitude: "+ userlatitude +" and this is longitude "+ userlongitude);
+        System.out.println("this is user latitude: "+ mechaniclatitude +" and this is longitude "+ mechaniclongitude);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("NOT ARRIVED - mechanic is " + (int)distance + " meters away");
+
+    }
 }

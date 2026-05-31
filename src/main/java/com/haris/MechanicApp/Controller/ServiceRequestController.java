@@ -69,4 +69,14 @@ public class ServiceRequestController {
         return serviceRequestService.getRequestTracking(requestId, userDetails.getUsername());
     }
 
+    @GetMapping("/api/service-request/isarrived/{requestId}")
+    public ResponseEntity<?> checkarrived(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.checkarrived(requestId, userDetails.getUsername());
+    }
+
 }

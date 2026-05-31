@@ -32,4 +32,8 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
     Optional<RequestService> findActiveAcceptedRequestByMechanicId(
             @Param("mechanicId") Long mechanicId
     );
+
+
+
+    Optional<RequestService> findByRequestIdAndMechanic(Long requestId, Mechanic mechanic);
 }
