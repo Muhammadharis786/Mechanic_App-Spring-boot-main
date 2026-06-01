@@ -94,7 +94,7 @@ public class ServiceRequestController {
         return  serviceRequestService.approvepaymentrequest (dto  , userDetails.getUsername());
     }
 
-    @GetMapping("api/service-request/approve-payment-request/{requesId}")
+    @GetMapping("api/service-request/work-completed/{requestId}")
 
     public ResponseEntity<?> workcomplete ( @PathVariable Long requestId,
                                             @AuthenticationPrincipal UserDetails userDetails){
