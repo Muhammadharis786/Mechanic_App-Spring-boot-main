@@ -80,11 +80,19 @@ public class ServiceRequestController {
         return serviceRequestService.checkarrived(requestId, userDetails.getUsername());
     }
 
-    @PostMapping("/api/serice-request/send-final-price")
+    @PostMapping("/api/service-request/send-final-price")
     public ResponseEntity <?>  sendFinalPrice(@RequestBody SendPriceDto dto ,
                                               @AuthenticationPrincipal UserDetails userDetails
     ){
         return  serviceRequestService.sendfinalprice(dto , userDetails.getUsername()) ;
     }
+
+    @PostMapping ("api/service-request/approve-payment-request")
+    public  ResponseEntity<?> approvepaymentrequest (@RequestBody SendPriceDto dto ,
+                                                     @AuthenticationPrincipal UserDetails userDetails ){
+
+        return  serviceRequestService.approvepaymentrequest (dto  , userDetails.getUsername());
+    }
+
 
 }

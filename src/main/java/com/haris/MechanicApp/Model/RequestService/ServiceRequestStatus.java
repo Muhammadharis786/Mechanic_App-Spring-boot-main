@@ -10,5 +10,6 @@ public enum ServiceRequestStatus {
     IN_PROGRESS,
     COMPLETED,
     CANCELLED,
-    WAITING_USER_APPROVAL
+    WAITING_USER_APPROVAL,
+    WORK_STARTED
 }

@@ -718,7 +718,7 @@ public class ServiceRequestService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Arrived");
         }
 
-        request.setInspectionPrice(dto.getFinalPrice());
+
         request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
 
         serviceRequestRepository.save(request);
@@ -736,6 +736,49 @@ public class ServiceRequestService {
 
 
         return ResponseEntity.ok("Final price sent to "+ request.getUser().getUsername());
+
+
+    }
+
+    public ResponseEntity<?> approvepaymentrequest(SendPriceDto dto, String userphonenumber) {
+        Optional<User> checkuser = userRepository.findByPhonenumber(userphonenumber);
+        if(checkuser.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
+        }
+        User user =  checkuser.get();
+        Optional<RequestService> checkrequest = serviceRequestRepository.findByRequestIdAndUser(dto.getRequestId()
+        , user);
+        if(checkrequest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
+        }
+
+        RequestService requestService = checkrequest.get();
+        if(requestService.getRequestStatus().equals(ServiceRequestStatus.WAITING_USER_APPROVAL)){
+          return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Approved");
+        }
+
+        requestService.setRequestStatus(ServiceRequestStatus.WORK_STARTED);
+        requestService.setInspectionPrice(dto.getFinalPrice());
+        serviceRequestRepository.save(requestService);
+
+        Map<String, Object> approvePayload = new HashMap<>();
+
+        approvePayload.put("requestId", requestService.getRequestId());
+        approvePayload.put("type", "USER_APPROVED");
+        approvePayload.put("status", "WORK_STARTED");
+
+        approvePayload.put("finalPrice", requestService.getInspectionPrice());
+
+        approvePayload.put("message", "User approved the final price. Start work now.");
+
+        approvePayload.put("userId", requestService.getUser().getUserid());
+        approvePayload.put("mechanicId", requestService.getMechanic().getId());
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/request/" + requestService.getRequestId(),
+                (Object)    approvePayload
+        );
+        return ResponseEntity.ok("Approved payment successfully");
 
 
     }
