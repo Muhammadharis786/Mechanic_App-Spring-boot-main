@@ -753,7 +753,7 @@ public class ServiceRequestService {
         }
 
         RequestService requestService = checkrequest.get();
-        if(requestService.getRequestStatus().equals(ServiceRequestStatus.WAITING_USER_APPROVAL)){
+        if(!requestService.getRequestStatus().equals(ServiceRequestStatus.WAITING_USER_APPROVAL)){
           return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Approved");
         }
 
