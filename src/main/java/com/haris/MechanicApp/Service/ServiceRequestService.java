@@ -757,7 +757,7 @@ public class ServiceRequestService {
           return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Approved");
         }
 
-        requestService.setRequestStatus(ServiceRequestStatus.APPROVED_PAYMENT_REQUEST);
+        requestService.setRequestStatus(ServiceRequestStatus.APPROVED_PRICE_REQUEST);
         requestService.setInspectionPrice(dto.getFinalPrice());
         serviceRequestRepository.save(requestService);
 
@@ -766,6 +766,15 @@ public class ServiceRequestService {
         approvePayload.put("requestId", requestService.getRequestId());
         approvePayload.put("type", "USER_APPROVED");
         approvePayload.put("status", "APPROVED_PAYMENT_REQUEST");
+        if(requestService.getServiceType().equals("BIKE")){
+            approvePayload.put("arrivalPrice", 300);
+        }
+        else if (requestService.getServiceType().equals("CAR")){
+            approvePayload.put("arrivalPrice", 500);
+        }
+        else if(requestService.getServiceType().equals("PUNCHER")) {
+            approvePayload.put("arrivalPrice", 100);
+        }
 
         approvePayload.put("finalPrice", requestService.getInspectionPrice());
 
@@ -778,8 +787,49 @@ public class ServiceRequestService {
                 "/topic/request/" + requestService.getRequestId(),
                 (Object)    approvePayload
         );
+
         return ResponseEntity.ok("Approved payment successfully");
 
 
     }
+
+    public ResponseEntity<?> workcomplete(Long requestId, String mechphonenumber) {
+        Optional<Mechanic>  checkmechanic = mechanicRepository.findByPhonenumber(mechphonenumber) ;
+        if (checkmechanic.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+
+        Mechanic mechanic = checkmechanic.get();
+        Optional<RequestService>   checkrquest = serviceRequestRepository.findByRequestIdAndMechanic(requestId , mechanic);
+        if(checkrquest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
+        }
+
+        RequestService request = checkrquest.get();
+        if(!request.getRequestStatus().equals(ServiceRequestStatus.APPROVED_PRICE_REQUEST)){
+        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Price Not Set");
+
+        }
+
+        request.setRequestStatus(ServiceRequestStatus.WORK_COMPLETED);
+        serviceRequestRepository.save(request);
+
+        Map<String, Object> payload =
+                new HashMap<>();
+
+        payload.put("type", "WORK_COMPLETED");
+
+        payload.put("requestId", request.getRequestId());
+
+        payload.put("status", request.getRequestStatus().name());
+         payload.put("message", "Repair completed. Please make payment.");
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/request/" + request.getRequestId(),
+                (Object)   payload
+        );
+
+
+        return  ResponseEntity.ok("Work Complete");
+ }
 }
