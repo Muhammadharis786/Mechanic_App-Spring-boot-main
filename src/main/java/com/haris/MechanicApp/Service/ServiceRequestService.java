@@ -6,11 +6,7 @@ import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicDTO;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicMapResponseDto;
-import com.haris.MechanicApp.Model.RequestService.AcceptedUserMechanicDto;
-import com.haris.MechanicApp.Model.RequestService.CreateServiceRequestDto;
-import com.haris.MechanicApp.Model.RequestService.MechanicRequestNotificationDto;
-import com.haris.MechanicApp.Model.RequestService.RequestService;
-import com.haris.MechanicApp.Model.RequestService.ServiceRequestStatus;
+import com.haris.MechanicApp.Model.RequestService.*;
 import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Repository.MechanicRepository;
@@ -27,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -700,6 +697,46 @@ public class ServiceRequestService {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("NOT ARRIVED - mechanic is " + (int)distance + " meters away");
+
+    }
+
+    public ResponseEntity<?> sendfinalprice(SendPriceDto dto, String mechphonenumber) {
+
+         Optional<Mechanic>  checkmechanic = mechanicRepository.findByPhonenumber(mechphonenumber) ;
+         if (checkmechanic.isEmpty()) {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+         }
+
+    Mechanic mechanic = checkmechanic.get();
+       Optional<RequestService>   checkrquest = serviceRequestRepository.findByRequestIdAndMechanic(dto.getRequestId() , mechanic);
+        if(checkrquest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
+        }
+
+            RequestService request = checkrquest.get();
+        if(! request.getRequestStatus().equals(ServiceRequestStatus.ARRIVED)){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Arrived");
+        }
+
+        request.setInspectionPrice(dto.getFinalPrice());
+        request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
+
+        serviceRequestRepository.save(request);
+
+        // 📡 notify user via websocket
+        Map<String, Object> pricepayload = new HashMap<>();
+        pricepayload.put("requestId", request.getRequestId());
+        pricepayload.put("type", "FINAL_PRICE_SENT");
+        pricepayload.put("finalPrice", dto.getFinalPrice());
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/request/" + request.getRequestId(),
+                (Object)    pricepayload
+        );
+
+
+        return ResponseEntity.ok("Final price sent to "+ request.getUser().getUsername());
+
 
     }
 }

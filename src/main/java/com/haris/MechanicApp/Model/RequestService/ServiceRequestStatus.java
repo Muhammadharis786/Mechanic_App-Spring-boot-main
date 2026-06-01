@@ -9,5 +9,6 @@ public enum ServiceRequestStatus {
     PRICE_GIVEN,
     IN_PROGRESS,
     COMPLETED,
-    CANCELLED
+    CANCELLED,
+    WAITING_USER_APPROVAL
 }

@@ -3,6 +3,7 @@ package com.haris.MechanicApp.Controller;
 
 import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.RequestService.CreateServiceRequestDto;
+import com.haris.MechanicApp.Model.RequestService.SendPriceDto;
 import com.haris.MechanicApp.Service.ServiceRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -77,6 +78,13 @@ public class ServiceRequestController {
 
     {
         return serviceRequestService.checkarrived(requestId, userDetails.getUsername());
+    }
+
+    @PostMapping("/api/serice-request/send-final-price")
+    public ResponseEntity <?>  sendFinalPrice(@RequestBody SendPriceDto dto ,
+                                              @AuthenticationPrincipal UserDetails userDetails
+    ){
+        return  serviceRequestService.sendfinalprice(dto , userDetails.getUsername()) ;
     }
 
 }
