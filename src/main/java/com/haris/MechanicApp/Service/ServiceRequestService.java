@@ -757,7 +757,7 @@ public class ServiceRequestService {
           return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request Status Not Approved");
         }
 
-        requestService.setRequestStatus(ServiceRequestStatus.WORK_STARTED);
+        requestService.setRequestStatus(ServiceRequestStatus.APPROVED_PAYMENT_REQUEST);
         requestService.setInspectionPrice(dto.getFinalPrice());
         serviceRequestRepository.save(requestService);
 
@@ -765,7 +765,7 @@ public class ServiceRequestService {
 
         approvePayload.put("requestId", requestService.getRequestId());
         approvePayload.put("type", "USER_APPROVED");
-        approvePayload.put("status", "WORK_STARTED");
+        approvePayload.put("status", "APPROVED_PAYMENT_REQUEST");
 
         approvePayload.put("finalPrice", requestService.getInspectionPrice());
 

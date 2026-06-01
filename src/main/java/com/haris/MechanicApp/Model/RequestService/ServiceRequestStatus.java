@@ -11,5 +11,6 @@ public enum ServiceRequestStatus {
     COMPLETED,
     CANCELLED,
     WAITING_USER_APPROVAL,
+    APPROVED_PAYMENT_REQUEST ,
     WORK_STARTED
 }
