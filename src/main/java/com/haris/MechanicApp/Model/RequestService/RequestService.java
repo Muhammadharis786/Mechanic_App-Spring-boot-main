@@ -36,6 +36,8 @@ public class RequestService {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ServiceRequestStatus requestStatus = ServiceRequestStatus.PENDING;
+
+
     private String serviceType;
 
     @Column(columnDefinition = "TEXT")

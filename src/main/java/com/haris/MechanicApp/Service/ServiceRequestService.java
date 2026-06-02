@@ -8,9 +8,13 @@ import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicDTO;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicMapResponseDto;
 import com.haris.MechanicApp.Model.Payment.PaymentTypeDto;
 import com.haris.MechanicApp.Model.RequestService.*;
+import com.haris.MechanicApp.Model.Review.Review;
+import com.haris.MechanicApp.Model.Review.ReviewDto;
+import com.haris.MechanicApp.Model.Review.ServiceType;
 import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Repository.MechanicRepository;
+import com.haris.MechanicApp.Repository.ReviewRepository;
 import com.haris.MechanicApp.Repository.ServiceRequestRepository;
 import com.haris.MechanicApp.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +29,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 
@@ -45,6 +50,9 @@ public class ServiceRequestService {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     public ResponseEntity<?> createRequest(CreateServiceRequestDto dto, String userPhoneNumber) {
 
@@ -946,5 +954,77 @@ public class ServiceRequestService {
                 (Object) payload);
 
         return ResponseEntity.ok("Payment confirmed");
+    }
+
+    public ResponseEntity<?> submitReview(ReviewDto dto, String userPhone) {
+
+        Optional<User> checkUser = userRepository.findByPhonenumber(userPhone);
+        if (checkUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User Not Found");
+        }
+        User user = checkUser.get();
+        Optional<RequestService> checkRequest =
+                serviceRequestRepository.findByRequestIdAndUser(dto.getServiceId() ,user);
+        if (checkRequest.isEmpty()) {
+            System.out.println("Error yha hay 1 ");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Request Not Found");
+        }
+        RequestService request = checkRequest.get();
+        System.out.println("Error yha hay 2 ");
+        if (!request.getRequestStatus()
+                .equals((ServiceRequestStatus.COMPLETED))) {
+            System.out.println("Error yha hay 3 ");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Service not completed yet");
+        }
+        System.out.println("Error yha hay 4 ");
+        if (reviewRepository.existsByServiceId(request.getRequestId())) {
+            System.out.println("Error yha hay 5 ");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Already reviewed");
+        }
+        System.out.println("Error yha hay 6 ");
+        Mechanic mechanic = request.getMechanic();
+
+        // 1. SAVE REVIEW
+        Review review = new Review();
+        review.setUser(user);
+        review.setMechanic(mechanic);
+        review.setServiceId(request.getRequestId());
+        review.setServiceType(ServiceType.EMERGENCY);
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+
+        reviewRepository.save(review);
+        System.out.println("Error yha hay 7 ");
+  // 2. UPDATE MECHANIC RATING
+        updateMechanicRating(mechanic, dto.getRating());
+        System.out.println("Error yha hay 8 ");
+        return ResponseEntity.ok("Review submitted successfully");
+
+
+
+
+
+    }
+
+    private void updateMechanicRating(Mechanic mechanic, int newRating) {
+
+        int oldTotalReviews = mechanic.getTotalReviews();
+
+        double oldAvg = mechanic.getAverageRating() == null ? 0 : mechanic.getAverageRating().doubleValue();
+
+        int newTotalReviews = oldTotalReviews + 1;
+
+        double newAvg =
+                ((oldAvg * oldTotalReviews) + newRating)
+                        / newTotalReviews;
+
+        mechanic.setTotalReviews(newTotalReviews);
+        mechanic.setAverageRating(BigDecimal.valueOf(newAvg));
+
+        mechanicRepository.save(mechanic);
     }
 }

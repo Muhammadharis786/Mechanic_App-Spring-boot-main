@@ -5,6 +5,7 @@ import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Payment.PaymentTypeDto;
 import com.haris.MechanicApp.Model.RequestService.CreateServiceRequestDto;
 import com.haris.MechanicApp.Model.RequestService.SendPriceDto;
+import com.haris.MechanicApp.Model.Review.ReviewDto;
 import com.haris.MechanicApp.Service.ServiceRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ServiceRequestController {
     @Autowired
     ServiceRequestService serviceRequestService;
+
     @PostMapping("/api/service-request/create")
     public ResponseEntity<?> createRequest(
             @RequestBody CreateServiceRequestDto dto,
@@ -130,6 +132,11 @@ public class ServiceRequestController {
 
     }
 
-
-
+    @PostMapping("api/service-request/review/submit")
+    public ResponseEntity<?> submitReview(
+            @RequestBody ReviewDto dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return serviceRequestService.submitReview(dto, userDetails.getUsername());
+    }
 }
