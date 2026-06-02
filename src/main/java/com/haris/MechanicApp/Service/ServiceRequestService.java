@@ -82,6 +82,101 @@ public class ServiceRequestService {
 //        return ResponseEntity.status(HttpStatus.CREATED).body(savedRequest);
     }
 
+    public ResponseEntity<?> createRequestForMechanic(
+            CreateServiceRequestDto dto,
+            Long mechanicId,
+            String userPhoneNumber
+    ) {
+        Optional<User> userOptional = userRepository.findByPhonenumber(userPhoneNumber);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User Not Found");
+        }
+
+        Optional<Mechanic> mechanicOptional = mechanicRepository.findById(mechanicId);
+        if (mechanicOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+
+        Mechanic mechanic = mechanicOptional.get();
+        if (!mechanic.isIsverified()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mechanic is not verified");
+        }
+        if (mechanic.isIsengaged()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic Already Engaged");
+        }
+        if (!mechanic.isIsactive()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic is not active");
+        }
+        if (mechanic.getMechanictype() == null ||
+                !mechanic.getMechanictype().equalsIgnoreCase(dto.getServiceType())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Selected mechanic does not provide this service");
+        }
+
+        Object redisOnline = redisTemplate.opsForHash()
+                .get("mechanic:details:" + mechanicId, "isOnline");
+        if (redisOnline != null && !Boolean.parseBoolean(redisOnline.toString())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic is offline");
+        }
+
+        User user = userOptional.get();
+        RequestService request = new RequestService();
+        request.setUser(user);
+        request.setUserLatitude(dto.getUserLatitude());
+        request.setUserLongitude(dto.getUserLongitude());
+        request.setLocationName(dto.getLocationName());
+        request.setServiceType(dto.getServiceType());
+        request.setUserNotes(dto.getUserNotes());
+        request.setIsFixedChargeAccepted(dto.isIsfixedchargeaccepted());
+        request.setRequestStatus(ServiceRequestStatus.PENDING);
+        request.setPaymentStatus("UNPAID");
+
+        RequestService savedRequest = serviceRequestRepository.save(request);
+
+        redisTemplate.opsForSet().add(
+                "request:mechanics:" + savedRequest.getRequestId(),
+                mechanicId.toString()
+        );
+
+        RoadInfo roadInfo = getAcceptedMechanicRoadInfo(mechanic, savedRequest);
+        Double distanceKm = null;
+        String eta = null;
+        if (roadInfo != null && roadInfo.getDistance() >= 0) {
+            distanceKm = roadInfo.getDistance();
+            eta = roadInfo.getDistancetime();
+        }
+
+        MechanicRequestNotificationDto notificationDto =
+                new MechanicRequestNotificationDto(
+                        savedRequest.getRequestId(),
+                        user.getUserid(),
+                        savedRequest.getServiceType(),
+                        savedRequest.getUserNotes(),
+                        savedRequest.getUserLatitude(),
+                        savedRequest.getUserLongitude(),
+                        savedRequest.getLocationName(),
+                        distanceKm,
+                        eta,
+                        savedRequest.getRequestStatus(),
+                        user.getUsername(),
+                        user.getUserimgurl()
+                );
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/mechanic/requests/" + mechanicId,
+                notificationDto
+        );
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("requestId", savedRequest.getRequestId());
+        response.put("requestStatus", savedRequest.getRequestStatus().name());
+        response.put("mechanicId", mechanicId);
+        response.put("message", "Request sent to selected mechanic");
+        response.put("notification", notificationDto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     private ResponseEntity<?> sendRequestToNearbyOnlineMechanics(RequestService request) {
 
         GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();

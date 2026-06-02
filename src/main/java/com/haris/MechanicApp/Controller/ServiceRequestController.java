@@ -33,6 +33,17 @@ public class ServiceRequestController {
         return serviceRequestService.createRequest(dto, userDetails.getUsername());
     }
 
+    @PostMapping("/api/service-request/create-for-mechanic/{mechanicId}")
+    public ResponseEntity<?> createRequestForMechanic(
+            @PathVariable Long mechanicId,
+            @RequestBody CreateServiceRequestDto dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.createRequestForMechanic(dto, mechanicId, userDetails.getUsername());
+    }
+
     @PostMapping("/api/service-request/nearbymechanic")
     public ResponseEntity<?> nearbyMechanic(
             @RequestBody LocationDTO dto,
@@ -139,4 +150,6 @@ public class ServiceRequestController {
     ) {
         return serviceRequestService.submitReview(dto, userDetails.getUsername());
     }
+
+
 }
