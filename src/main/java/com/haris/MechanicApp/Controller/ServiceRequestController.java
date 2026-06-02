@@ -2,6 +2,7 @@ package com.haris.MechanicApp.Controller;
 
 
 import com.haris.MechanicApp.Model.Location.LocationDTO;
+import com.haris.MechanicApp.Model.Payment.PaymentTypeDto;
 import com.haris.MechanicApp.Model.RequestService.CreateServiceRequestDto;
 import com.haris.MechanicApp.Model.RequestService.SendPriceDto;
 import com.haris.MechanicApp.Service.ServiceRequestService;
@@ -101,6 +102,18 @@ public class ServiceRequestController {
 
 
         return serviceRequestService.workcomplete(requestId , userDetails.getUsername());
+
+
+    }
+
+    @GetMapping("api/service-request/paynow/{requestId}")
+
+    public ResponseEntity<?> paynow( @RequestBody PaymentTypeDto dto  ,
+                                    @PathVariable Long requestId,
+                                     @AuthenticationPrincipal UserDetails userDetails){
+
+
+        return serviceRequestService.paynow(requestId , dto, userDetails.getUsername());
 
 
     }

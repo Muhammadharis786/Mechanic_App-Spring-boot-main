@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,11 +45,14 @@ public class RequestService {
     @Column(name = "inspection_price")
     private Double inspectionPrice;
 
+    @Column(name = "visiting_charges")
+    private Double visitingcharges;
+
     private Double finalAmount;
     private String paymentStatus = "UNPAID";
     @Column(updatable = false)
-    private LocalDateTime createdAt;
-    private LocalDateTime completedAt;
+    private Instant createdAt;
+    private Instant completedAt;
 
 
     @Column(nullable = false , name = "is_fixed_charge_accepted")
@@ -56,7 +60,7 @@ public class RequestService {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = Instant.now();
     }
 
 }

@@ -13,4 +13,5 @@ public enum ServiceRequestStatus {
     WAITING_USER_APPROVAL,
     APPROVED_PRICE_REQUEST ,
     WORK_COMPLETED ,
+    PAYMENT_PENDING
 }

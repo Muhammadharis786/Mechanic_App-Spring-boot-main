@@ -6,6 +6,7 @@ import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicDTO;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicMapResponseDto;
+import com.haris.MechanicApp.Model.Payment.PaymentTypeDto;
 import com.haris.MechanicApp.Model.RequestService.*;
 import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.Verification.User;
@@ -23,8 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -759,7 +760,7 @@ public class ServiceRequestService {
 
         requestService.setRequestStatus(ServiceRequestStatus.APPROVED_PRICE_REQUEST);
         requestService.setInspectionPrice(dto.getFinalPrice());
-        serviceRequestRepository.save(requestService);
+
 
         Map<String, Object> approvePayload = new HashMap<>();
 
@@ -768,14 +769,18 @@ public class ServiceRequestService {
         approvePayload.put("status", "APPROVED_PAYMENT_REQUEST");
         if(requestService.getServiceType().equals("BIKE")){
             approvePayload.put("arrivalPrice", 300);
+            requestService.setVisitingcharges(300.0);
         }
         else if (requestService.getServiceType().equals("CAR")){
             approvePayload.put("arrivalPrice", 500);
+            requestService.setVisitingcharges(500.0);
+
         }
         else if(requestService.getServiceType().equals("PUNCHER")) {
             approvePayload.put("arrivalPrice", 100);
+            requestService.setVisitingcharges(100.0);
         }
-
+        serviceRequestRepository.save(requestService);
         approvePayload.put("finalPrice", requestService.getInspectionPrice());
 
         approvePayload.put("message", "User approved the final price. Start work now.");
@@ -832,4 +837,114 @@ public class ServiceRequestService {
 
         return  ResponseEntity.ok("Work Complete");
  }
+
+    public ResponseEntity<?> paynow(Long requestId, PaymentTypeDto dto, String username) {
+    Optional<User> checkuser = userRepository.findByPhonenumber(username);
+    if(checkuser.isEmpty()){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
+    }
+    User user = checkuser.get();
+        Optional<RequestService> checkRequest = serviceRequestRepository.findByRequestIdAndUser(requestId , user ) ;
+
+        if (checkRequest.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Request Not Found");
+        }
+
+        RequestService request =
+                checkRequest.get();
+        if(dto.getPaymentype().equals("CASH")){
+
+            if (!request.getRequestStatus()
+                    .equals(ServiceRequestStatus.WORK_COMPLETED)) {
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Work not completed yet");
+            }
+            request.setRequestStatus(ServiceRequestStatus.PAYMENT_PENDING);
+
+            serviceRequestRepository.save(request);
+
+            Map<String, Object> payload = new HashMap<>();
+
+            payload.put("type", "PAYMENT_PENDING");
+
+            payload.put("requestId", request.getRequestId());
+
+            payload.put("amount", request.getInspectionPrice());
+            payload.put("visiting charges", request.getVisitingcharges());
+            payload.put("message", "User is ready to pay cash");
+
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/request/"
+                            + request.getRequestId(),
+                    (Object) payload
+            );
+
+            return ResponseEntity.ok("Have you receive if yes so press confirm payment receive button");
+        }
+            //age payment tpye online hay tb ye kam hoga
+        return ResponseEntity.ok("This is "+ dto.getPaymentype() + " payment method");
+
+
+
+    }
+
+
+    public ResponseEntity<?> confirmCashPayment(Long requestId, String mechanicPhoneNumber) {
+
+        Optional<Mechanic> checkMechanic = mechanicRepository.findByPhonenumber(mechanicPhoneNumber);
+
+        if (checkMechanic.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+
+        Mechanic mechanic = checkMechanic.get();
+
+        Optional<RequestService> checkRequest = serviceRequestRepository.findByRequestIdAndMechanic(requestId, mechanic);
+
+        if (checkRequest.isEmpty()) {return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");}
+
+        RequestService request = checkRequest.get();
+
+        if (!request.getRequestStatus().equals(ServiceRequestStatus.PAYMENT_PENDING)) {
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment not started");
+        }
+
+        request.setRequestStatus(ServiceRequestStatus.COMPLETED);
+
+            request.setPaymentStatus("PAID");
+            request.setCompletedAt(Instant.now());
+        Double inspection = request.getInspectionPrice() == null ? 0 : request.getInspectionPrice();
+
+        Double visiting = request.getVisitingcharges() == null ? 0 : request.getVisitingcharges();
+
+        double totalPayment = inspection + visiting;
+
+            request.setFinalAmount(totalPayment);
+         mechanic.setTotalearning((int) (mechanic.getTotalearning() +  totalPayment));
+         mechanic.setTotalJobsCompleted(mechanic.getTotalJobsCompleted() +1);
+
+        serviceRequestRepository.save(request);
+
+        // mechanic free
+        mechanic.setIsengaged(false);
+        mechanicRepository.save(mechanic);
+
+        Map<String, Object> payload = new HashMap<>();
+
+        payload.put("type", "PAYMENT_DONE");
+        payload.put("requestId", request.getRequestId());
+        payload.put("status", request.getRequestStatus().name());
+        payload.put("finalAmount", request.getFinalAmount());
+        payload.put("message", "Payment received successfully");
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/request/"
+                        + request.getRequestId(),
+                (Object) payload);
+
+        return ResponseEntity.ok("Payment confirmed");
+    }
 }
