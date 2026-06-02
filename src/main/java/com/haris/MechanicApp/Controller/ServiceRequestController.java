@@ -106,7 +106,7 @@ public class ServiceRequestController {
 
     }
 
-    @GetMapping("api/service-request/paynow/{requestId}")
+    @PostMapping("api/service-request/paynow/{requestId}")
 
     public ResponseEntity<?> paynow( @RequestBody PaymentTypeDto dto  ,
                                     @PathVariable Long requestId,
