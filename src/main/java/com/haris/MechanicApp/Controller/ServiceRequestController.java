@@ -118,6 +118,18 @@ public class ServiceRequestController {
 
     }
 
+    @GetMapping("api/service-request/completed/{requestId}")
+
+    public ResponseEntity<?> completedService(
+                                     @PathVariable Long requestId,
+                                     @AuthenticationPrincipal UserDetails userDetails){
+
+
+        return serviceRequestService.confirmCashPayment(requestId , userDetails.getUsername());
+
+
+    }
+
 
 
 }
