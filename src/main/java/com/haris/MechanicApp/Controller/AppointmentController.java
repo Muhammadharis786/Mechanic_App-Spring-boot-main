@@ -1,9 +1,11 @@
 package com.haris.MechanicApp.Controller;
 
+import com.haris.MechanicApp.Model.Appointments.AppointmentPriceDTO;
 import com.haris.MechanicApp.Model.Appointments.AutoAppointmentDto;
 import com.haris.MechanicApp.Model.Appointments.ManualAppointmentDto;
 import com.haris.MechanicApp.Model.Appointments.ReasonDTO;
 import com.haris.MechanicApp.Model.Location.Location;
+import com.haris.MechanicApp.Model.RequestService.SendPriceDto;
 import com.haris.MechanicApp.Service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -130,5 +132,57 @@ public class AppointmentController {
         String phonenumber = userDetails.getUsername();
         return appointmentService.startappointment(phonenumber ,appointmentid );
     }
+
+
+    @GetMapping ("api/mechanic/appointment/arrived/{appointmentid}")
+    public ResponseEntity<?> arrived(
+
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable ("appointmentid") String appointmentid
+    ){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.arriveappointment(phonenumber ,appointmentid );
+    }
+
+    @GetMapping ("api/mechanic/appointment/startwork/{appointmentid}")
+    public ResponseEntity<?> startwork(
+
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable ("appointmentid") String appointmentid
+    ){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.startwork(phonenumber ,appointmentid );
+    }
+
+    @GetMapping ("api/mechanic/appointment/completework/{appointmentid}")
+    public ResponseEntity<?> completework(
+
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable ("appointmentid") String appointmentid
+    ){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.completework(phonenumber ,appointmentid );
+    }
+@PostMapping ("api/mechanic/appointment/sencharges/{appointmentid}")
+public ResponseEntity<?> sendcharges(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @PathVariable ("appointmentid") String appointmentid ,
+         @RequestBody AppointmentPriceDTO dto
+) {
+        return  appointmentService.sendcharges(userDetails.getUsername() , appointmentid , dto);
+}
+
+
+    @GetMapping ("api/mechanic/appointment/paynow/{appointmentid}")
+    public ResponseEntity<?> payonlinecash(
+
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable ("appointmentid") String appointmentid
+    ){
+        String phonenumber = userDetails.getUsername();
+        return appointmentService.paycash(phonenumber ,appointmentid );
+    }
+
+
 
 }

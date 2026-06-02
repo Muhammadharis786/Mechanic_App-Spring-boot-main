@@ -15,4 +15,5 @@ public class CreateServiceRequestDto {
     private Double userLongitude;
 
     private String locationName;
+    private String selectedMechanicPhone;
 }

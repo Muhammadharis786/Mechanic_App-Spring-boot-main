@@ -177,6 +177,29 @@ public class ServiceRequestService {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    public ResponseEntity<?> createRequestForSelectedMechanic(
+            CreateServiceRequestDto dto,
+            String userPhoneNumber
+    ) {
+        String selectedPhone = dto.getSelectedMechanicPhone();
+        if (selectedPhone == null || selectedPhone.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Selected mechanic phone is missing");
+        }
+
+        Optional<Mechanic> mechanicOptional =
+                mechanicRepository.findByPhonenumber(selectedPhone.trim());
+        if (mechanicOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+
+        return createRequestForMechanic(
+                dto,
+                mechanicOptional.get().getId(),
+                userPhoneNumber
+        );
+    }
+
     private ResponseEntity<?> sendRequestToNearbyOnlineMechanics(RequestService request) {
 
         GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();
@@ -1053,58 +1076,56 @@ public class ServiceRequestService {
 
     public ResponseEntity<?> submitReview(ReviewDto dto, String userPhone) {
 
-        Optional<User> checkUser = userRepository.findByPhonenumber(userPhone);
-        if (checkUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("User Not Found");
+        if (dto.getServiceType().equals((ServiceType.EMERGENCY).toString())) {
+            Optional<User> checkUser = userRepository.findByPhonenumber(userPhone);
+            if (checkUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("User Not Found");
+            }
+            User user = checkUser.get();
+            Optional<RequestService> checkRequest =
+                    serviceRequestRepository.findByRequestIdAndUser(dto.getServiceId() ,user);
+            if (checkRequest.isEmpty()) {
+                System.out.println("Error yha hay 1 ");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Request Not Found");
+            }
+            RequestService request = checkRequest.get();
+            System.out.println("Error yha hay 2 ");
+            if (!request.getRequestStatus()
+                    .equals((ServiceRequestStatus.COMPLETED))) {
+                System.out.println("Error yha hay 3 ");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Service not completed yet");
+            }
+            System.out.println("Error yha hay 4 ");
+            if (reviewRepository.existsByServiceId(request.getRequestId())) {
+                System.out.println("Error yha hay 5 ");
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Already reviewed");
+            }
+            System.out.println("Error yha hay 6 ");
+            Mechanic mechanic = request.getMechanic();
+
+            // 1. SAVE REVIEW
+            Review review = new Review();
+            review.setUser(user);
+            review.setMechanic(mechanic);
+            review.setServiceId(request.getRequestId());
+            review.setServiceType(ServiceType.EMERGENCY);
+            review.setRating(dto.getRating());
+            review.setComment(dto.getComment());
+
+            reviewRepository.save(review);
+            System.out.println("Error yha hay 7 ");
+            // 2. UPDATE MECHANIC RATING
+            updateMechanicRating(mechanic, dto.getRating());
+            System.out.println("Error yha hay 8 ");
+            return ResponseEntity.ok("Review submitted successfully");
+
         }
-        User user = checkUser.get();
-        Optional<RequestService> checkRequest =
-                serviceRequestRepository.findByRequestIdAndUser(dto.getServiceId() ,user);
-        if (checkRequest.isEmpty()) {
-            System.out.println("Error yha hay 1 ");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Request Not Found");
-        }
-        RequestService request = checkRequest.get();
-        System.out.println("Error yha hay 2 ");
-        if (!request.getRequestStatus()
-                .equals((ServiceRequestStatus.COMPLETED))) {
-            System.out.println("Error yha hay 3 ");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Service not completed yet");
-        }
-        System.out.println("Error yha hay 4 ");
-        if (reviewRepository.existsByServiceId(request.getRequestId())) {
-            System.out.println("Error yha hay 5 ");
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Already reviewed");
-        }
-        System.out.println("Error yha hay 6 ");
-        Mechanic mechanic = request.getMechanic();
-
-        // 1. SAVE REVIEW
-        Review review = new Review();
-        review.setUser(user);
-        review.setMechanic(mechanic);
-        review.setServiceId(request.getRequestId());
-        review.setServiceType(ServiceType.EMERGENCY);
-        review.setRating(dto.getRating());
-        review.setComment(dto.getComment());
-
-        reviewRepository.save(review);
-        System.out.println("Error yha hay 7 ");
-  // 2. UPDATE MECHANIC RATING
-        updateMechanicRating(mechanic, dto.getRating());
-        System.out.println("Error yha hay 8 ");
-        return ResponseEntity.ok("Review submitted successfully");
-
-
-
-
-
+        return ResponseEntity.ok("ok");
     }
-
     private void updateMechanicRating(Mechanic mechanic, int newRating) {
 
         int oldTotalReviews = mechanic.getTotalReviews();

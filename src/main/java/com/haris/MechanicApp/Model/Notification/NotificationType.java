@@ -8,9 +8,12 @@ public enum NotificationType {
 
     // Mechanic rejected appointment
     APPOINTMENT_REJECTED,
-
+    MECHANIC_ARRIVED ,
     // User cancelled appointment
     APPOINTMENT_CANCELLED,
+
+    MECHANIC_WORK_STARTED ,
+    WORK_COMPLETED ,
 
     // Mechanic completed work
     APPOINTMENT_COMPLETED,

@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Model.Appointments;
 
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
+import com.haris.MechanicApp.Model.Payment.PaymentStatus;
 import com.haris.MechanicApp.Model.Verification.User;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -62,6 +63,14 @@ public class Appointments {
 
     @Column(name = "reason")
     private String reason;
+
+    @Enumerated(EnumType.STRING)
+    @Column (name =  "payment_status")
+    private PaymentStatus paymentStatus;
+
+    @Column (name =  "payment_method")
+
+    private String paymentMethod; // CASH / ONLINE
 
 
 

@@ -1,0 +1,13 @@
+package com.haris.MechanicApp.Model.Appointments;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AppointmentPriceDTO {
+    String appid;
+    private Double finalPrice;
+}

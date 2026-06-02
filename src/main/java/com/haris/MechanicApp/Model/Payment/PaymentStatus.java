@@ -2,7 +2,7 @@ package com.haris.MechanicApp.Model.Payment;
 
 public enum PaymentStatus {
     PENDING,
-    PAID ,
-    FAILED,
-    REFUNDED
+    PAYMENT_PENDING,
+    PAID,
+    FAILED
 }

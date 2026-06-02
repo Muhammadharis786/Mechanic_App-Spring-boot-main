@@ -44,6 +44,16 @@ public class ServiceRequestController {
         return serviceRequestService.createRequestForMechanic(dto, mechanicId, userDetails.getUsername());
     }
 
+    @PostMapping("/api/service-request/create-for-selected-mechanic")
+    public ResponseEntity<?> createRequestForSelectedMechanic(
+            @RequestBody CreateServiceRequestDto dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.createRequestForSelectedMechanic(dto, userDetails.getUsername());
+    }
+
     @PostMapping("/api/service-request/nearbymechanic")
     public ResponseEntity<?> nearbyMechanic(
             @RequestBody LocationDTO dto,

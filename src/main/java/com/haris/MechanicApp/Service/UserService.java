@@ -416,6 +416,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         List<MechanicDTO> mechanicDTOS = new ArrayList<>();
         for (Mechanic mechanic : allnearbymechanics) {
             MechanicDTO mechanicDTO = new MechanicDTO();
+            mechanicDTO.setId(mechanic.getId());
             mechanicDTO.setName(mechanic.getName());
             mechanicDTO.setMechanicType(mechanic.getMechanictype());
             mechanicDTO.setAveragerating(mechanic.getAverageRating());

@@ -7,5 +7,9 @@ public enum AppointmentStatus {
     CANCELLED,
     REJECTED ,
     EXPIRED,
-    ON_THE_WAY
+    ON_THE_WAY,
+    ARRIVED,
+    IN_PROGRESS,
+    WORK_COMPLETED ,
+    PAYMENT_PROCESS
 }

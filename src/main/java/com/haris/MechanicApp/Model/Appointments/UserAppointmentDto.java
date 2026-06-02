@@ -40,6 +40,7 @@ public class UserAppointmentDto {
     private String mechnumber;
     private float rating ;
     private String mechanicshopaddress;
+    private int repairamount ;
 
 
     private String reason;
