@@ -156,7 +156,7 @@ public class ServiceRequestController {
 
     }
 
-    @PostMapping("api/service-request/review/submit")
+    @PostMapping("/api/service-request/review/submit")
     public ResponseEntity<?> submitReview(
             @RequestBody ReviewDto dto,
             @AuthenticationPrincipal UserDetails userDetails

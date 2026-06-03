@@ -13,6 +13,9 @@ import com.haris.MechanicApp.Model.Review.ReviewDto;
 import com.haris.MechanicApp.Model.Review.ServiceType;
 import com.haris.MechanicApp.Model.RoadInfo;
 import com.haris.MechanicApp.Model.Verification.User;
+import com.haris.MechanicApp.Model.Appointments.Appointments;
+import com.haris.MechanicApp.Model.Appointments.AppointmentStatus;
+import com.haris.MechanicApp.Repository.AppointmentRepository;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Repository.ReviewRepository;
 import com.haris.MechanicApp.Repository.ServiceRequestRepository;
@@ -53,6 +56,9 @@ public class ServiceRequestService {
 
     @Autowired
     private ReviewRepository reviewRepository;
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
 
     public ResponseEntity<?> createRequest(CreateServiceRequestDto dto, String userPhoneNumber) {
 
@@ -1096,7 +1102,8 @@ public class ServiceRequestService {
 
     public ResponseEntity<?> submitReview(ReviewDto dto, String userPhone) {
 
-        if (dto.getServiceType().equals((ServiceType.EMERGENCY).toString())) {
+        if (dto.getServiceType() != null
+                && dto.getServiceType().equalsIgnoreCase(ServiceType.EMERGENCY.name())) {
             Optional<User> checkUser = userRepository.findByPhonenumber(userPhone);
             if (checkUser.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -1144,7 +1151,58 @@ public class ServiceRequestService {
             return ResponseEntity.ok("Review submitted successfully");
 
         }
-        return ResponseEntity.ok("ok");
+
+        if (dto.getServiceType() != null
+                && dto.getServiceType().equalsIgnoreCase(ServiceType.APPOINTMENT.name())) {
+
+            if (dto.getAppointmentId() == null || dto.getAppointmentId().isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("appointmentId is required");
+            }
+
+            Optional<User> checkUser = userRepository.findByPhonenumber(userPhone);
+            if (checkUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
+            }
+            User user = checkUser.get();
+
+            Optional<Appointments> appointmentOpt =
+                    appointmentRepository.findByAppointmentIdAndUser(dto.getAppointmentId(), user);
+            if (appointmentOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Appointment Not Found");
+            }
+            Appointments appointment = appointmentOpt.get();
+
+            if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Appointment not completed yet");
+            }
+
+            if (reviewRepository.existsByAppointmentId(appointment.getAppointmentId())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Already reviewed");
+            }
+
+            Mechanic mechanic = appointment.getMechanic();
+            if (mechanic == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("No mechanic assigned to this appointment");
+            }
+
+            Review review = new Review();
+            review.setUser(user);
+            review.setMechanic(mechanic);
+            review.setAppointmentId(appointment.getAppointmentId());
+            review.setServiceType(ServiceType.APPOINTMENT);
+            review.setRating(dto.getRating());
+            review.setComment(dto.getComment());
+            reviewRepository.save(review);
+
+            updateMechanicRating(mechanic, dto.getRating());
+            return ResponseEntity.ok("Review submitted successfully");
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Unsupported service type: " + dto.getServiceType());
     }
     private void updateMechanicRating(Mechanic mechanic, int newRating) {
 

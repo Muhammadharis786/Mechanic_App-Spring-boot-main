@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class ReviewDto {
 
     private Long serviceId;
+    private String appointmentId;
     private String serviceType;
     private Integer rating;
     private String comment;

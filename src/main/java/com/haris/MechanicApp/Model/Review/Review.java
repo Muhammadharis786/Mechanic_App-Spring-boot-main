@@ -45,6 +45,9 @@ public class Review {
      @Column (name = "service_id")
     private Long serviceId;
 
+    @Column(name = "appointment_id")
+    private String appointmentId;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
