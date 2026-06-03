@@ -145,6 +145,18 @@ public class LiveLocationController {
     ) {
         String etaKey = "request:eta:" + request.getRequestId();
 
+        // Always persist latest mechanic position for arrival checks (isarrived API).
+        redisTemplate.opsForHash().put(
+                etaKey,
+                "lastLat",
+                dto.getLatitude().toString()
+        );
+        redisTemplate.opsForHash().put(
+                etaKey,
+                "lastLng",
+                dto.getLongitude().toString()
+        );
+
         Double oldLat = getRedisDouble(etaKey, "lastLat");
         Double oldLng = getRedisDouble(etaKey, "lastLng");
         Long lastCalculatedAt = getRedisLong(etaKey, "lastCalculatedAt");
@@ -174,19 +186,7 @@ public class LiveLocationController {
                 distance = roadInfos.get(0).getDistance();
                 eta = roadInfos.get(0).getDistancetime();
 
-                redisTemplate.opsForHash().put(
-                        etaKey,
-                        "lastLat",
-                        dto.getLatitude().toString()
-                );
                 System.out.println("this is mechanic latitude: "+dto.getLatitude() +" and this is longitude "+ dto.getLongitude());
-
-
-                redisTemplate.opsForHash().put(
-                        etaKey,
-                        "lastLng",
-                        dto.getLongitude().toString()
-                );
 
                 redisTemplate.opsForHash().put(
                         etaKey,

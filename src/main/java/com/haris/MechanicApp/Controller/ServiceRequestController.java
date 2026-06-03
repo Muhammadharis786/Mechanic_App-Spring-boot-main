@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -97,11 +98,13 @@ public class ServiceRequestController {
     @GetMapping("/api/service-request/isarrived/{requestId}")
     public ResponseEntity<?> checkarrived(
             @PathVariable Long requestId,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
             @AuthenticationPrincipal UserDetails userDetails
     )
 
     {
-        return serviceRequestService.checkarrived(requestId, userDetails.getUsername());
+        return serviceRequestService.checkarrived(requestId, userDetails.getUsername(), lat, lng);
     }
 
     @PostMapping("/api/service-request/send-final-price")

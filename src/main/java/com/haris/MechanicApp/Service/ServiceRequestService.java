@@ -760,7 +760,12 @@ public class ServiceRequestService {
         return ResponseEntity.ok("Request Cancelled");
     }
 
-    public ResponseEntity<?> checkarrived(Long requestId, String phonenumber) {
+    public ResponseEntity<?> checkarrived(
+            Long requestId,
+            String phonenumber,
+            Double clientLat,
+            Double clientLng
+    ) {
 
         Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
         if(checkmechanic.isEmpty()){
@@ -778,27 +783,42 @@ public class ServiceRequestService {
 
         String etaKey = "request:eta:" + request.getRequestId();
 
-        Object mechaniclatitude = redisTemplate.opsForHash().get(
-                etaKey,
-                "lastLat"
+        double mechLat;
+        double mechLng;
 
-        );
+        if (clientLat != null && clientLng != null) {
+            mechLat = clientLat;
+            mechLng = clientLng;
+            redisTemplate.opsForHash().put(etaKey, "lastLat", String.valueOf(mechLat));
+            redisTemplate.opsForHash().put(etaKey, "lastLng", String.valueOf(mechLng));
+        } else {
+            Object mechaniclatitude = redisTemplate.opsForHash().get(
+                    etaKey,
+                    "lastLat"
 
-        Object mechaniclongitude = redisTemplate.opsForHash().get(
-                etaKey,
-                "lastLng"
+            );
 
-        );
+            Object mechaniclongitude = redisTemplate.opsForHash().get(
+                    etaKey,
+                    "lastLng"
 
-        if(mechaniclatitude == null || mechaniclongitude == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Mechanic live location not available");
+            );
+
+            if (mechaniclatitude == null || mechaniclongitude == null) {
+                String detailsKey = "mechanic:details:" + mechanic.getId();
+                mechaniclatitude = redisTemplate.opsForHash().get(detailsKey, "latitude");
+                mechaniclongitude = redisTemplate.opsForHash().get(detailsKey, "longitude");
+            }
+
+            if(mechaniclatitude == null || mechaniclongitude == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Mechanic live location not available");
+            }
+
+            mechLat = Double.parseDouble(mechaniclatitude.toString());
+            mechLng = Double.parseDouble(mechaniclongitude.toString());
         }
-        String mechaniclat = mechaniclatitude.toString();
-        String mechaniclong = mechaniclongitude.toString();
 
-        double mechLat = Double.parseDouble(mechaniclat);
-        double mechLng = Double.parseDouble(mechaniclong);
         LiveLocationController locationController = new LiveLocationController();
 
         double distance = locationController.calculateHaversineMeters(
@@ -820,7 +840,7 @@ public class ServiceRequestService {
 
 
         System.out.println("this is user latitude: "+ userlatitude +" and this is longitude "+ userlongitude);
-        System.out.println("this is user latitude: "+ mechaniclatitude +" and this is longitude "+ mechaniclongitude);
+        System.out.println("this is mechanic latitude: "+ mechLat +" and this is longitude "+ mechLng);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("NOT ARRIVED - mechanic is " + (int)distance + " meters away");
