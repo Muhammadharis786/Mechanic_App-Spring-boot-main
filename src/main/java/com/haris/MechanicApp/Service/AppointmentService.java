@@ -867,10 +867,8 @@ public class AppointmentService {
         Appointments appointment = checkappointments.get();
 
         // already accepted check
-        if (appointment.getMechanic() != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Appointment already accepted by another mechanic");
-        }
+
+
 
         Optional<AppointmentRequest> checkrequest =
                 appointmentRequestRepository.findByMechanicAndAppointment(mechanic, appointment);
@@ -896,7 +894,6 @@ public class AppointmentService {
         // ================= UPDATE APPOINTMENT =================
         appointment.setStatus(AppointmentStatus.ACCEPTED);
         appointment.setMechanic(mechanic);
-        mechanic.setIsengaged(true);
         appointmentRepository.save(appointment);
 
         // ================= EXPIRE OTHER REQUESTS =================
@@ -922,7 +919,6 @@ public class AppointmentService {
             notification.setTitle("Appointment Expired");
             notification.setMessage("Appointment accepted by " + mechanic.getName());
             notification.setMechanic(req.getMechanic());
-            notification.setUser(appointment.getUser());
             notification.setCreatedAt(Instant.now());
             notificationRepository.save(notification);
 
