@@ -20,13 +20,16 @@ public class MechanicAppointmentDTO {
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private Integer visitingcharges;
+    private Integer repairAmount;
+    private  BigDecimal amount;
     private Instant created_at ;
-    private RequestStatus status;
+    private String status;
 
     private String useraddress;
     private String userimage ;
     private String username;
     private String userphonenumber;
+    private String paymentStatus="PENDING" ;
 
     private BigDecimal mechshoplat;
     private BigDecimal mechshoplong;

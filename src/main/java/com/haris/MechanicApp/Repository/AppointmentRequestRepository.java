@@ -32,4 +32,7 @@ public interface AppointmentRequestRepository extends JpaRepository<AppointmentR
     @Modifying
     @Query("UPDATE AppointmentRequest a SET a.status = 'EXPIRED' WHERE a.status = 'PENDING' AND a.createdAt < :cutoff")
     void expirePendingAppointments(Instant cutoff);
+
+    List<AppointmentRequest> findByMechanicAndStatus(Mechanic mechanic,
+                                                     RequestStatus requestStatus);
 }

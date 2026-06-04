@@ -42,6 +42,10 @@ public class UserAppointmentDto {
     private String mechanicshopaddress;
     private int repairamount ;
 
+    private String paymentStatus ="PENDING" ;
+    private Integer visitingCharges ;
+    private  Integer repairAmount ;
+    private BigDecimal amount ;
 
     private String reason;
 

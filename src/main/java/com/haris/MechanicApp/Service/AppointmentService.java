@@ -520,7 +520,7 @@ public class AppointmentService {
                 dto.setLatitude(appointments.getLatitude());
                 dto.setLongitude(appointments.getLongitude());
                 dto.setServiceType(appointments.getServiceType());
-                dto.setVisitingcharges(appointments.getVisitingCharge());
+
                 dto.setRepairamount(appointments.getRepairAmount());
                 // Visiting charge hamesha dikhayein
                 dto.setReason(appointments.getReason());
@@ -537,8 +537,16 @@ public class AppointmentService {
                     dto.setMechshoplat(appointments.getMechanic().getShoplatitude());
                     dto.setMechshoplong(appointments.getMechanic().getShoplongitude());
                     dto.setMechnumber(appointments.getMechanic().getPhonenumber());
+                    if(appointments.getPaymentStatus()!=null){
+                        dto.setPaymentStatus(appointments.getPaymentStatus().toString());
 
-
+                    }
+                    if(appointments.getVisitingCharge()!=null && appointments.getRepairAmount()!=null
+                            && appointments.getAmount()!=null ){
+                        dto.setVisitingcharges(appointments.getVisitingCharge());
+                        dto.setAmount(appointments.getAmount());
+                        dto.setRepairAmount(appointments.getRepairAmount());
+                    }
                     dto.setReason(appointments.getReason());
 
                 }
@@ -556,50 +564,92 @@ public class AppointmentService {
         }
 
     public ResponseEntity<?> showmechanicappointments(String mechphonenumber) {
+
         Optional<Mechanic> checkmechanic = mechanicrepo.findByPhonenumber(mechphonenumber);
-        if(checkmechanic.isPresent()) {
-            Mechanic mechanic = checkmechanic.get();
-            List<AppointmentRequest> mechappointments = appointmentRequestRepository.findByMechanic(mechanic);
-            if(mechappointments.isEmpty()) {
-                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Appointments ");
-            }
-            List<MechanicAppointmentDTO>listofappointments =  new ArrayList<>();
-            for(AppointmentRequest appointments : mechappointments) {
-
-                MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
-
-                //this is user address wo address hay jha per isko service chie
-                dto.setAppointmentid(appointments.getAppointment().getAppointmentId());
-                dto.setStatus(appointments.getStatus());
-                dto.setAppointmentDate(appointments.getAppointment().getAppointmentDate());
-                dto.setAppointmentTime(appointments.getAppointment().getAppointmentTime());
-                dto.setProblemDescription(appointments.getAppointment().getProblemDescription());
-                dto.setLatitude(appointments.getAppointment().getLatitude());
-                dto.setLongitude(appointments.getAppointment().getLongitude());
-                dto.setServiceType(appointments.getAppointment().getServiceType());
-                dto.setCreated_at(appointments.getCreatedAt());
-                dto.setReason(appointments.getReason());
-                dto.setVisitingcharges(appointments.getAppointment().getVisitingCharge());
-                dto.setRespondedat(appointments.getRespondedAt());
-
-                dto.setUseraddress(appointments.getAppointment().getAddress());
-                dto.setUsername(appointments.getAppointment().getUser().getUsername());
-                dto.setUserimage(appointments.getAppointment().getUser().getUserimgurl());
-                dto.setMechshoplat(appointments.getMechanic().getShoplatitude());
-                dto.setMechshoplong(appointments.getMechanic().getShoplongitude());
-                dto.setUserphonenumber(appointments.getAppointment().getUser().getPhonenumber());
-                //ye uskay lie ha just reject or cancelled k lie
-
-                listofappointments.add(dto);
-
-            }
-            return  ResponseEntity.ok(listofappointments);
-
-
+        if (checkmechanic.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic nahi mila");
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic nh mila");
-    }
 
+        Mechanic mechanic = checkmechanic.get();
+        List<MechanicAppointmentDTO> listofappointments = new ArrayList<>();
+
+        // =============================================
+        // PART 1: Pending Requests (abhi accept/reject nahi kiya)
+        // AppointmentRequest table se → status = PENDING
+        // =============================================
+        List<AppointmentRequest> pendingRequests =
+                appointmentRequestRepository.findByMechanicAndStatus(mechanic, RequestStatus.PENDING);
+
+        for (AppointmentRequest req : pendingRequests) {
+            Appointments apt = req.getAppointment(); // parent appointment
+
+            MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
+            dto.setAppointmentid(apt.getAppointmentId());
+            dto.setStatus(apt.getStatus().toString()); // frontend ko pata chale ye pending request hai
+            dto.setAppointmentDate(apt.getAppointmentDate());
+            dto.setAppointmentTime(apt.getAppointmentTime());
+            dto.setProblemDescription(apt.getProblemDescription());
+            dto.setLatitude(apt.getLatitude());
+            dto.setLongitude(apt.getLongitude());
+            dto.setServiceType(apt.getServiceType());
+            dto.setCreated_at(req.getCreatedAt());
+            dto.setVisitingcharges(apt.getVisitingCharge());
+            dto.setUseraddress(apt.getAddress());
+            dto.setUsername(apt.getUser().getUsername());
+            dto.setUserimage(apt.getUser().getUserimgurl());
+            dto.setUserphonenumber(apt.getUser().getPhonenumber());
+            dto.setMechshoplat(mechanic.getShoplatitude());
+            dto.setMechshoplong(mechanic.getShoplongitude());
+
+
+            listofappointments.add(dto);
+        }
+
+        // =============================================
+        // PART 2: Accepted/Active Appointments
+        // Appointments table se → mechanic = this mechanic
+        // (PENDING, ACCEPTED, WORK_STARTED, COMPLETED, CANCELLED, REJECTED)
+        // =============================================
+        List<Appointments> myAppointments = appointmentRepository.findByMechanic(mechanic);
+
+        for (Appointments apt : myAppointments) {
+            MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
+            dto.setAppointmentid(apt.getAppointmentId());
+            dto.setStatus(apt.getStatus().toString());
+            dto.setAppointmentDate(apt.getAppointmentDate());
+            dto.setAppointmentTime(apt.getAppointmentTime());
+            dto.setProblemDescription(apt.getProblemDescription());
+            dto.setLatitude(apt.getLatitude());
+            dto.setLongitude(apt.getLongitude());
+            dto.setServiceType(apt.getServiceType());
+            dto.setCreated_at(apt.getCreatedAt());
+            dto.setReason(apt.getReason());
+            if(apt.getPaymentStatus()!=null){
+                dto.setPaymentStatus(apt.getPaymentStatus().toString());
+
+            }
+            dto.setUseraddress(apt.getAddress());
+            dto.setUsername(apt.getUser().getUsername());
+            dto.setUserimage(apt.getUser().getUserimgurl());
+            dto.setUserphonenumber(apt.getUser().getPhonenumber());
+            dto.setMechshoplat(mechanic.getShoplatitude());
+            dto.setMechshoplong(mechanic.getShoplongitude());
+
+            if(apt.getVisitingCharge()!=null && apt.getRepairAmount()!=null  && apt.getAmount()!=null ){
+                dto.setVisitingcharges(apt.getVisitingCharge());
+                dto.setAmount(apt.getAmount());
+                dto.setRepairAmount(apt.getRepairAmount());
+            }
+
+            listofappointments.add(dto);
+        }
+
+        if (listofappointments.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Koi appointments nahi");
+        }
+
+        return ResponseEntity.ok(listofappointments);
+    }
     // =========================================================
     // REJECT APPOINTMENT (CLEAN VERSION)
     // =========================================================
@@ -1059,6 +1109,11 @@ public class AppointmentService {
 
         Optional<Appointments> checkappointment =
                 appointmentRepository.findByMechanicAndAppointmentId(mechanic, appointmentid);
+        Optional<AppointmentRequest> checkrequest = appointmentRequestRepository.findByMechanicAndAppointment_AppointmentId(mechanic, appointmentid);
+        if(checkrequest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No appointment found") ;
+        }
 
         if (checkappointment.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -1066,18 +1121,24 @@ public class AppointmentService {
         }
 
         Appointments appointment = checkappointment.get();
+        AppointmentRequest request = checkrequest.get();
 
-        if (appointment.getStatus() == AppointmentStatus.ARRIVED) {
+
+        if (appointment.getStatus() == AppointmentStatus.ARRIVED || request.getStatus()==RequestStatus.ARRIVED) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("You Are already arrived");
         }
-        if (appointment.getStatus() != AppointmentStatus.ON_THE_WAY) {
+        if (appointment.getStatus() != AppointmentStatus.ON_THE_WAY  || request.getStatus()!=RequestStatus.ON_THE_WAY) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("You can only arrive after ON_THE_WAY");
         }
+            request.setStatus(RequestStatus.ARRIVED);
+        appointmentRequestRepository.save(request);
 
         appointment.setStatus(AppointmentStatus.ARRIVED);
         appointmentRepository.save(appointment);
+
+
 
         Notification notification = new Notification();
         notification.setType(NotificationType.MECHANIC_ARRIVED);
@@ -1110,26 +1171,34 @@ public class AppointmentService {
         }
 
         Mechanic mechanic = checkmechanic.get();
+        Optional<AppointmentRequest> checkrequest = appointmentRequestRepository.findByMechanicAndAppointment_AppointmentId(mechanic, appointmentid);
 
         Optional<Appointments> checkappointment =
                 appointmentRepository.findByMechanicAndAppointmentId(mechanic, appointmentid);
-
+        if(checkrequest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No appointment found") ;
+        }
         if (checkappointment.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No appointment found");
         }
 
         Appointments appointment = checkappointment.get();
+        AppointmentRequest request = checkrequest.get();
 
-        if (appointment.getStatus() == AppointmentStatus.IN_PROGRESS) {
+        if (appointment.getStatus() == AppointmentStatus.IN_PROGRESS || request.getStatus()==RequestStatus.IN_PROGRESS) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("YOU Are ALready work started");
         }
 
-        if (appointment.getStatus() != AppointmentStatus.ARRIVED) {
+        if (appointment.getStatus() != AppointmentStatus.ARRIVED  || request.getStatus()!=RequestStatus.ARRIVED ) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Work can only start after ARRIVED");
         }
+
+        request.setStatus(RequestStatus.IN_PROGRESS);
+        appointmentRequestRepository.save(request);
 
         appointment.setStatus(AppointmentStatus.IN_PROGRESS);
         appointmentRepository.save(appointment);
@@ -1167,29 +1236,37 @@ public class AppointmentService {
         }
 
         Mechanic mechanic = checkmechanic.get();
+        Optional<AppointmentRequest> checkrequest = appointmentRequestRepository.findByMechanicAndAppointment_AppointmentId(mechanic, appointmentid);
 
         Optional<Appointments> checkappointment =
                 appointmentRepository.findByMechanicAndAppointmentId(mechanic, appointmentid);
-
+        if(checkrequest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No appointment found") ;
+        }
         if (checkappointment.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No appointment found");
         }
-
+        AppointmentRequest request = checkrequest.get();
         Appointments appointment = checkappointment.get();
 
-        if (appointment.getStatus() == AppointmentStatus.WORK_COMPLETED) {
+        if (appointment.getStatus() == AppointmentStatus.WORK_COMPLETED || request.getStatus()==RequestStatus.WORK_COMPLETED) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("You already completed this appointment");
         }
 
-        if (appointment.getStatus() != AppointmentStatus.IN_PROGRESS) {
+        if (appointment.getStatus() != AppointmentStatus.IN_PROGRESS  || request.getStatus()!=RequestStatus.IN_PROGRESS ) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Work can only be completed after IN_PROGRESS");
         }
 
         appointment.setStatus(AppointmentStatus.WORK_COMPLETED);
         appointmentRepository.save(appointment);
+
+
+        request.setStatus(RequestStatus.WORK_COMPLETED);
+        appointmentRequestRepository.save(request);
 
         // 🔥 Payment trigger point
         Notification notification = new Notification();
@@ -1224,24 +1301,28 @@ public class AppointmentService {
         }
 
         Mechanic mechanic = checkmechanic.get();
+        Optional<AppointmentRequest> checkrequest = appointmentRequestRepository.findByMechanicAndAppointment_AppointmentId(mechanic, appointmentid);
 
         Optional<Appointments> checkappointment =
                 appointmentRepository.findByMechanicAndAppointmentId(mechanic, appointmentid);
-
+        if(checkrequest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No appointment found") ;
+        }
         if (checkappointment.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No appointment found");
         }
-
+        AppointmentRequest request = checkrequest.get();
         Appointments appointment = checkappointment.get();
 
-        if (appointment.getStatus() != AppointmentStatus.WORK_COMPLETED) {
+        if (appointment.getStatus() != AppointmentStatus.WORK_COMPLETED  || request.getStatus()!=RequestStatus.WORK_COMPLETED) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("First Complete your work");
         }
 
                     int visitingcharges =appointment.getVisitingCharge() ;
-        System.out.println("this is visiting charges "+ visitingcharges);
+                System.out.println("this is visiting charges "+ visitingcharges);
 
                 int  finalprice  =  dto.getFinalPrice() == null ? 0 : (int)dto.getFinalPrice().doubleValue();
                    appointment.setRepairAmount(finalprice);
@@ -1249,6 +1330,10 @@ public class AppointmentService {
                     appointment.setPaymentStatus(PaymentStatus.PENDING);
                     appointment.setStatus(AppointmentStatus.PAYMENT_PROCESS);
                     appointmentRepository.save(appointment);
+
+        ;
+                    request.setStatus(RequestStatus.PAYMENT_PROCESS) ;
+                    appointmentRequestRepository.save(request);
 
                  AppointmentResponseDTO dto1 = new AppointmentResponseDTO();
                         dto1.setTitle("Send Charges");

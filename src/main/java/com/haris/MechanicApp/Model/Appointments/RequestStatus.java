@@ -4,9 +4,14 @@ public enum RequestStatus {
 
     PENDING,
     ACCEPTED,
-    REJECTED,
+    COMPLETED,
+    CANCELLED,
+    REJECTED ,
     EXPIRED,
     ON_THE_WAY,
-    CANCELLED
+    ARRIVED,
+    IN_PROGRESS,
+    WORK_COMPLETED ,
+    PAYMENT_PROCESS
 
 }
