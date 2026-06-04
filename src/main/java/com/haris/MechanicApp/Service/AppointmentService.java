@@ -521,7 +521,7 @@ public class AppointmentService {
                 dto.setLongitude(appointments.getLongitude());
                 dto.setServiceType(appointments.getServiceType());
 
-                dto.setRepairamount(appointments.getRepairAmount());
+
                 // Visiting charge hamesha dikhayein
                 dto.setReason(appointments.getReason());
 
