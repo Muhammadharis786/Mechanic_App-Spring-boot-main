@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MechOtpDto {
-    private long userid;
+
     private String phonenumber;
     private String password;
 

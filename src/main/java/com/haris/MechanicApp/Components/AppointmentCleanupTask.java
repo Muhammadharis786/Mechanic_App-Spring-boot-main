@@ -7,9 +7,11 @@ import com.haris.MechanicApp.Model.Appointments.RequestStatus;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Notification.Notification;
 import com.haris.MechanicApp.Model.Notification.NotificationType;
+import com.haris.MechanicApp.Model.Verification.VerificationTokenMechanic;
 import com.haris.MechanicApp.Repository.AppointmentRepository;
 import com.haris.MechanicApp.Repository.AppointmentRequestRepository;
 import com.haris.MechanicApp.Repository.MechanicNotificationRepository;
+import com.haris.MechanicApp.Repository.OtpTokenMechanicRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -37,8 +39,15 @@ public class AppointmentCleanupTask {
 
     @Autowired
     MechanicNotificationRepository notificationRepository;
+
+    @Autowired
+    OtpTokenMechanicRepository otptokenrepo;
 // ye ek auto schedula hay jo kay har ghantay may run hoga automatically
     //ye is lie lgya hay tkay pending request ko 1 din say zyada ko wo pending sa expired krday
+
+
+
+
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional

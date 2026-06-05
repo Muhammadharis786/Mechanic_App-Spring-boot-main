@@ -12,6 +12,7 @@ import com.haris.MechanicApp.Model.Verification.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Random;
 
 import com.haris.MechanicApp.Repository.AppointmentRepository;
@@ -98,7 +99,24 @@ public class UserService  {
                 User user =  checkUser.get();
                 if(user.isEnabled()){
                     updateVerificationToken(user, token);
-                    whtsappotp.sendwhatsappotp(user.getPhonenumber(), token);
+                    try {
+                        whtsappotp.sendwhatsappotp(user.getPhonenumber(), token);
+                    } catch (Exception e) {
+                        String errorMsg = e.getMessage();
+                        if (errorMsg != null && (
+                                errorMsg.contains("30") ||      // 30 sec wala message
+                                        errorMsg.contains("rate") ||
+                                        errorMsg.contains("limit") ||
+                                        errorMsg.contains("too many")
+                        )) {
+                            return ResponseEntity
+                                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                                    .body("Please wait 30 seconds before requesting another OTP");
+                        }
+                        return ResponseEntity
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("Failed to send OTP, please try again");
+                    }
 
                     return ResponseEntity.ok("Check Whatsapp " + user.getPhonenumber());
                 }
@@ -124,7 +142,24 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             }
  updateVerificationToken(user2, token);
 //
-                whtsappotp.sendwhatsappotp(user2.getPhonenumber() , token);
+            try {
+                whtsappotp.sendwhatsappotp(user2.getPhonenumber(), token);
+            } catch (Exception e) {
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && (
+                        errorMsg.contains("30") ||      // 30 sec wala message
+                                errorMsg.contains("rate") ||
+                                errorMsg.contains("limit") ||
+                                errorMsg.contains("too many")
+                )) {
+                    return ResponseEntity
+                            .status(HttpStatus.TOO_MANY_REQUESTS)
+                            .body("Please wait 30 seconds before requesting another OTP");
+                }
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to send OTP, please try again");
+            }
 
                 return ResponseEntity.ok("Check Your whatsApp for OTP code.." + user2.getPhonenumber());
 
@@ -145,7 +180,24 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
             createVerificationToken(newUser, token);
 //
-            whtsappotp.sendwhatsappotp(newUser.getPhonenumber() , token);
+            try {
+                whtsappotp.sendwhatsappotp(newUser.getPhonenumber(), token);
+            } catch (Exception e) {
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && (
+                        errorMsg.contains("30") ||      // 30 sec wala message
+                                errorMsg.contains("rate") ||
+                                errorMsg.contains("limit") ||
+                                errorMsg.contains("too many")
+                )) {
+                    return ResponseEntity
+                            .status(HttpStatus.TOO_MANY_REQUESTS)
+                            .body("Please wait 30 seconds before requesting another OTP");
+                }
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to send OTP, please try again");
+            }
 
             return ResponseEntity.ok("Check your Whatsapp for OTP code  " + newUser.getPhonenumber());
         }
@@ -168,7 +220,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             verificationToken.setToken(token);
         }
         verificationToken.setCreatedDate(LocalDateTime.now());
-        verificationToken.setExpiryDate(1); // Set new expiry date
+        verificationToken.setExpiryDate(3); // Set new expiry date
         tokenRepo.save(verificationToken);
     }
 
@@ -179,7 +231,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setUser(newUser);
         verificationToken.setToken(token);
-        verificationToken.setExpiryDate(1); // expiry in minutes (assumed)
+        verificationToken.setExpiryDate(3); // expiry in minutes (assumed)
 
         verificationToken.setCreatedDate(LocalDateTime.now());
         tokenRepo.save(verificationToken);
@@ -234,18 +286,33 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             );
 
             if (auth.isAuthenticated()) {
-                if("USER".equals(user.getLoginAs().toUpperCase())) {
+                if("USER".equalsIgnoreCase(user.getLoginAs())) {
 
 
                     return ResponseEntity.ok(" USER Login Successfully");
 
 
                 }
-                else if ("MECHANIC".equals(user.getLoginAs().toUpperCase())) {
+                else if ("MECHANIC".equalsIgnoreCase(user.getLoginAs())) {
+
                     Mechanic mech = mechRepo.findByPhonenumber(user.getPhonenumber()).get();
 
-                        return ResponseEntity.ok(mech);
-   }
+                    // ✅ Password sahi tha, ab verification check karo
+                    if (!mech.isIsverified()) {
+                        System.out.println("Mechanic not verified by admin.");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body("Mechanic is not verified by admin ❌");
+                    }
+
+                    if (!mech.isIsotpverified()) {
+                        System.out.println("Mechanic OTP not verified.");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body("Mechanic phone number is not OTP verified ❌");
+                    }
+
+                    System.out.println("MECHANIC login successful.");
+                    return ResponseEntity.ok(mech);
+                }
                 }
          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Number or password ❌");
         } catch (AuthenticationException e) {
@@ -266,8 +333,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             Optional<VerificationToken> checkToken = tokenRepo.findByTokenAndUser_Userid(token.getToken() , user.getUserid() );
             if(checkToken.isPresent()){
                 VerificationToken token1 = checkToken.get();
-                if (token1.getExpiryDate().before(Calendar.getInstance().getTime())) {
-                    return ResponseEntity.status(498).body("Expired Token");
+                if (token1.getExpiryDate().isBefore(Instant.now())) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token Expired, please request again");
                 }
                     tokenRepo.delete(token1);
                 return ResponseEntity.ok("Token Verified");

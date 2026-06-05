@@ -613,35 +613,38 @@ public class AppointmentService {
         List<Appointments> myAppointments = appointmentRepository.findByMechanic(mechanic);
 
         for (Appointments apt : myAppointments) {
-            MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
-            dto.setAppointmentid(apt.getAppointmentId());
-            dto.setStatus(apt.getStatus().toString());
-            dto.setAppointmentDate(apt.getAppointmentDate());
-            dto.setAppointmentTime(apt.getAppointmentTime());
-            dto.setProblemDescription(apt.getProblemDescription());
-            dto.setLatitude(apt.getLatitude());
-            dto.setLongitude(apt.getLongitude());
-            dto.setServiceType(apt.getServiceType());
-            dto.setCreated_at(apt.getCreatedAt());
-            dto.setReason(apt.getReason());
-            if(apt.getPaymentStatus()!=null){
-                dto.setPaymentStatus(apt.getPaymentStatus().toString());
+            if(apt.getStatus()!=AppointmentStatus.PENDING){
+                MechanicAppointmentDTO dto = new MechanicAppointmentDTO();
+                dto.setAppointmentid(apt.getAppointmentId());
+                dto.setStatus(apt.getStatus().toString());
+                dto.setAppointmentDate(apt.getAppointmentDate());
+                dto.setAppointmentTime(apt.getAppointmentTime());
+                dto.setProblemDescription(apt.getProblemDescription());
+                dto.setLatitude(apt.getLatitude());
+                dto.setLongitude(apt.getLongitude());
+                dto.setServiceType(apt.getServiceType());
+                dto.setCreated_at(apt.getCreatedAt());
+                dto.setReason(apt.getReason());
+                if(apt.getPaymentStatus()!=null){
+                    dto.setPaymentStatus(apt.getPaymentStatus().toString());
 
+                }
+                dto.setUseraddress(apt.getAddress());
+                dto.setUsername(apt.getUser().getUsername());
+                dto.setUserimage(apt.getUser().getUserimgurl());
+                dto.setUserphonenumber(apt.getUser().getPhonenumber());
+                dto.setMechshoplat(mechanic.getShoplatitude());
+                dto.setMechshoplong(mechanic.getShoplongitude());
+
+                if(apt.getVisitingCharge()!=null && apt.getRepairAmount()!=null  && apt.getAmount()!=null ){
+                    dto.setVisitingcharges(apt.getVisitingCharge());
+                    dto.setAmount(apt.getAmount());
+                    dto.setRepairAmount(apt.getRepairAmount());
+                }
+
+                listofappointments.add(dto);
             }
-            dto.setUseraddress(apt.getAddress());
-            dto.setUsername(apt.getUser().getUsername());
-            dto.setUserimage(apt.getUser().getUserimgurl());
-            dto.setUserphonenumber(apt.getUser().getPhonenumber());
-            dto.setMechshoplat(mechanic.getShoplatitude());
-            dto.setMechshoplong(mechanic.getShoplongitude());
 
-            if(apt.getVisitingCharge()!=null && apt.getRepairAmount()!=null  && apt.getAmount()!=null ){
-                dto.setVisitingcharges(apt.getVisitingCharge());
-                dto.setAmount(apt.getAmount());
-                dto.setRepairAmount(apt.getRepairAmount());
-            }
-
-            listofappointments.add(dto);
         }
 
         if (listofappointments.isEmpty()) {

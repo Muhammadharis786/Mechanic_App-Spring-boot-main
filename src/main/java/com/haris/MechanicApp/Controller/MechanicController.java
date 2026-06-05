@@ -1,6 +1,8 @@
 package com.haris.MechanicApp.Controller;
 
 import com.haris.MechanicApp.Model.Mechanic.*;
+import com.haris.MechanicApp.Model.Verification.DtoUser;
+import com.haris.MechanicApp.Model.Verification.ForgotNumber;
 import com.haris.MechanicApp.Model.Verification.Token;
 import com.haris.MechanicApp.Repository.MechanicRepository;
 import com.haris.MechanicApp.Service.MechanicService;
@@ -88,6 +90,29 @@ public class MechanicController {
 
 
     }
+
+    @PostMapping("api/mechanic/forget")
+    public ResponseEntity<?> forgotmechanic(
+      @RequestBody ForgotNumber number
+    ){
+      return   mechanicService.forgotpasswords(number.getPhonenumber());
+    }
+
+    @PostMapping("api/mechanic/forget/verifytoken")
+
+    public ResponseEntity<?> verifynewpasswordtoken (
+            @RequestBody Token token
+    ) {
+        return mechanicService.verifynewPasswordToken(token);
+    }
+
+    @PostMapping("api/mechanic/forget/newPassword")
+    public ResponseEntity<?> updatepassword(@RequestBody DtoUser user) {
+
+        return mechanicService.updatePassword(user);
+
+    }
+
 
     @PostMapping ("api/mechanic/checknumber")
     public ResponseEntity<?> checkNumber( @RequestBody MechanicNumnerDto numberDto){

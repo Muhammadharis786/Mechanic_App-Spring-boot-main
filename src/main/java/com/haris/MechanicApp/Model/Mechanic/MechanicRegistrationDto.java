@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MechanicRegistrationDto {
-    private long userid;
+
     private String name;
     private String phonenumber;
    private String shopaddress;

@@ -3,7 +3,9 @@ package com.haris.MechanicApp.Model.Verification;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -15,7 +17,7 @@ public class VerificationToken  {
    @GeneratedValue (strategy = GenerationType.IDENTITY)
 
    private long id ;
-    private Date expiryDate ;
+    private Instant expiryDate ;
    private String token;
     @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)
     @JoinColumn(nullable = false, name = "userid")
@@ -32,8 +34,8 @@ public class VerificationToken  {
         this.token = token;
     }
 
-    public void setExpiryDate(int ExpiryDate) {
-        this.expiryDate = calculateExpiryDate(ExpiryDate);
+    public void setExpiryDate(int expiryTimeInMinutes) {
+        this.expiryDate = Instant.now().plus(expiryTimeInMinutes, ChronoUnit.MINUTES);
     }
 
     public LocalDateTime getCreatedDate() {
@@ -44,16 +46,11 @@ public class VerificationToken  {
         this.createdDate = createdDate;
     }
 
-    public Date getExpiryDate() {
+    public Instant getExpiryDate() {
         return expiryDate;
     }
 
-    private Date calculateExpiryDate(int expiryTimeInMinutes) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(new Date(cal.getTime().getTime()));
-        cal.add(Calendar.MINUTE, expiryTimeInMinutes);
-        return new Date(cal.getTime().getTime());
-    }
+
 
     public long getId() {
         return id;

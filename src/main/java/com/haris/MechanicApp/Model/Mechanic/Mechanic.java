@@ -24,8 +24,8 @@ public class Mechanic {
     private String password;
 
 
-
-
+      @Column(name = "is_complete_register")
+     boolean iscompleteRegister=false;
 
     // 📱 Contact Information
     @Column(name = "phone_number")

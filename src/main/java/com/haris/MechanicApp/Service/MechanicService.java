@@ -25,7 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -79,11 +81,13 @@ public class MechanicService    {
             MechanicRegistrationDto mechanicdata,
             MultipartFile mecanicimg,
             MultipartFile cnicbackimg,
-            MultipartFile cnicfrontimg) {
+            MultipartFile cnicfrontimg
+    )
+    {
 
         try {
             Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(mechanicdata.getPhonenumber());
-            Optional<User> user = userRepository.findById(mechanicdata.getUserid());
+            Optional<User> user = userRepository.findByPhonenumber(mechanicdata.getPhonenumber());
          if (user.isPresent()) {
                 User mechanicAndduser = user.get();
                 if(checkmechanic.isPresent()){
@@ -123,8 +127,9 @@ public class MechanicService    {
                     newregisteredmechanic.setCnicfronturl(cnicFrontUrl);
                     newregisteredmechanic.setCnicbackurl(cnicBackUrl);
 
-
+                    newregisteredmechanic.setIscompleteRegister(true);
                     System.out.println("hogya mechanic registered");
+
                     mechanicRepository.save(newregisteredmechanic);
                     // Jab mechanic register ya login kare
                     String  mechanictype= mechanicdata.getMechanictype().toUpperCase();
@@ -249,40 +254,97 @@ public class MechanicService    {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
     }
+    public String modernDate() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMM yyyy h:mm a", Locale.ENGLISH);
+        String formattedDate = now.format(formatter).toLowerCase();
 
+        formattedDate = formattedDate.substring(0, 2) +
+                formattedDate.substring(2, 3).toUpperCase() +
+                formattedDate.substring(3);
+
+        return formattedDate;
+    }
     public ResponseEntity<?>    mechanicOtp(MechOtpDto otpDto) {
     Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(otpDto.getPhonenumber());
-        Optional<User> checuser = userRepository.findByUserid(otpDto.getUserid());
-        System.out.println(otpDto.getUserid());
+        Optional<User> checuser = userRepository.findByPhonenumber(otpDto.getPhonenumber());
 
+         String token = String.format("%06d", new Random().nextInt(999999));
 
-        String token = String.format("%06d", new Random().nextInt(999999));
-
-
-
-        if(checuser.isPresent()){
-            User user = checuser.get();
             if(checkmechanic.isPresent()){
-                Mechanic mech =  checkmechanic.get();
-                if (mech.isIsotpverified()){
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Number Already used");
+            Mechanic mech =  checkmechanic.get();
+            if (mech.isIsotpverified()  && mech.isIscompleteRegister()){
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Number Already used");
 
-                }
-                createToken (token , mech);
-                whtsappotp.sendwhatsappotp(otpDto.getPhonenumber() , token);
-                return ResponseEntity.ok("Check your WhatsApp Number: "+ otpDto.getPhonenumber());
             }
+
+            createToken (token , mech);
+                try {
+                    whtsappotp.sendwhatsappotp(otpDto.getPhonenumber(), token);
+                } catch (Exception e) {
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && (
+                            errorMsg.contains("30") ||      // 30 sec wala message
+                                    errorMsg.contains("rate") ||
+                                    errorMsg.contains("limit") ||
+                                    errorMsg.contains("too many")
+                    )) {
+                        return ResponseEntity
+                                .status(HttpStatus.TOO_MANY_REQUESTS)
+                                .body("Please wait 30 seconds before requesting another OTP");
+                    }
+                    return ResponseEntity
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Failed to send OTP, please try again");
+                }
+            return ResponseEntity.ok("Check your WhatsApp Number: "+ otpDto.getPhonenumber());
+        }
+
+        User user;
+        if(checuser.isPresent()) {
+            user = checuser.get();
+
+        }
+        else {
+            // User nahi hai — automatically bana do
+            user = new User();
+            user.setUsername(otpDto.getPhonenumber());         // MechOtpDto mein name add karo
+            user.setPhonenumber(otpDto.getPhonenumber());
+            user.setEnabled(true);
+            user.setPassword(encoder.encode(otpDto.getPassword()));
+            user.setRegistrationDate(modernDate());
+            user.getRoles().add(Role.USER);
+            userRepository.save(user);
+        }
             Mechanic newmechanic =  new Mechanic();
             newmechanic.setPhonenumber(otpDto.getPhonenumber());
             newmechanic.setPassword(encoder.encode(otpDto.getPassword()));
             newmechanic.setUser(user);
             mechanicRepository.save(newmechanic);
+
+
             createToken (token , newmechanic);
-            whtsappotp.sendwhatsappotp(otpDto.getPhonenumber() , token);
+        try {
+            whtsappotp.sendwhatsappotp(otpDto.getPhonenumber(), token);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (
+                    errorMsg.contains("30") ||      // 30 sec wala message
+                            errorMsg.contains("rate") ||
+                            errorMsg.contains("limit") ||
+                            errorMsg.contains("too many")
+            )) {
+                return ResponseEntity
+                        .status(HttpStatus.TOO_MANY_REQUESTS)
+                        .body("Please wait 30 seconds before requesting another OTP");
+            }
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send OTP, please try again");
+        }
 
                 return ResponseEntity.ok("Check your WhatsApp Number"+ otpDto.getPhonenumber());
-            }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("First Create User Account");
+
 
 }
 
@@ -309,11 +371,11 @@ public class MechanicService    {
 
         if(checktoken.isPresent()){
    VerificationTokenMechanic Token = checktoken.get();
-    Date expiryDate =  Token.getExpiryDate();
-    Date currentDate = new Date();
-   if(expiryDate.before(currentDate)){
-       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token Expired Again send OTP");
-   }
+            // Instant se compare karo
+            if (Token.getExpiryDate().isBefore(Instant.now())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Token Expired, please request again");
+            }
     otptokenrepo.delete(Token);
 
     Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(token.getPhonenumber());
@@ -360,5 +422,75 @@ return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please ente
                 "false"
         );
         return ResponseEntity.status(HttpStatus.OK).body("Mechanic Offline Successfully");
+ }
+
+    public ResponseEntity<?> forgotpasswords(String number) {
+        System.out.println("This is number: "+ number);
+
+        Optional<Mechanic> checmechanic = mechanicRepository.findByPhonenumber(number);
+        if (checmechanic.isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+        }
+
+        Mechanic mechanic =  checmechanic.get();
+
+        if(!mechanic.isIscompleteRegister()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Create Mechanic Account");
+
+        }
+        String token = String.format("%06d", new Random().nextInt(999999));
+        createToken( token , mechanic);
+        try {
+            whtsappotp.sendwhatsappotp(mechanic.getPhonenumber(), token);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (
+                    errorMsg.contains("30") ||      // 30 sec wala message
+                            errorMsg.contains("rate") ||
+                            errorMsg.contains("limit") ||
+                            errorMsg.contains("too many")
+            )) {
+                return ResponseEntity
+                        .status(HttpStatus.TOO_MANY_REQUESTS)
+                        .body("Please wait 30 seconds before requesting another OTP");
+            }
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send OTP, please try again");
+        }
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body("We have sent otp to whatsapp "+ mechanic.getPhonenumber());
+    }
+
+    public ResponseEntity<?> verifynewPasswordToken(Token token) {
+        Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(token.getPhonenumber());
+        if(checkmechanic.isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+        }
+        Mechanic mechanic =  checkmechanic.get();
+        Optional<VerificationTokenMechanic> checkToken = otptokenrepo.findByTokenAndMechanic_Phonenumber(token.getToken() , mechanic.getPhonenumber() );
+            if (checkToken.isEmpty()){
+                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token Not Found");
+            }
+            VerificationTokenMechanic token1 = checkToken.get();
+
+        if (token1.getExpiryDate().isBefore(Instant.now())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Token Expired, please request again");
+        }
+        otptokenrepo.delete(token1);
+        return ResponseEntity.ok("Token Verified");
+ }
+
+    public ResponseEntity<?> updatePassword(DtoUser mechanic) {
+        Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(mechanic.getPhonenumber());
+        if(checkmechanic.isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+        }
+        Mechanic updatemechpassword =  checkmechanic.get();
+        updatemechpassword.setPassword(encoder.encode((mechanic.getPassword())));
+        mechanicRepository.save(updatemechpassword);
+        return  ResponseEntity.ok("Password Updated Successfully");
  }
 }

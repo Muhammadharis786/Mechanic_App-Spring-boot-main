@@ -60,31 +60,21 @@ public class CustomUserDetailsService_Final   implements UserDetailsService {
           throw new UsernameNotFoundException("User not found with Phone Number: " + phonenumber);
 
       }
-      else if ("MECHANIC".equalsIgnoreCase(Role)){
+      else if ("MECHANIC".equalsIgnoreCase(Role)) {
           System.out.println("Searching for a MECHANIC in the database...");
 
           Optional<Mechanic> checkmech = mechanicRepository.findByPhonenumber(phonenumber);
-          if(checkmech.isPresent()){
-              Mechanic mechanic =  checkmech.get();
-              if(!mechanic.isIsverified()){
-                  throw new UsernameNotFoundException("Mechanic is not verified by admin") ;
-
-              }
-            if(!mechanic.isIsotpverified()){
-                    throw new UsernameNotFoundException("Mechaic Number is  not Verified");
-              }
+          if (checkmech.isPresent()) {
+              // ✅ Verification check yahan se hata diya
+              // Sirf UserDetails return karo taake Spring password check kar sake
               System.out.println("SUCCESS: Mechanic found! Creating MyPrincipalMechanic object.");
-
               return new MyPrincipalMechanic(checkmech.get());
           }
+
           System.out.println("FAILURE: Mechanic not found with Phone Number: " + phonenumber);
-
           throw new UsernameNotFoundException("Mechanic not found with Phone Number: " + phonenumber);
-
-
       }
         System.out.println("ERROR: Invalid role specified: " + Role);
-
           throw new UsernameNotFoundException("Invalid role specified: " + Role);
 
     }

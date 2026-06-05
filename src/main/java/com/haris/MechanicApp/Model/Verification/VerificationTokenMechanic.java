@@ -3,7 +3,9 @@ package com.haris.MechanicApp.Model.Verification;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -15,7 +17,7 @@ public class VerificationTokenMechanic {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 
     private long id ;
-    private Date expiryDate ;
+    private Instant expiryDate;
     private String token;
     @OneToOne(targetEntity = Mechanic.class, fetch = FetchType.EAGER)
     @JoinColumn(name = "mechid", referencedColumnName = "id", nullable = false, unique = true)
@@ -30,13 +32,13 @@ public class VerificationTokenMechanic {
         this.token = token;
     }
 
-    public void setExpiryDate(int ExpiryDate) {
-        this.expiryDate = calculateExpiryDate(ExpiryDate);
+    public void setExpiryDate(int expiryTimeInMinutes) {
+        this.expiryDate = Instant.now().plus(expiryTimeInMinutes, ChronoUnit.MINUTES);
     }
 
 
 
-    public Date getExpiryDate() {
+    public Instant getExpiryDate() {
         return expiryDate;
     }
 
