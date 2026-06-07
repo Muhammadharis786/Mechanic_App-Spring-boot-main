@@ -3,6 +3,7 @@ package com.haris.MechanicApp.Repository;
 import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Verification.User;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,7 +24,17 @@ public interface AppointmentRepository  extends JpaRepository<Appointments , Str
 
     List<Appointments> findByMechanic(Mechanic mechanic);
 
+// AppointmentRepository.java
 
+    @Query("SELECT a FROM Appointments a WHERE a.mechanic = :mechanic " +
+            "AND a.status = 'COMPLETED' " +
+            "AND a.completedAt >= :startOfDay " +
+            "AND a.completedAt < :endOfDay")
+    List<Appointments> findTodayCompletedByMechanic(
+            @Param("mechanic") Mechanic mechanic,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("endOfDay") Instant endOfDay
+    );
 
     Optional<Appointments> findByAppointmentIdAndUser(String appointmentid, User user);
 

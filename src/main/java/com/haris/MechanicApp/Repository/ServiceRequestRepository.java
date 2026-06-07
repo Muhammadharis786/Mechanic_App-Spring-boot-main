@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface ServiceRequestRepository extends JpaRepository<RequestService, Long> {
@@ -32,6 +34,18 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
     """, nativeQuery = true)
     Optional<RequestService> findActiveAcceptedRequestByMechanicId(
             @Param("mechanicId") Long mechanicId
+    );
+
+    // ServiceRequestRepository.java
+
+    @Query("SELECT r FROM RequestService r WHERE r.mechanic = :mechanic " +
+            "AND r.requestStatus = 'COMPLETED' " +
+            "AND r.completedAt >= :startOfDay " +
+            "AND r.completedAt < :endOfDay")
+    List<RequestService> findTodayCompletedByMechanic(
+            @Param("mechanic") Mechanic mechanic,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("endOfDay") Instant endOfDay
     );
 
 

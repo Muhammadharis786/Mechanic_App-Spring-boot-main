@@ -3,11 +3,11 @@ package com.haris.MechanicApp.Service;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Mechanic.*;
+import com.haris.MechanicApp.Model.RequestService.RequestService;
 import com.haris.MechanicApp.Model.Verification.*;
-import com.haris.MechanicApp.Repository.MechanicRepository;
-import com.haris.MechanicApp.Repository.OtpTokenMechanicRepository;
-import com.haris.MechanicApp.Repository.UserRepository;
+import com.haris.MechanicApp.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.geo.Point;
@@ -26,7 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -40,6 +42,12 @@ public class MechanicService    {
     private MechanicRepository mechanicRepository;
     @Autowired
     private UserRepository userRepository;
+
+
+    @Autowired
+    private AppointmentRepository appointmentRepository ;
+    @Autowired
+    private ServiceRequestRepository serviceRequestRepository;
     @Autowired
     private WhatsappOtpService whtsappotp;
     @Autowired
@@ -230,19 +238,70 @@ public class MechanicService    {
     }
 
     public ResponseEntity<?> mechanicdashboard(String phonenumber) {
-        System.out.println("Mecahnic Dashboard Call hogya ");
-        Optional <Mechanic >  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
-        if(checkmechanic.isPresent()){
+        System.out.println("Mechanic Dashboard Call hogya");
+        Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
+        if (checkmechanic.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+        Mechanic mechanic = checkmechanic.get();
+        // ── Aaj ki start aur end time calculate karo ──
+        Instant startOfDay = LocalDate.now()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant();
 
-            Mechanic verfiedmechanic = checkmechanic.get();
-            System.out.println("Mechanic ka data show hoga ab");
-            return  ResponseEntity.status(HttpStatus.OK).body(verfiedmechanic);
+        Instant endOfDay = LocalDate.now()
+                .plusDays(1)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant() ;
 
+        // ── Aaj ki Appointments list ──
+        List<Appointments> todayAppointments = appointmentRepository
+                .findTodayCompletedByMechanic(mechanic, startOfDay, endOfDay);
+
+        // ── Aaj ki ServiceRequests list ──
+        List<RequestService> todayServiceRequests = serviceRequestRepository
+                .findTodayCompletedByMechanic(mechanic, startOfDay, endOfDay);
+
+
+        // ── Today Services Count ──
+        int todayServices = todayAppointments.size() + todayServiceRequests.size();
+
+        // ── Today Earnings Calculate karo ──
+        double todayEarnings = 0.0;
+
+        // Appointments se earnings nikalo
+        for (Appointments app : todayAppointments) {
+            if (app.getAmount() != null) {
+                todayEarnings += app.getAmount().doubleValue();
+                System.out.println("meray pass yha say aya hay amount " + app.getAmount() +" and id "+app.getAppointmentId());
+            }
 
         }
-        System.out.println("Mechanic mila hi nh hay");
-        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
 
+        // ServiceRequests se earnings nikalo
+        for (RequestService sr : todayServiceRequests) {
+            if (sr.getFinalAmount() != null) {
+                todayEarnings += sr.getFinalAmount();
+                System.out.println("meray pass yha say aya hay amount " + sr.getFinalAmount() +" and id "+sr.getRequestId());
+            }
+
+        }
+
+
+        // ── Response Map banao ──
+        Map<String, Object> response = new HashMap<>();
+        response.put("name", mechanic.getName());
+        response.put("averageRating", mechanic.getAverageRating());
+        response.put("totalearning", mechanic.getTotalearning());
+        response.put("totalServices", mechanic.getTotalJobsCompleted());
+        response.put("mechanicimgurl", mechanic.getMechanicimgurl());
+        response.put("isonline", mechanic.isIsactive());
+
+        // ✅ Naya add hua
+        response.put("todaysEarnings", todayEarnings);
+        response.put("todaysServices", todayServices);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     public ResponseEntity<?> dltmechani(long mechid) {
@@ -275,7 +334,6 @@ public class MechanicService    {
             Mechanic mech =  checkmechanic.get();
             if (mech.isIsotpverified()  && mech.isIscompleteRegister()){
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Number Already used");
-
             }
 
             createToken (token , mech);

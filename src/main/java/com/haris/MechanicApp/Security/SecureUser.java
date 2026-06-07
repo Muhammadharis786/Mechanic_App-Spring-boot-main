@@ -69,6 +69,10 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/mechanic/forget/newPassword").permitAll()
                         .requestMatchers( "/api/mechanic/forget/verifytoken").permitAll()
                         .requestMatchers("/api/mechanic/forget").permitAll()
+                        .requestMatchers("/create").permitAll()
+
+
+
 
 
 

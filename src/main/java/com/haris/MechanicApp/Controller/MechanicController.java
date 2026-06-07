@@ -91,7 +91,7 @@ public class MechanicController {
 
     }
 
-    @PostMapping("api/mechanic/forget")
+        @PostMapping("api/mechanic/forget")
     public ResponseEntity<?> forgotmechanic(
       @RequestBody ForgotNumber number
     ){

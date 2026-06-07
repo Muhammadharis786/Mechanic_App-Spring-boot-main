@@ -1379,6 +1379,7 @@ public class AppointmentService {
         }
         appointment.setPaymentStatus(PaymentStatus.PAID);
         appointment.setStatus(AppointmentStatus.COMPLETED);
+        appointment.setCompletedAt(Instant.now());
         appointment.setPaymentMethod("CASH");
         appointmentRepository.save(appointment);
 

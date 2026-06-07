@@ -32,6 +32,9 @@ public class Appointments {
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
 
+    @Column (name = "completed_at")
+    private Instant completedAt;
+
     // Enum mapping yahan hai
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
