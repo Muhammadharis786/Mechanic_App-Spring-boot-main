@@ -154,6 +154,16 @@ public class MechanicController {
 
     }
 
+    @GetMapping("/api/mechanic/alljobs/history")
+    public ResponseEntity<?> alljobshistory(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return  mechanicService.alljobshistory (userDetails.getUsername());
+
+
+    }
+
+
 
 
 

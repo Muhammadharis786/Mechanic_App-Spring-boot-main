@@ -57,4 +57,7 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
 
     List<RequestService> findTop5ByMechanicAndRequestStatusOrderByCompletedAtDesc(
             Mechanic mechanic, ServiceRequestStatus status
-    );}
+    );
+
+    List<RequestService> findByMechanicAndRequestStatusOrderByCompletedAtDesc(Mechanic mech, ServiceRequestStatus serviceRequestStatus);
+}

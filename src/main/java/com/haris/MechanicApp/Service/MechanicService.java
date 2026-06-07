@@ -580,7 +580,9 @@ return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please ente
                 );
 
         List<Map<String, Object>> activities = new ArrayList<>();
-
+        if(serviceRequests.isEmpty() && appointments.isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No Jobs Done");
+        }
         for (Appointments app : appointments) {
             Map<String, Object> activity = new HashMap<>();
             activity.put("type", "APPOINTMENT");
@@ -617,4 +619,65 @@ return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please ente
 
         return ResponseEntity.ok(top5);
     }
-}
+
+    public ResponseEntity<?> alljobshistory(String phonenumber) {
+
+        Optional<Mechanic>    mechanic = mechanicRepository.findByPhonenumber(phonenumber);
+        if(mechanic.isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+        }
+        // Appointments — last 5 completed
+        Mechanic mech = mechanic.get();
+
+        List<Appointments> appointments = appointmentRepository
+                .findByMechanicAndStatusOrderByCompletedAtDesc(
+                        mech, AppointmentStatus.COMPLETED
+                );
+
+        // ServiceRequests — last 5 completed
+        List<RequestService> serviceRequests = serviceRequestRepository
+                .findByMechanicAndRequestStatusOrderByCompletedAtDesc(
+                        mech, ServiceRequestStatus.COMPLETED
+                );
+
+        if(serviceRequests.isEmpty() && appointments.isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No Jobs Done");
+        }
+
+        List<Map<String, Object>> activities = new ArrayList<>();
+
+        for (Appointments app : appointments) {
+            Map<String, Object> activity = new HashMap<>();
+            activity.put("type", "APPOINTMENT");
+            activity.put("username", app.getUser().getUsername());
+            activity.put("serviceType", app.getServiceType());
+            activity.put("amount", app.getAmount());
+            activity.put("completedAt", app.getCompletedAt());
+            activities.add(activity);
+        }
+
+        for (RequestService sr : serviceRequests) {
+            Map<String, Object> activity = new HashMap<>();
+            activity.put("type", "SERVICE_REQUEST");
+            activity.put("username", sr.getUser().getUsername());
+            activity.put("serviceType", sr.getServiceType());
+            activity.put("amount", sr.getFinalAmount());
+            activity.put("completedAt", sr.getCompletedAt());
+            activities.add(activity);
+        }
+
+        // Date ke hisaab se sort karo — latest pehle
+        activities.sort((a, b) -> {
+            Instant timeA = (Instant) a.get("completedAt");
+            Instant timeB = (Instant) b.get("completedAt");
+            if (timeA == null) return 1;
+            if (timeB == null) return -1;
+            return timeB.compareTo(timeA);
+        });
+
+
+
+        return ResponseEntity.ok(activities);
+    }
+    }
+

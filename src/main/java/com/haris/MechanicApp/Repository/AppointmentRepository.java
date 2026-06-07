@@ -45,4 +45,7 @@ public interface AppointmentRepository  extends JpaRepository<Appointments , Str
 
     List<Appointments> findTop5ByMechanicAndStatusOrderByCompletedAtDesc(
             Mechanic mechanic, AppointmentStatus status
-    );}
+    );
+
+    List<Appointments> findByMechanicAndStatusOrderByCompletedAtDesc(Mechanic mech, AppointmentStatus appointmentStatus);
+}
