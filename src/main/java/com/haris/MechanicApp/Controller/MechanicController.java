@@ -144,7 +144,15 @@ public class MechanicController {
       return  mechanicService.onlinestatus(phonenumber , isOnlineDto);
 }
 
+    // MechanicController.java mein add karo
+    @GetMapping("/api/mechanic/recent-activity")
+    public ResponseEntity<?> getRecentActivity(
+            @AuthenticationPrincipal UserDetails userDetails) {
 
+        return  mechanicService.recentactivities (userDetails.getUsername());
+
+
+    }
 
 
 

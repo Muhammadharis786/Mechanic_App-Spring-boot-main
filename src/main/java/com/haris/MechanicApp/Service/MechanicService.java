@@ -3,9 +3,11 @@ package com.haris.MechanicApp.Service;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.haris.MechanicApp.Model.Appointments.AppointmentStatus;
 import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Mechanic.*;
 import com.haris.MechanicApp.Model.RequestService.RequestService;
+import com.haris.MechanicApp.Model.RequestService.ServiceRequestStatus;
 import com.haris.MechanicApp.Model.Verification.*;
 import com.haris.MechanicApp.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class MechanicService    {
@@ -265,6 +268,12 @@ public class MechanicService    {
 
         // ── Today Services Count ──
         int todayServices = todayAppointments.size() + todayServiceRequests.size();
+        if(todayAppointments.isEmpty()){
+            System.out.println("koy appointment mila hi nh jisper ajki koy pay");
+        }
+        if(todayServiceRequests.isEmpty()){
+
+        }
 
         // ── Today Earnings Calculate karo ──
         double todayEarnings = 0.0;
@@ -551,4 +560,61 @@ return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please ente
         mechanicRepository.save(updatemechpassword);
         return  ResponseEntity.ok("Password Updated Successfully");
  }
+
+    public ResponseEntity<?> recentactivities(String phonenumber) {
+       Optional<Mechanic>    mechanic = mechanicRepository.findByPhonenumber(phonenumber);
+       if(mechanic.isEmpty()){
+           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+       }
+        // Appointments — last 5 completed
+        Mechanic mech = mechanic.get();
+        List<Appointments> appointments = appointmentRepository
+                .findTop5ByMechanicAndStatusOrderByCompletedAtDesc(
+                        mech, AppointmentStatus.COMPLETED
+                );
+
+        // ServiceRequests — last 5 completed
+        List<RequestService> serviceRequests = serviceRequestRepository
+                .findTop5ByMechanicAndRequestStatusOrderByCompletedAtDesc(
+                        mech, ServiceRequestStatus.COMPLETED
+                );
+
+        List<Map<String, Object>> activities = new ArrayList<>();
+
+        for (Appointments app : appointments) {
+            Map<String, Object> activity = new HashMap<>();
+            activity.put("type", "APPOINTMENT");
+            activity.put("username", app.getUser().getUsername());
+            activity.put("serviceType", app.getServiceType());
+            activity.put("amount", app.getAmount());
+            activity.put("completedAt", app.getCompletedAt());
+            activities.add(activity);
+        }
+
+        for (RequestService sr : serviceRequests) {
+            Map<String, Object> activity = new HashMap<>();
+            activity.put("type", "SERVICE_REQUEST");
+            activity.put("username", sr.getUser().getUsername());
+            activity.put("serviceType", sr.getServiceType());
+            activity.put("amount", sr.getFinalAmount());
+            activity.put("completedAt", sr.getCompletedAt());
+            activities.add(activity);
+        }
+
+        // Date ke hisaab se sort karo — latest pehle
+        activities.sort((a, b) -> {
+            Instant timeA = (Instant) a.get("completedAt");
+            Instant timeB = (Instant) b.get("completedAt");
+            if (timeA == null) return 1;
+            if (timeB == null) return -1;
+            return timeB.compareTo(timeA);
+        });
+
+        // Sirf top 5 rakhो
+        List<Map<String, Object>> top5 = activities.stream()
+                .limit(5)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(top5);
+    }
 }

@@ -2,6 +2,7 @@ package com.haris.MechanicApp.Repository;
 
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.RequestService.RequestService;
+import com.haris.MechanicApp.Model.RequestService.ServiceRequestStatus;
 import com.haris.MechanicApp.Model.Verification.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -53,4 +54,7 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
     Optional<RequestService> findByRequestIdAndMechanic(Long requestId, Mechanic mechanic);
 
     Optional<RequestService> findByRequestIdAndUser(Long requestId, User user);
-}
+
+    List<RequestService> findTop5ByMechanicAndRequestStatusOrderByCompletedAtDesc(
+            Mechanic mechanic, ServiceRequestStatus status
+    );}

@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Repository;
 
+import com.haris.MechanicApp.Model.Appointments.AppointmentStatus;
 import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Verification.User;
@@ -41,4 +42,7 @@ public interface AppointmentRepository  extends JpaRepository<Appointments , Str
     Optional<Appointments> findByAppointmentId(String appointmentid);
 
     Optional<Appointments> findByMechanicAndAppointmentId(Mechanic mechanic, String appointmentid);
-}
+
+    List<Appointments> findTop5ByMechanicAndStatusOrderByCompletedAtDesc(
+            Mechanic mechanic, AppointmentStatus status
+    );}

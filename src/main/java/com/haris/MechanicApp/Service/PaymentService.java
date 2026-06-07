@@ -27,6 +27,9 @@ public class PaymentService {
     @Value("${swich.secret-key}")
     private String secretKey;
 
+    @Value("${switch.client-screte-key}")
+    private String clientsecretkey;
+
     @Value("${swich.pwa-url}")
     private String pwaUrl;
     @Autowired
@@ -44,7 +47,7 @@ public class PaymentService {
 
         body.add("grant_type", "client_credentials");
         body.add("client_id", clientId);
-        body.add("client_secret", secretKey);
+        body.add("client_secret", clientsecretkey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(
