@@ -378,7 +378,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File Upload Failed");
                 }
                 verifieduser.setEmail(userDto.getEmail());
-                verifieduser.setPassword(  encoder.encode(userDto.getPassword()));
+
                 verifieduser.setUsername(userDto.getUsername());
                 verifieduser.setUserimgurl(mechanicImageUrl);
                 userRepo.save(verifieduser);

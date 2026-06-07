@@ -8,6 +8,7 @@ import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Mechanic.*;
 import com.haris.MechanicApp.Model.RequestService.RequestService;
 import com.haris.MechanicApp.Model.RequestService.ServiceRequestStatus;
+import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.*;
 import com.haris.MechanicApp.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -679,5 +680,56 @@ return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please ente
 
         return ResponseEntity.ok(activities);
     }
+public ResponseEntity<?>showmechanicprofile (String phonenumber) {
+    Optional<Mechanic>  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
+
+    if(checkmechanic.isEmpty()){
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
+    }
+    Mechanic mechanic =   checkmechanic.get();
+    Map<String, Object>  profiledata = new HashMap<>();
+    profiledata.put("username", mechanic.getUser().getUsername());
+    profiledata.put("phonenumber", mechanic.getPhonenumber());
+    profiledata.put("mechanicimage", mechanic.getMechanicimgurl());
+    profiledata.put("experience", mechanic.getExperienceyears());
+    profiledata.put("shopaddress", mechanic.getShopaddress());
+
+    return ResponseEntity.ok(profiledata);
+}
+    public ResponseEntity<?> updatemechanic(MechanicUpdateDto mechdto,
+                                        MultipartFile mechimage ,
+                                        String phonenumber) {
+
+        Optional<Mechanic>  checkmechanic = mechanicRepository.findByPhonenumber(phonenumber);
+        try
+        {
+            if(checkmechanic.isPresent()){
+
+                Mechanic mechanic =   checkmechanic.get();
+                String mechanicImageUrl = uploadFileToGcs(mechimage, "mechanic_images");
+                if(mechanicImageUrl == null){
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File Upload Failed");
+                }
+
+
+                mechanic.setName(mechdto.getName());
+                mechanic.setMechanicimgurl(mechanicImageUrl);
+                mechanic.setShopaddress(mechdto.getShopaddress());
+                mechanic.setExperienceyears(mechdto.getExperience());
+
+                mechanicRepository.save(mechanic);
+
+
+
+                return ResponseEntity.ok("Updated Succesfully");
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User Not Exist");
+
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     }
 

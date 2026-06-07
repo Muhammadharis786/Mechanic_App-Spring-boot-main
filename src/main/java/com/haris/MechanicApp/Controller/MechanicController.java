@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Controller;
 
 import com.haris.MechanicApp.Model.Mechanic.*;
+import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.DtoUser;
 import com.haris.MechanicApp.Model.Verification.ForgotNumber;
 import com.haris.MechanicApp.Model.Verification.Token;
@@ -164,6 +165,16 @@ public class MechanicController {
     }
 
 
+
+
+    @GetMapping("/api/mechanic/showprofile")
+    public ResponseEntity<?> showprofile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return  mechanicService.showmechanicprofile (userDetails.getUsername());
+
+
+    }
 
 
 
