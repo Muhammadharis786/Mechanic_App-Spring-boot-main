@@ -6,6 +6,7 @@ import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicDTO;
 import com.haris.MechanicApp.Model.Mechanic.NearbyMechanicMapResponseDto;
+import com.haris.MechanicApp.Model.Notification.NotificationType;
 import com.haris.MechanicApp.Model.Payment.PaymentTypeDto;
 import com.haris.MechanicApp.Model.RequestService.*;
 import com.haris.MechanicApp.Model.Review.Review;
@@ -59,6 +60,9 @@ public class ServiceRequestService {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private FcmService fcmService;
 
     public ResponseEntity<?> createRequest(CreateServiceRequestDto dto, String userPhoneNumber) {
 
@@ -265,6 +269,28 @@ public class ServiceRequestService {
                 new ArrayList<>(mechanicPoints.keySet())
 
         );
+
+       List<Mechanic> allnearbyvalidmechanics =   mechanicRepository.findAllById(validMechanicIds);
+        Map<String, String> fcmData = new HashMap<>();
+        fcmData.put("type", NotificationType.ROAD_REQUEST.toString());
+        fcmData.put("requestid", String.valueOf(request.getRequestId())  );
+        String redisKey = "request:mechanics:" + request.getRequestId();
+
+        for (Mechanic mech : allnearbyvalidmechanics) {
+
+           redisTemplate.opsForSet().add(
+                   redisKey,
+                  mech.getId().toString()
+           );
+            System.out.println("acha ye"+ mech.getId().toString() + " id redis may jarhi hay is key per request:mechanics:" + request.getRequestId());
+
+            fcmService.sendToMechanic(
+                    mech,
+                   "Emergency Request",
+                   "Need Emergency: "+ request.getUserNotes(),
+                   fcmData
+           );
+       }
         //        mechanic online bhi hona chie service type match hona chie engaged nh hona chie aur mechanci verified bhi hona chie
         //ager nh hay ye sari chizay tu empty hay
         if (validMechanicIds.isEmpty()) {
@@ -272,15 +298,9 @@ public class ServiceRequestService {
 
         }
 
-        String redisKey = "request:mechanics:" + request.getRequestId();
 
-        for (Long mechanicId : validMechanicIds) {
-            redisTemplate.opsForSet().add(
-                    redisKey,
-                    mechanicId.toString()
-            );
-            System.out.println("acha ye"+  mechanicId + " id redis may jarhi hay is key per request:mechanics:" + request.getRequestId());
-        }
+
+
 
 
         StringBuilder destinationsparam = new StringBuilder();
@@ -305,10 +325,11 @@ public class ServiceRequestService {
                         .append("|");
 
                 orderedMechanicIds.add(mechanicId);
+
             }
 
         }
-
+        System.out.println("ye saray nearby mechanics hain: "+ orderedMechanicIds);
 
         if (!destinationsparam.isEmpty()) {
             destinationsparam.setLength(destinationsparam.length() - 1);
@@ -340,6 +361,8 @@ public class ServiceRequestService {
                 eta = roadInfo.getDistancetime();
             }
 
+
+
             MechanicRequestNotificationDto notificationDto =
                     new MechanicRequestNotificationDto(
                             request.getRequestId(),
@@ -355,6 +378,10 @@ public class ServiceRequestService {
                             request.getUser().getUsername() ,
                             request.getUser().getUserimgurl()
                     );
+
+
+
+
 
             simpMessagingTemplate.convertAndSend(
                     "/topic/mechanic/requests/" + mechanicId,

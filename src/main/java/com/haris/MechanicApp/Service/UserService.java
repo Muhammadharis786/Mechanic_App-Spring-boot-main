@@ -304,10 +304,12 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
                                 .body("Mechanic is not verified by admin ❌");
                     }
 
-                    if (!mech.isIsotpverified()) {
-                        System.out.println("Mechanic OTP not verified.");
+
+
+                    if(!mech.isIscompleteRegister()){
+                        System.out.println("Mechanic not complete registration");
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                .body("Mechanic phone number is not OTP verified ❌");
+                                .body("First Complete Registrariion❌");
                     }
 
                     System.out.println("MECHANIC login successful.");
