@@ -688,7 +688,7 @@ public ResponseEntity<?>showmechanicprofile (String phonenumber) {
     }
     Mechanic mechanic =   checkmechanic.get();
     Map<String, Object>  profiledata = new HashMap<>();
-    profiledata.put("username", mechanic.getUser().getUsername());
+    profiledata.put("username", mechanic.getName());
     profiledata.put("phonenumber", mechanic.getPhonenumber());
     profiledata.put("mechanicimage", mechanic.getMechanicimgurl());
     profiledata.put("experience", mechanic.getExperienceyears());
