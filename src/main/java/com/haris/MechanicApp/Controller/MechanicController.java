@@ -176,7 +176,17 @@ public class MechanicController {
 
     }
 
+    @PutMapping(value = "api/save/mechanic/userimage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 
+    public ResponseEntity<?> updateUser(
+            @RequestPart("mechanicimage") MultipartFile userimage,
+            @RequestPart("mechanicdata") MechanicUpdateDto mechDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String phonenumber = userDetails.getUsername();
+        return mechanicService.updatemechanic(mechDto, userimage, phonenumber);
+
+    }
 
 
 }

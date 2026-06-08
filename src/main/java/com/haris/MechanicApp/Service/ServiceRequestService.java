@@ -194,7 +194,7 @@ public class ServiceRequestService {
         }
 
         Optional<Mechanic> mechanicOptional =
-                mechanicRepository.findByPhonenumber(selectedPhone.trim());
+                mechanicRepository.findByPhonenumber(selectedPhone);
         if (mechanicOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
         }
