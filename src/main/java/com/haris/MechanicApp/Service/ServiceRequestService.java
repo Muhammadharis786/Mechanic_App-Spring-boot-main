@@ -274,6 +274,14 @@ public class ServiceRequestService {
         Map<String, String> fcmData = new HashMap<>();
         fcmData.put("type", NotificationType.ROAD_REQUEST.toString());
         fcmData.put("requestid", String.valueOf(request.getRequestId())  );
+        fcmData.put("userLatitude", String.valueOf(request.getUserLatitude()));
+        fcmData.put("userLongitude", String.valueOf(request.getUserLongitude()));
+        fcmData.put("locationName", request.getLocationName());
+        fcmData.put("serviceType", request.getServiceType());
+        fcmData.put("notes", request.getUserNotes());
+        fcmData.put("username", request.getUser().getUsername());
+
+
         String redisKey = "request:mechanics:" + request.getRequestId();
 
         for (Mechanic mech : allnearbyvalidmechanics) {

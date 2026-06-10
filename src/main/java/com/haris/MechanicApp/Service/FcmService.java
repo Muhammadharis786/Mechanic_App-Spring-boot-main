@@ -100,14 +100,21 @@ public class FcmService {
                                 .setBody(body)
                                 .build())
                         .putAllData(data != null ? data : new HashMap<>())
-                        .setAndroidConfig(AndroidConfig.builder()
-                                .setPriority(AndroidConfig.Priority.HIGH)
-                                .setNotification(AndroidNotification.builder()
-                                        .setChannelId("onfix_high_importance")
-                                        .setSound("default")
-                                        .setIcon("ic_launcher")
+                        .setAndroidConfig(
+                                AndroidConfig.builder()
+
+                                        .setPriority(
+                                                AndroidConfig.Priority.HIGH
+                                        )
+
+                                        .setNotification(
+                                                AndroidNotification
+                                                        .builder()
+                                                        .setChannelId("emergency_channel").setSound("emergency").setPriority(AndroidNotification.Priority.MAX)
+                                                        .setDefaultVibrateTimings(true)
+                                                        .setIcon("ic_launcher")
+                                                        .build())
                                         .build())
-                                .build())
                         .build();
 
 

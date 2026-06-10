@@ -1356,17 +1356,16 @@ public class AppointmentService {
 
 
     public ResponseEntity<?> paycash(String phonenumber, String appointmentid) {
-        Optional<Mechanic> checkmechanic = mechanicrepo.findByPhonenumber(phonenumber);
-        if (checkmechanic.isEmpty()) {
+        Optional<User> checkuser = userRepo.findByPhonenumber(phonenumber);
+        if (checkuser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
         }
-
-        Mechanic mechanic = checkmechanic.get();
-
-        Optional<Appointments> checkappointment =
-                appointmentRepository.findByMechanicAndAppointmentId(mechanic, appointmentid);
+User user  = checkuser.get();
+        System.out.println("user mil gya hay ");
+        Optional<Appointments> checkappointment = appointmentRepository.findByAppointmentIdAndUser(appointmentid ,  user);
 
         if (checkappointment.isEmpty()) {
+            System.out.println("user ki ussay koy appointment nh hay ");
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No appointment found");
         }
@@ -1382,11 +1381,11 @@ public class AppointmentService {
         appointment.setCompletedAt(Instant.now());
         appointment.setPaymentMethod("CASH");
         appointmentRepository.save(appointment);
-
+Mechanic mechanic = appointment.getMechanic();
 
         mechanic.setIsengaged(false);
-        mechanic.setTotalJobsCompleted(mechanic.getTotalJobsCompleted() +1 );
-        mechanic.setTotalearning(mechanic.getTotalearning() + appointment.getAmount().intValue());
+        mechanic.setTotalJobsCompleted( mechanic.getTotalJobsCompleted() +1 );
+        appointment.getMechanic().setTotalearning( mechanic.getTotalearning() + appointment.getAmount().intValue());
 
         mechanicrepo.save(mechanic);
 
