@@ -450,7 +450,10 @@ public class MechanicService    {
         Mechanic mech =  checkmechanic.get();
             mech.setIsotpverified(true);
             mechanicRepository.save(mech);
-            return  ResponseEntity.status(HttpStatus.OK).body("WhatsApp Number Verified");
+            Map<String , Object> data =  new HashMap<>();
+            data.put("message","WhatsApp Number Verified");
+            data.put("iskyc",mech.isIskyc());
+            return  ResponseEntity.status(HttpStatus.OK).body(data);
    }
    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mechanic Not Found");
 }
