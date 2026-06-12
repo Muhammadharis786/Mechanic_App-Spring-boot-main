@@ -18,9 +18,7 @@ public class MechanicRegistrationDto {
     private String mechanictype;
     private int experienceyears;
     private String workinghours;
-    private String mechanicimgurl;
-    private String cnicfronturl;
-    private String cnicbackurl;
+
     private BigDecimal latitude;
     private BigDecimal longitude;
 

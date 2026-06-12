@@ -30,4 +30,6 @@ public interface MechanicRepository  extends JpaRepository<Mechanic ,Long> {
             List<Long> ids
     );
     boolean existsByUser(User user);
+
+    boolean existsByCnicNumber(String nicnumber);
 }

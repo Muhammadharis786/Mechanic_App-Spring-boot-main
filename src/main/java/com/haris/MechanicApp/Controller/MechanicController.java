@@ -82,12 +82,11 @@ public class MechanicController {
     @PostMapping(value = "api/mechanic/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registerMechanic(
             @RequestPart("userData") MechanicRegistrationDto mechanicdata,
-            @RequestPart("mechanicprofilePicture") MultipartFile mecanicimg,
-            @RequestPart("cnicfrontimg") MultipartFile cnicfrontimg,
-            @RequestPart("cnicbackimg") MultipartFile cnicbackimg
+            @RequestPart("mechanicprofilePicture") MultipartFile mecanicimg
+
 
             ){
-        return  mechanicService.registerMechanic (mechanicdata , mecanicimg , cnicbackimg ,cnicfrontimg);
+        return  mechanicService.registerMechanic (mechanicdata , mecanicimg );
 
 
     }

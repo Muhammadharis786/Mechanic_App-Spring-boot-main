@@ -54,6 +54,9 @@ public class Mechanic {
      @Column(name = "is_verified")
     private boolean isverified = false;
 
+     @Column (name = "is_kyc")
+     private boolean iskyc = false;
+
     // 🔧 Work Details
     private String mechanictype;
 

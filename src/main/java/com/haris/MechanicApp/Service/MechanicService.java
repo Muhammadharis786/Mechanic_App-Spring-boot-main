@@ -91,9 +91,8 @@ public class MechanicService    {
 
     public ResponseEntity<?> registerMechanic(
             MechanicRegistrationDto mechanicdata,
-            MultipartFile mecanicimg,
-            MultipartFile cnicbackimg,
-            MultipartFile cnicfrontimg
+            MultipartFile mecanicimg
+
     )
     {
 
@@ -104,16 +103,18 @@ public class MechanicService    {
                 User mechanicAndduser = user.get();
                 if(checkmechanic.isPresent()){
 
+
                     Mechanic newregisteredmechanic = checkmechanic.get();
-
-                    String mechanicImageUrl = uploadFileToGcs(mecanicimg, "mechanic_images");
-                    String cnicFrontUrl = uploadFileToGcs(cnicfrontimg, "cnic_images");
-                    String cnicBackUrl = uploadFileToGcs(cnicbackimg, "cnic_images");
-
-                    if (mechanicImageUrl == null || cnicFrontUrl == null || cnicBackUrl == null) {
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed.");
+                    if(!newregisteredmechanic.isIskyc()){
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("First complete KYC!");
                     }
 
+                    String mechanicImageUrl = uploadFileToGcs(mecanicimg, "mechanic_images");
+
+
+                    if (mechanicImageUrl == null ) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed.");
+                    }
 
                     //menay jo hay wo user jo tha ab mechanic bhi bn gya hay tu menay ab ussay save krdya hay Role mechanic
                     mechanicAndduser.getRoles().add(Role.MECHANIC);
@@ -134,10 +135,8 @@ public class MechanicService    {
 
 
 
-                    newregisteredmechanic.setShopaddress(mechanicdata.getShopaddress());
+
                     newregisteredmechanic.setMechanicimgurl(mechanicImageUrl);
-                    newregisteredmechanic.setCnicfronturl(cnicFrontUrl);
-                    newregisteredmechanic.setCnicbackurl(cnicBackUrl);
 
                     newregisteredmechanic.setIscompleteRegister(true);
                     System.out.println("hogya mechanic registered");
