@@ -59,74 +59,81 @@ public class KycService {
     }
 
     // ================= FACE COMPARE (AWS Rekognition) =================
-    public ResponseEntity<?> verifyFace(
-            MultipartFile nicFront,
-            MultipartFile selfie,
-            MultipartFile nicBack ,
-            String mechanicnumber
-    ) throws IOException {
-        System.out.println("This is mechanic number: "+ mechanicnumber);
-            Optional<Mechanic> checkmechanic  = mechanicRepository.findByPhonenumber(mechanicnumber);
-            if(checkmechanic.isEmpty()){
-                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic  not found");
-            }
-            Mechanic mechanic = checkmechanic.get();
-        RekognitionClient client = rekognitionClient();
+        public ResponseEntity<?> verifyFace(
+                MultipartFile nicFront,
+                MultipartFile selfie,
+                MultipartFile nicBack ,
+                String mechanicnumber
+        ) throws IOException {
+            System.out.println("This is mechanic number: "+ mechanicnumber);
+                Optional<Mechanic> checkmechanic  = mechanicRepository.findByPhonenumber(mechanicnumber);
+                if(checkmechanic.isEmpty()){
+                    return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic  not found");
+                }
+                Mechanic mechanic = checkmechanic.get();
+            RekognitionClient client = rekognitionClient();
 
-        // AWS Image — directly use karo (import upar se aa rahi hai)
-        Image source = Image.builder()
-                .bytes(SdkBytes.fromByteArray(nicFront.getBytes()))
-                .build();
+            // AWS Image — directly use karo (import upar se aa rahi hai)
+            Image source = Image.builder()
+                    .bytes(SdkBytes.fromByteArray(nicFront.getBytes()))
+                    .build();
 
-        Image target = Image.builder()
-                .bytes(SdkBytes.fromByteArray(selfie.getBytes()))
-                .build();
+            Image target = Image.builder()
+                    .bytes(SdkBytes.fromByteArray(selfie.getBytes()))
+                    .build();
 
-        CompareFacesRequest request = CompareFacesRequest.builder()
-                .sourceImage(source)
-                .targetImage(target)
-                .similarityThreshold(80F)
-                .build();
+            CompareFacesRequest request = CompareFacesRequest.builder()
+                    .sourceImage(source)
+                    .targetImage(target)
+                    .similarityThreshold(80F)
+                    .build();
 
-        CompareFacesResponse response = client.compareFaces(request);
-       String nicnumber =  extractCnic(nicFront) ;
+            CompareFacesResponse response = client.compareFaces(request);
+           String nicnumber =  extractCnic(nicFront) ;
 
 
-        float similarity = 0f;
-        if (!response.faceMatches().isEmpty()) {
+            float similarity = 0f;
+            if (!response.faceMatches().isEmpty()) {
 
-            similarity = response.faceMatches().getFirst().similarity();
-        }
-
-        boolean verified = similarity >= 90.0f;
-
-        if(  verified && !nicnumber.contains("Not")){
-       boolean   checknic  =   mechanicRepository.existsByCnicNumber(nicnumber);
-       if(checknic){
-           return ResponseEntity.status(HttpStatus.CONFLICT).body("cnic Already used");
-       }
-            System.out.println("This is cnic number:"+ nicnumber);
-            String cnicFrontUrl = uploadFileToGcs(nicFront, "cnic_images");
-            String cnicBackUrl = uploadFileToGcs(nicBack, "cnic_images");
-            if ( cnicFrontUrl == null || cnicBackUrl == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed.");
+                similarity = response.faceMatches().getFirst().similarity();
             }
 
-            mechanic.setIskyc(true);
-            mechanic.setCnicNumber(nicnumber);
-            mechanic.setCnicfronturl(cnicFrontUrl);
-            mechanic.setCnicbackurl(cnicBackUrl);
-            mechanicRepository.save(mechanic);
-            System.out.println("mechanic succesfully uploaded");
+            boolean verified = similarity >= 90.0f;
+            System.out.println("The similarity is that: "+ similarity);
+            if(  verified && !nicnumber.contains("Not")){
+           boolean   checknic  =   mechanicRepository.existsByCnicNumber(nicnumber);
+                System.out.println("yni kay mera face mathc hogya hay aur nic say number nikl gya hay");
+           if(checknic){
+               Map<String, Object> result = new HashMap<>();
+               result.put("verified", true);
+               result.put("similarityScore", String.format("%.2f", similarity) + "%");
+               result.put("message", "cninc already used");
+               System.out.println("yni kay mera face mathc hogya hay aur nic say number nikl gya hay mgr nic kisi aur ka pass already hay");
+
+               return ResponseEntity.status(HttpStatus.CONFLICT).body(result);
+           }
+                System.out.println("This is cnic number:"+ nicnumber);
+                String cnicFrontUrl = uploadFileToGcs(nicFront, "cnic_images");
+                String cnicBackUrl = uploadFileToGcs(nicBack, "cnic_images");
+                if ( cnicFrontUrl == null || cnicBackUrl == null) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed.");
+                }
+
+                mechanic.setIskyc(true);
+                mechanic.setCnicNumber(nicnumber);
+                mechanic.setCnicfronturl(cnicFrontUrl);
+                mechanic.setCnicbackurl(cnicBackUrl);
+                mechanicRepository.save(mechanic);
+                System.out.println("mechanic succesfully uploaded");
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("verified", verified);
+            result.put("similarityScore", String.format("%.2f", similarity) + "%");
+            result.put("message", verified ? "KYC Verified ✅" : "KYC Failed ❌");
+
+            return ResponseEntity.ok(result);
         }
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("verified", verified);
-        result.put("similarityScore", String.format("%.2f", similarity) + "%");
-        result.put("message", verified ? "KYC Verified ✅" : "KYC Failed ❌");
-
-        return ResponseEntity.ok(result);
-    }
 
     // ================= CNIC EXTRACT (Google Vision) =================
     public String extractCnic(MultipartFile image) throws IOException {
