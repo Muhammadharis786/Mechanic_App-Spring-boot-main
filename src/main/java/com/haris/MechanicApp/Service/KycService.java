@@ -127,7 +127,11 @@ public class KycService {
                 System.out.println("mechanic succesfully uploaded");
             }
             if(nicnumber.contains("Not")){
-                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("NIC not valid ");
+                Map<String, Object> result = new HashMap<>();
+                result.put("verified", false);
+                result.put("similarityScore", String.format("%.2f", 0f) + "%");
+                result.put("message", "NIC not valid");
+                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
             }
 
             Map<String, Object> result = new HashMap<>();
