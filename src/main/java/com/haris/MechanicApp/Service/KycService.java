@@ -98,7 +98,7 @@ public class KycService {
                 similarity = response.faceMatches().getFirst().similarity();
             }
 
-            boolean verified = similarity >= 90.0f;
+            boolean verified = similarity >= 90.0f;  //true
             System.out.println("The similarity is that: "+ similarity);
             if(  verified && !nicnumber.contains("Not")){
            boolean   checknic  =   mechanicRepository.existsByCnicNumber(nicnumber);
@@ -125,6 +125,9 @@ public class KycService {
                 mechanic.setCnicbackurl(cnicBackUrl);
                 mechanicRepository.save(mechanic);
                 System.out.println("mechanic succesfully uploaded");
+            }
+            if(nicnumber.contains("Not")){
+                return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("NIC not valid ");
             }
 
             Map<String, Object> result = new HashMap<>();

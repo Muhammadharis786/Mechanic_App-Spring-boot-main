@@ -9,13 +9,12 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.rekognition.model.RekognitionException;
 
 @RestController
-@RequestMapping("/api/kyc")
 public class KycController {
 
     @Autowired
     private KycService kycService;
 
-    @PostMapping("/verify/{mechanicnumber}")
+    @PostMapping("/api/kyc/verify/{mechanicnumber}")
     public ResponseEntity<?> verifyKyc(
             @PathVariable("mechanicnumber") String mechanicnumber,
             @RequestParam("nicFront") MultipartFile nicFront,
