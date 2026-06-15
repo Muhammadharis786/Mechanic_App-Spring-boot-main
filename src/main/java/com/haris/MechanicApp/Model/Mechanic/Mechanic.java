@@ -69,7 +69,7 @@ public class Mechanic {
     private boolean isengaged = false;
 
     @Column(name = "is_active")
-    private boolean isactive = true;
+    private boolean isactive = false;
 
          @Column(name = "working_hours")         // Account active/deactivated
     private String workinghours;          // e.g., "9 AM - 6 PM"
