@@ -187,7 +187,14 @@ public class MechanicController {
 
     }
 
+// =====================================================
+// Yeh MechanicController.java mein add karo
+// =====================================================
 
+    @GetMapping("/api/mechanic/my-services")
+    public ResponseEntity<?> getMyServices(@AuthenticationPrincipal UserDetails userDetails) {
+        return mechanicService.getMyServices(userDetails.getUsername());
+    }
 }
 
 

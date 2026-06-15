@@ -90,7 +90,7 @@ public class Mechanic {
     private User user;
 
     @Column(name = "average_rating", precision = 3 ,scale = 2)
-    private BigDecimal averageRating = new BigDecimal("5.0");
+    private BigDecimal averageRating = new BigDecimal("0.0");
 
     @Column(name = "isotpverified")
     private  boolean isotpverified =false;

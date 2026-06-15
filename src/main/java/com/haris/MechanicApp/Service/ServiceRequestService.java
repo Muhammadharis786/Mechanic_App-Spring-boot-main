@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Service;
 
 import com.haris.MechanicApp.Controller.LiveLocationController;
+import com.haris.MechanicApp.Model.Appointments.RequestStatus;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
@@ -1255,5 +1256,36 @@ public class ServiceRequestService {
         mechanic.setAverageRating(BigDecimal.valueOf(newAvg));
 
         mechanicRepository.save(mechanic);
+    }
+
+    public ResponseEntity<?> cancelRequestByMechanicAfterAccept(Long requestId, String mechphonenumber) {
+
+        Optional<Mechanic> checkmechanic = mechanicRepository.findByPhonenumber(mechphonenumber);
+        if (checkmechanic.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+        Mechanic mechanic =  checkmechanic.get();
+        Optional<RequestService> checkrequest = serviceRequestRepository.findByRequestIdAndMechanic(requestId, mechanic);
+        if(checkrequest.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
+        }
+        RequestService request = checkrequest.get();
+        if(request.getRequestStatus()== (ServiceRequestStatus.ACCEPTED)){
+
+            mechanic.setTotalJobsCancelled(mechanic.getTotalJobsCancelled() + 1);
+            mechanicRepository.save(mechanic);
+            Map<String, Object> cancelPayload = new HashMap<>();
+            cancelPayload.put("requestId", request.getRequestId());
+            cancelPayload.put("type", "ROAD_REQUEST_CANCELLED");
+            cancelPayload.put("message", "Mechanic has cancelled your request"+ mechanic.getName());
+
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/user/requests/" + request.getUser().getUserid(),
+                    (Object) cancelPayload
+            );
+
+            return ResponseEntity.ok(cancelPayload);
+        }
+        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can't cancel request before accept the request" );
     }
 }

@@ -60,6 +60,14 @@ public class AppointmentCleanupTask {
     @Transactional
 
     @Scheduled(fixedRate = 60000)
+    public void expireservicerequest (){
+
+    }
+
+
+    @Transactional
+
+    @Scheduled(fixedRate = 60000)
     public void sendAppointmentReminders() {
 
         List<AppointmentRequest> acceptedRequests =

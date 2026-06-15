@@ -85,6 +85,16 @@ public class ServiceRequestController {
         return serviceRequestService.cancelRequest(requestId, userDetails.getUsername());
     }
 
+    @GetMapping("/api/service-request/cancel/{requestId}")
+    public ResponseEntity<?> cancelRequestByMechanicAfterAccept(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.cancelRequestByMechanicAfterAccept(requestId, userDetails.getUsername());
+    }
+
     @GetMapping("/api/service-request/tracking/{requestId}")
     public ResponseEntity<?> getRequestTracking(
             @PathVariable Long requestId,

@@ -28,10 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -732,6 +729,91 @@ public ResponseEntity<?>showmechanicprofile (String phonenumber) {
             throw new RuntimeException(e);
         }
     }
+
+
+
+
+    // =====================================================
+// Yeh method MechanicService.java mein add karo
+// =====================================================
+
+    public ResponseEntity<?> getMyServices(String phonenumber) {
+
+        Optional<Mechanic> checkMechanic = mechanicRepository.findByPhonenumber(phonenumber);
+        if (checkMechanic.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic not found");
+        }
+
+        Mechanic mechanic = checkMechanic.get();
+
+        // ── 1. Active Jobs (ACCEPTED → COMPLETED se pehle wali saari statuses) ──
+        long activeFromAppointments = appointmentRepository.countActiveByMechanic(mechanic);
+        long activeFromRequests = serviceRequestRepository.countActiveByMechanic(mechanic);
+        int activeJobs = (int)(activeFromAppointments + activeFromRequests);
+
+        // ── 2. Due Today (sirf appointments ki date check hogi — RequestService mein date nahi hoti) ──
+        long dueToday = appointmentRepository.countDueTodayByMechanic(mechanic, LocalDate.now());
+
+        // ── 3. Total Jobs = completed + cancelled ──
+        int totalJobs = mechanic.getTotalJobsCompleted() + mechanic.getTotalJobsCancelled();
+
+        // ── 4. Completion Rate ──
+        double completionRate = totalJobs > 0
+                ? Math.round((mechanic.getTotalJobsCompleted() * 100.0 / totalJobs) * 10.0) / 10.0
+                : 0.0;
+
+        // ── 5. Growth % this month vs last month ──
+        YearMonth thisYearMonth = YearMonth.now();
+        YearMonth lastYearMonth = thisYearMonth.minusMonths(1);
+
+        Instant thisMonthStart = thisYearMonth.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant thisMonthEnd   = thisYearMonth.atEndOfMonth().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant lastMonthStart = lastYearMonth.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant lastMonthEnd   = lastYearMonth.atEndOfMonth().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+        long thisMonthJobs = appointmentRepository.countByMechanicAndCreatedAtBetween(mechanic, thisMonthStart, thisMonthEnd)
+                + serviceRequestRepository.countByMechanicAndCreatedAtBetween(mechanic, thisMonthStart, thisMonthEnd);
+        long lastMonthJobs = appointmentRepository.countByMechanicAndCreatedAtBetween(mechanic, lastMonthStart, lastMonthEnd)
+                + serviceRequestRepository.countByMechanicAndCreatedAtBetween(mechanic, lastMonthStart, lastMonthEnd);
+
+        double growthPercent = lastMonthJobs > 0
+                ? Math.round(((thisMonthJobs - lastMonthJobs) * 100.0 / lastMonthJobs) * 10.0) / 10.0
+                : (thisMonthJobs > 0 ? 100.0 : 0.0);
+
+        // ── 6. Last Month Earnings (Performance Overview filter ke liye) ──
+        List<Appointments> lastMonthApps = appointmentRepository
+                .findCompletedByMechanicAndMonth(mechanic, lastMonthStart, lastMonthEnd);
+        List<RequestService> lastMonthReqs = serviceRequestRepository
+                .findCompletedByMechanicAndMonth(mechanic, lastMonthStart, lastMonthEnd);
+
+        double lastMonthEarning = 0.0;
+        for (Appointments a : lastMonthApps) {
+            if (a.getAmount() != null) lastMonthEarning += a.getAmount().doubleValue();
+        }
+        for (RequestService r : lastMonthReqs) {
+            if (r.getFinalAmount() != null) lastMonthEarning += r.getFinalAmount();
+        }
+
+        // ── 7. DTO build karo ──
+        MyServicesDTO dto = new MyServicesDTO();
+        dto.setTotalCompleted(mechanic.getTotalJobsCompleted());
+        dto.setTotalCancelled(mechanic.getTotalJobsCancelled());
+        dto.setTotaljobsCompleted(totalJobs);
+
+        dto.setTotalEarning(mechanic.getTotalearning());
+        dto.setAverageRating(mechanic.getAverageRating());
+        dto.setTotalReviews(mechanic.getTotalReviews());
+        dto.setCompletionRate(completionRate);
+        dto.setActiveJobs(activeJobs);
+        dto.setDueToday((int) dueToday);
+        dto.setGrowthPercent(growthPercent);
+        dto.setLastMonthEarning(lastMonthEarning);
+
+
+        return ResponseEntity.ok(dto);
+    }
+
+
 
     }
 

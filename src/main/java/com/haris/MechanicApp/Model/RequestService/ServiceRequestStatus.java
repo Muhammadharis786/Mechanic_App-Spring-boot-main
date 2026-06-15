@@ -9,6 +9,7 @@ public enum ServiceRequestStatus {
     PRICE_GIVEN,
     IN_PROGRESS,
     COMPLETED,
+    EXPIRED,
     CANCELLED,
     WAITING_USER_APPROVAL,
     APPROVED_PRICE_REQUEST ,

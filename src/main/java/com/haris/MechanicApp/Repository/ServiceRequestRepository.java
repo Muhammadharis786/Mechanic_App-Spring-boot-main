@@ -58,6 +58,41 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
     List<RequestService> findTop5ByMechanicAndRequestStatusOrderByCompletedAtDesc(
             Mechanic mechanic, ServiceRequestStatus status
     );
+    // Woh saari PENDING requests jo :cutoff se pehle bani hain aur kisi mechanic
+    // ne accept nahi ki (mechanic IS NULL)
+    @Query("""
+        SELECT r FROM RequestService r
+        WHERE r.requestStatus = 'PENDING'
+          AND r.mechanic IS NULL
+          AND r.createdAt <= :cutoff
+    """)
+    List<RequestService> findExpiredPendingRequests(@Param("cutoff") Instant cutoff);
+
+
+    // My Services page ke liye count
 
     List<RequestService> findByMechanicAndRequestStatusOrderByCompletedAtDesc(Mechanic mech, ServiceRequestStatus serviceRequestStatus);
+
+
+    // 1. Active service requests count
+    @Query("SELECT COUNT(r) FROM RequestService r WHERE r.mechanic = :mechanic " +
+            "AND r.requestStatus IN ('ACCEPTED', 'MECHANIC_ON_WAY', 'ARRIVED', 'INSPECTION_STARTED', " +
+            "'PRICE_GIVEN', 'IN_PROGRESS', 'WAITING_USER_APPROVAL', 'APPROVED_PRICE_REQUEST', " +
+            "'WORK_STARTED', 'WORK_COMPLETED', 'PAYMENT_PENDING')")
+    long countActiveByMechanic(@Param("mechanic") Mechanic mechanic);
+
+    // 2. Monthly earnings filter ke liye
+    @Query("SELECT r FROM RequestService r WHERE r.mechanic = :mechanic " +
+            "AND r.requestStatus = 'COMPLETED' " +
+            "AND r.completedAt >= :start AND r.completedAt < :end")
+    List<RequestService> findCompletedByMechanicAndMonth(@Param("mechanic") Mechanic mechanic,
+                                                         @Param("start") Instant start,
+                                                         @Param("end") Instant end);
+
+    // 3. This month/last month count (for growth %)
+    @Query("SELECT COUNT(r) FROM RequestService r WHERE r.mechanic = :mechanic " +
+            "AND r.createdAt >= :start AND r.createdAt < :end")
+    long countByMechanicAndCreatedAtBetween(@Param("mechanic") Mechanic mechanic,
+                                            @Param("start") Instant start,
+                                            @Param("end") Instant end);
 }
