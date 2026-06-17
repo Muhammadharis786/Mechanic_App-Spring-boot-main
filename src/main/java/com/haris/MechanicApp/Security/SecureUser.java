@@ -86,6 +86,9 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/login").permitAll()
                                 .requestMatchers("/api/mechanic/registerwithotp").permitAll()
                                 .requestMatchers("/api/mechanic/register/verify").permitAll()
+                                .requestMatchers("/api/admin/**").permitAll()
+
+
 
 
 
@@ -105,6 +108,7 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                 )
 
                 .httpBasic(Customizer.withDefaults());
+
 //                .oauth2Login(Customizer.withDefaults());
 //                .formLogin(Customizer.withDefaults());
              return http.build();
