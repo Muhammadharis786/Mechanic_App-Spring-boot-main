@@ -76,4 +76,8 @@ public interface AppointmentRepository  extends JpaRepository<Appointments , Str
     List<Appointments> findCompletedByMechanicAndMonth(@Param("mechanic") Mechanic mechanic,
                                                        @Param("start") Instant start,
                                                        @Param("end") Instant end);
+
+
+    List<Appointments> findByStatus(AppointmentStatus status);
+    List<Appointments> findAll();  // already hai JpaRepository mein
 }

@@ -95,4 +95,6 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
     long countByMechanicAndCreatedAtBetween(@Param("mechanic") Mechanic mechanic,
                                             @Param("start") Instant start,
                                             @Param("end") Instant end);
+
+    List<RequestService> findByRequestStatus(ServiceRequestStatus status);
 }
