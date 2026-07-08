@@ -41,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService  {
@@ -416,7 +417,6 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
     }
 
     public ResponseEntity<?> dashboard(String phonenumber) {
-        System.out.println("im dashboard");
        Optional<User>  checkuser = userRepo.findByPhonenumber(phonenumber);
 
     if(checkuser.isPresent()){
@@ -424,7 +424,6 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
 
         Map<String , Object> map = new HashMap<>();
-        System.out.println("User Cordinates: "+ user.getLastLatitude()+" : " +  user.getLastLongitude());
 
         GeoOperations<String  , String> geoOperations = redisTemplate.opsForGeo();
          double userlongitude ;
@@ -441,6 +440,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             // Fallback if not in Redis
             userlongitude = user.getLastLongitude().doubleValue();
             userlatitude = user.getLastLatitude().doubleValue();
+            System.out.println("Fetched User position from Database: " + userlatitude + ", " + userlongitude);
         }
         GeoResults<GeoLocation<String>> results =
                 geoOperations.search(
@@ -459,17 +459,44 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         for (GeoResult<GeoLocation<String>> result  : results){
           long mechanicid =  Long.parseLong (result.getContent().getName());
 
-          Point point = result.getContent().getPoint();
-            System.out.println("Mechanic Latitude: "+ point.getX());
-            System.out.println("Mechanic Longitude: "+ point.getY());
+            Point point = result.getContent().getPoint();
+
             destinationparam.append(point.getY()).append(",").append(point.getX()).append("|");
           mechanicIds.add(mechanicid);
         }
+        List<Mechanic> mechanics = mechRepo.findAllById(mechanicIds);
+
+        // Database se mili hui IDs
+        Set<Long> foundIds = mechanics.stream()
+                .map(Mechanic::getId)
+                .collect(Collectors.toSet());
+        // Missing IDs
+        List<Long> missingIds = mechanicIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+//        for (Long id : missingIds) {
+//            redisTemplate.opsForZSet().remove("mechanics", id.toString());
+//        }
+
+        System.out.println("Found IDs: " + foundIds);
+        System.out.println("Missing IDs: " + missingIds);
+
+
         GoogleDistance googleapi =  new GoogleDistance();
-        if(destinationparam.length()>0){
+
+
+        if(!destinationparam.isEmpty()){
             destinationparam.setLength(destinationparam.length()-1);
         }
-     List<RoadInfo> distancewithtime =    googleapi.getBatchRoadDistances(userlatitude , userlongitude , destinationparam.toString());
+
+            List<RoadInfo> distancewithtime =    googleapi.getBatchRoadDistances(userlatitude , userlongitude ,destinationparam.toString());
+
+        if(distancewithtime ==null ){
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No Data Found");
+        }
+
+
 
         List<Mechanic>   allnearbymechanics = mechRepo.findAllById(mechanicIds);
         if(allnearbymechanics.isEmpty()){
@@ -528,7 +555,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             User user = checkuser.get();
             userRepo.delete(user);
             return ResponseEntity.ok("User Deleted");
-            
+
 
         }
 
