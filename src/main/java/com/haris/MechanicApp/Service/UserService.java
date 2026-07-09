@@ -474,9 +474,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         List<Long> missingIds = mechanicIds.stream()
                 .filter(id -> !foundIds.contains(id))
                 .toList();
-//        for (Long id : missingIds) {
-//            redisTemplate.opsForZSet().remove("mechanics", id.toString());
-//        }
+        for (Long id : missingIds) {
+            redisTemplate.opsForZSet().remove("mechanic", id.toString());
+        }
 
         System.out.println("Found IDs: " + foundIds);
         System.out.println("Missing IDs: " + missingIds);
