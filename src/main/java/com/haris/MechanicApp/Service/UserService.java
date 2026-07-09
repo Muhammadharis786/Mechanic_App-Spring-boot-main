@@ -478,6 +478,8 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             redisTemplate.opsForZSet().remove("mechanic", id.toString());
         }
 
+        System.out.println("This is param: "+ destinationparam);
+
         System.out.println("Found IDs: " + foundIds);
         System.out.println("Missing IDs: " + missingIds);
 
