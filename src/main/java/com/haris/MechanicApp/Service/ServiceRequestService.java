@@ -170,46 +170,36 @@ public class ServiceRequestService {
                         eta,
                         savedRequest.getRequestStatus(),
                         user.getUsername(),
-                        user.getUserimgurl()
+                        user.getUserimgurl(),
+                        user.getPhonenumber()
                 );
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/mechanic/requests/" + mechanicId,
+                "/topic/mechanic/slectedmechanic/requests/" + mechanicId,
                 notificationDto
         );
+        Map<String, String> fcmData = new HashMap<>();
+        fcmData.put("type", NotificationType.ROAD_REQUEST.toString());
+        fcmData.put("requestid", String.valueOf(request.getRequestId())  );
+        fcmData.put("userLatitude", String.valueOf(request.getUserLatitude()));
+        fcmData.put("userLongitude", String.valueOf(request.getUserLongitude()));
+        fcmData.put("locationName", request.getLocationName());
+        fcmData.put("serviceType", request.getServiceType());
+        fcmData.put("notes", request.getUserNotes());
+        fcmData.put("username", request.getUser().getUsername());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("requestId", savedRequest.getRequestId());
-        response.put("requestStatus", savedRequest.getRequestStatus().name());
-        response.put("mechanicId", mechanicId);
-        response.put("message", "Request sent to selected mechanic");
-        response.put("notification", notificationDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
 
-    public ResponseEntity<?> createRequestForSelectedMechanic(
-            CreateServiceRequestDto dto,
-            String userPhoneNumber
-    ) {
-        String selectedPhone = dto.getSelectedMechanicPhone();
-        if (selectedPhone == null || selectedPhone.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Selected mechanic phone is missing");
-        }
-
-        Optional<Mechanic> mechanicOptional =
-                mechanicRepository.findByPhonenumber(selectedPhone);
-        if (mechanicOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
-        }
-
-        return createRequestForMechanic(
-                dto,
-                mechanicOptional.get().getId(),
-                userPhoneNumber
+        fcmService.sendToMechanic(
+                mechanic,
+                "Emergency Request",
+                "Need Emergency: "+ request.getUserNotes(),
+                fcmData
         );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(notificationDto);
     }
+
 
     private ResponseEntity<?> sendRequestToNearbyOnlineMechanics(RequestService request) {
 
@@ -385,7 +375,8 @@ public class ServiceRequestService {
                             eta,
                             request.getRequestStatus(),
                             request.getUser().getUsername() ,
-                            request.getUser().getUserimgurl()
+                            request.getUser().getUserimgurl(),
+                            request.getUser().getPhonenumber()
                     );
 
 
@@ -682,7 +673,7 @@ public class ServiceRequestService {
         if (roadDistances.isEmpty()) {
             return null;
         }
-        return roadDistances.get(0);
+        return roadDistances.getFirst();
     }
 
     private Point getMechanicCurrentPoint(Mechanic mechanic) {
@@ -691,8 +682,8 @@ public class ServiceRequestService {
 
         if (redisPositions != null &&
                 !redisPositions.isEmpty() &&
-                redisPositions.get(0) != null) {
-            return redisPositions.get(0);
+                redisPositions.getFirst() != null) {
+            return redisPositions.getFirst();
         }
 
         if (mechanic.getLatitude() != null && mechanic.getLongitude() != null) {

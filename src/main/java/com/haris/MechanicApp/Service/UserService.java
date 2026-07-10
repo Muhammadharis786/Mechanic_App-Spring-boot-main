@@ -458,11 +458,20 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
 
         for (GeoResult<GeoLocation<String>> result  : results){
           long mechanicid =  Long.parseLong (result.getContent().getName());
+            System.out.println("ids tu mil rhi hay: "+ mechanicIds);
+            boolean isOnline = Boolean.parseBoolean(
+                    String.valueOf(
+                            redisTemplate.opsForHash()
+                                    .get("mechanic:details:" + mechanicid, "isOnline")
+                    )
+            );
+            if(isOnline){
+                Point point = result.getContent().getPoint();
 
-            Point point = result.getContent().getPoint();
+                destinationparam.append(point.getY()).append(",").append(point.getX()).append("|");
+                mechanicIds.add(mechanicid);
+            }
 
-            destinationparam.append(point.getY()).append(",").append(point.getX()).append("|");
-          mechanicIds.add(mechanicid);
         }
         List<Mechanic> mechanics = mechRepo.findAllById(mechanicIds);
 
@@ -474,6 +483,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         List<Long> missingIds = mechanicIds.stream()
                 .filter(id -> !foundIds.contains(id))
                 .toList();
+
         for (Long id : missingIds) {
             redisTemplate.opsForZSet().remove("mechanic", id.toString());
         }
@@ -491,17 +501,21 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             destinationparam.setLength(destinationparam.length()-1);
         }
 
-            List<RoadInfo> distancewithtime =    googleapi.getBatchRoadDistances(userlatitude , userlongitude ,destinationparam.toString());
+        List<RoadInfo> distancewithtime =    googleapi.getBatchRoadDistances(userlatitude , userlongitude ,destinationparam.toString());
 
         if(distancewithtime ==null ){
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No Data Found");
         }
 
+           List<Mechanic>   allnearbyOnlineNotEngagegmechanics = mechRepo.findAllById(foundIds);
+
+        List<Mechanic> availableMechanics = allnearbyOnlineNotEngagegmechanics.stream()
+                .filter(mechanic -> !mechanic.isIsengaged())
+                .toList();
 
 
-        List<Mechanic>   allnearbymechanics = mechRepo.findAllById(mechanicIds);
-        if(allnearbymechanics.isEmpty()){
+        if(availableMechanics.isEmpty()){
             map.put("user", user);
             map.put("mechanics", "Mechanic not available right now");
             return ResponseEntity.ok(map);
@@ -513,7 +527,10 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         }
 
         List<MechanicDTO> mechanicDTOS = new ArrayList<>();
-        for (Mechanic mechanic : allnearbymechanics) {
+        int count = 0;
+        for (Mechanic mechanic : availableMechanics) {
+
+
             MechanicDTO mechanicDTO = new MechanicDTO();
             mechanicDTO.setId(mechanic.getId());
             mechanicDTO.setName(mechanic.getName());
@@ -530,9 +547,9 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             mechanicDTO.setDistance(BigDecimal.valueOf(distanceMap.get(mechanic.getId())));
             mechanicDTOS.add(mechanicDTO);
 
-
+                    count++;
         }
-
+        System.out.println("There is total mechanics online and not engaged: "+ count);
         map.put("mechanics", mechanicDTOS);
         map.put("user", user);
 

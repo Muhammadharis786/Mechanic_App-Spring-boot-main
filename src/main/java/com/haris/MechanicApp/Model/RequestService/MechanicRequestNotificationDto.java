@@ -21,6 +21,7 @@ public class MechanicRequestNotificationDto {
     private String userimage ;
     private String username;
     private Double distanceKm;
+    private String userphonenumber ;
 
     private String requestStatus;
 
@@ -31,7 +32,7 @@ public class MechanicRequestNotificationDto {
 
     }
 
-    public MechanicRequestNotificationDto(Long requestId, long userid, String serviceType, String userNotes, Double userLatitude, Double userLongitude, String locationName, Double distanceKm, String eta, ServiceRequestStatus requestStatus, String username, String userimgurl) {
+    public MechanicRequestNotificationDto(Long requestId, long userid, String serviceType, String userNotes, Double userLatitude, Double userLongitude, String locationName, Double distanceKm, String eta, ServiceRequestStatus requestStatus, String username, String userimgurl , String userphonenumber) {
 
         this.requestId = requestId;
         this.userId = userid;
@@ -45,6 +46,7 @@ public class MechanicRequestNotificationDto {
         this.requestStatus = requestStatus.name();
         this.userimage = userimgurl;
         this.username = username;
+        this.userphonenumber = userphonenumber;
 
     }
 }
