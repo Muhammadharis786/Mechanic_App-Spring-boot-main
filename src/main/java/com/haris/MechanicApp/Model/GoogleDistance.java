@@ -91,7 +91,7 @@ public class GoogleDistance {
             JSONArray rows = json.getJSONArray("rows");
 
             // FIX: rows empty hone ka case handle karo
-            if (rows.length() == 0) {
+            if (rows.isEmpty()) {
                 System.err.println("No rows returned from Google API");
                 return roadInfos;
             }

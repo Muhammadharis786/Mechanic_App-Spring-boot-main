@@ -253,6 +253,10 @@ public class AppointmentService {
             List<RoadInfo> roadDistances = googleapi.getBatchRoadDistances(
                     userlatitude, userlongitude, destinationsparam.toString()
             );
+            if(roadDistances.isEmpty() || roadDistances==null){
+                return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Not Found Distance and time form google");
+
+            }
             List<MechanicDTO> mechanicDTOs = new ArrayList<>();
 
             List<Mechanic> allnearbymechanics = mechanicrepo.findAllById(mechanicIds);

@@ -266,6 +266,7 @@ public class ServiceRequestService {
 
         );
 
+
        List<Mechanic> allnearbyvalidmechanics =   mechanicRepository.findAllById(validMechanicIds);
         Map<String, String> fcmData = new HashMap<>();
         fcmData.put("type", NotificationType.ROAD_REQUEST.toString());
