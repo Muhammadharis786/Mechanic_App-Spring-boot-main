@@ -529,25 +529,27 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         List<MechanicDTO> mechanicDTOS = new ArrayList<>();
         int count = 0;
         for (Mechanic mechanic : availableMechanics) {
+        if(mechanic.getUser()!=user){
+        MechanicDTO mechanicDTO = new MechanicDTO();
+        mechanicDTO.setId(mechanic.getId());
+        mechanicDTO.setName(mechanic.getName());
+        mechanicDTO.setMechanicType(mechanic.getMechanictype());
+        mechanicDTO.setAveragerating(mechanic.getAverageRating());
+        mechanicDTO.setExperience(mechanic.getExperienceyears());
+        mechanicDTO.setIsactive(mechanic.isIsactive());
+        mechanicDTO.setPhonenumber(mechanic.getPhonenumber());
+        mechanicDTO.setMechanicimgurl(mechanic.getMechanicimgurl());
+        mechanicDTO.setIsengaged(mechanic.isIsengaged());
+        mechanicDTO.setLatitude(mechanic.getLatitude());
+        mechanicDTO.setLongitude(mechanic.getLongitude());
+        mechanicDTO.setMechaniclocname(mechanic.getLocationName());
+        mechanicDTO.setDistance(BigDecimal.valueOf(distanceMap.get(mechanic.getId())));
+        mechanicDTOS.add(mechanicDTO);
+
+        count++;
+        }
 
 
-            MechanicDTO mechanicDTO = new MechanicDTO();
-            mechanicDTO.setId(mechanic.getId());
-            mechanicDTO.setName(mechanic.getName());
-            mechanicDTO.setMechanicType(mechanic.getMechanictype());
-            mechanicDTO.setAveragerating(mechanic.getAverageRating());
-            mechanicDTO.setExperience(mechanic.getExperienceyears());
-            mechanicDTO.setIsactive(mechanic.isIsactive());
-            mechanicDTO.setPhonenumber(mechanic.getPhonenumber());
-            mechanicDTO.setMechanicimgurl(mechanic.getMechanicimgurl());
-            mechanicDTO.setIsengaged(mechanic.isIsengaged());
-            mechanicDTO.setLatitude(mechanic.getLatitude());
-            mechanicDTO.setLongitude(mechanic.getLongitude());
-            mechanicDTO.setMechaniclocname(mechanic.getLocationName());
-            mechanicDTO.setDistance(BigDecimal.valueOf(distanceMap.get(mechanic.getId())));
-            mechanicDTOS.add(mechanicDTO);
-
-                    count++;
         }
         System.out.println("There is total mechanics online and not engaged: "+ count);
         map.put("mechanics", mechanicDTOS);
