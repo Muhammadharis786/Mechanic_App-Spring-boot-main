@@ -449,7 +449,7 @@ public class ServiceRequestService {
 
             }
         }
-
+        System.out.println(mechanicPoints.keySet());
         //ager mechanic online aur user ki service type say nh hay tu mechanicpoints empty hngay
         if (mechanicPoints.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Online in your area");
@@ -711,6 +711,7 @@ public class ServiceRequestService {
 
     public ResponseEntity<?> getRequestTracking(Long requestId, String userPhoneNumber) {
         Optional<RequestService> requestOpt = serviceRequestRepository.findById(requestId);
+
         if (requestOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
         }

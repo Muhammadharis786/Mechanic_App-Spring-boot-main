@@ -57,7 +57,6 @@ public class GoogleDistance {
     public List<RoadInfo> getBatchRoadDistances(double userLatitude, double userLongitude, String destinationsParam) {
         List<RoadInfo> roadInfos = new ArrayList<>();
 
-
         if (destinationsParam == null || destinationsParam.isEmpty()) {
             return roadInfos;
         }
@@ -65,8 +64,6 @@ public class GoogleDistance {
         try {
             String originLocation = userLatitude + "," + userLongitude;
 
-            // FIX: Use .build().toUri() instead of .toUriString()
-            // Is se RestTemplate String encode nahi karega balkay direct URI read karega (Double Encoding Bug fixed)
             URI uri = UriComponentsBuilder.newInstance()
                     .scheme("https")
                     .host("maps.googleapis.com")
@@ -75,42 +72,49 @@ public class GoogleDistance {
                     .queryParam("destinations", destinationsParam)
                     .queryParam("key", API_KEY)
                     .build()
-                    .toUri(); // <= String ke bajaye URI banaya gaya hai
-
+                    .toUri();
 
             RestTemplate restTemplate = new RestTemplate();
-
-            // FIX: String URL ki jaga URI object pass kiya hai
             String response = restTemplate.getForObject(uri, String.class);
 
+            System.out.println("Google API Raw Response: " + response); // Debug ke liye
 
             JSONObject json = new JSONObject(response);
 
-            // Google returns single "row" for our single origin
-            JSONArray elementsArray = json.getJSONArray("rows")
-                    .getJSONObject(0)
-                    .getJSONArray("elements");
+            // FIX: Top-level status check pehle karo
+            String topStatus = json.optString("status", "UNKNOWN");
+            if (!topStatus.equals("OK")) {
+                System.err.println("Google Distance Matrix API failed. Status: " + topStatus);
+                return roadInfos; // khaali list return karo, crash mat hone do
+            }
 
-            // Loop over elements
+            JSONArray rows = json.getJSONArray("rows");
+
+            // FIX: rows empty hone ka case handle karo
+            if (rows.length() == 0) {
+                System.err.println("No rows returned from Google API");
+                return roadInfos;
+            }
+
+            JSONArray elementsArray = rows.getJSONObject(0).getJSONArray("elements");
+
             for (int i = 0; i < elementsArray.length(); i++) {
                 JSONObject element = elementsArray.getJSONObject(i);
 
-                if (element.getString("status").equals("OK")) {
+                String elementStatus = element.optString("status", "UNKNOWN");
+                if (elementStatus.equals("OK")) {
                     int distanceMeters = element.getJSONObject("distance").getInt("value");
                     String eta = element.getJSONObject("duration").getString("text");
                     double distanceKm = (double) distanceMeters / 1000.0;
-                    roadInfos.add( new RoadInfo(distanceKm, eta));
-
-
+                    roadInfos.add(new RoadInfo(distanceKm, eta));
                 } else {
-                    roadInfos.add( new RoadInfo(-1, "NULL"));
+                    roadInfos.add(new RoadInfo(-1, "NULL"));
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
         return roadInfos;
     }
