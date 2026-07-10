@@ -118,11 +118,16 @@ public class ServiceRequestService {
         if (!mechanic.isIsactive()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic is not active");
         }
+
+        String mechanictype =   (String) redisTemplate.opsForHash()
+                .get("mechanic:details:" + mechanicId, "serviceType");
+
         if (mechanic.getMechanictype() == null ||
-                !mechanic.getMechanictype().equalsIgnoreCase(dto.getServiceType())) {
+                !dto.getServiceType().equalsIgnoreCase(mechanictype)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Selected mechanic does not provide this service");
         }
+        System.out.println("This is redis service type: "+ mechanictype +" and this is jo frontend say aya hay: "+ dto.getServiceType() );
 
         Object redisOnline = redisTemplate.opsForHash()
                 .get("mechanic:details:" + mechanicId, "isOnline");
