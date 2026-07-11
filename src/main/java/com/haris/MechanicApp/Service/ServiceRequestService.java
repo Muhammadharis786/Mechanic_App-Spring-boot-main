@@ -788,10 +788,10 @@ public class ServiceRequestService {
             Mechanic assignedMechanic = request.getMechanic();
             assignedMechanic.setIsengaged(false); // Mechanic ko free kar diya
             mechanicRepository.save(assignedMechanic);
-
+            Long assignedMechanicId = assignedMechanic.getId() ;
             // Sirf is ek mechanic ko message bhejain jo tracking map par hai
             simpMessagingTemplate.convertAndSend(
-                    "/topic/request/" + request.getRequestId(),
+                    "/topic/mechanic/requests/" + assignedMechanicId,
                     (Object)  cancelPayload
             );
         }

@@ -67,7 +67,7 @@ public class ServiceRequestController {
         return serviceRequestService.acceptRequest(requestId, userDetails.getUsername());
     }
 
-    @PostMapping("/api/service-request/cancel/{requestId}")
+    @GetMapping("/api/service-request/user/cancel/{requestId}")
     public ResponseEntity<?> cancelRequest(
             @PathVariable Long requestId,
             @AuthenticationPrincipal UserDetails userDetails
@@ -77,7 +77,7 @@ public class ServiceRequestController {
         return serviceRequestService.cancelRequest(requestId, userDetails.getUsername());
     }
 
-    @GetMapping("/api/service-request/cancel/{requestId}")
+    @GetMapping("/api/service-request/mechanic/cancel/{requestId}")
     public ResponseEntity<?> cancelRequestByMechanicAfterAccept(
             @PathVariable Long requestId,
             @AuthenticationPrincipal UserDetails userDetails
