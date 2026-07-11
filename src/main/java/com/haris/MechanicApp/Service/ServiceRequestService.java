@@ -796,6 +796,11 @@ public class ServiceRequestService {
             );
         }
 
+        simpMessagingTemplate.convertAndSend(
+                "/topic/request/" + request.getRequestId(),
+                (Object) cancelPayload
+        );
+
         serviceRequestRepository.save(request);
         return ResponseEntity.ok("Request Cancelled");
     }
@@ -1298,6 +1303,11 @@ public class ServiceRequestService {
 
         simpMessagingTemplate.convertAndSend(
                 "/topic/user/requests/" + request.getUser().getUserid(),
+                (Object) cancelPayload
+        );
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/request/" + request.getRequestId(),
                 (Object) cancelPayload
         );
 
