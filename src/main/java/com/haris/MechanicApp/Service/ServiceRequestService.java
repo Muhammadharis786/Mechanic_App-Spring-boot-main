@@ -1,7 +1,6 @@
 package com.haris.MechanicApp.Service;
 
 import com.haris.MechanicApp.Controller.LiveLocationController;
-import com.haris.MechanicApp.Model.Appointments.RequestStatus;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
@@ -426,6 +425,7 @@ public class ServiceRequestService {
         }
 
         Map<Long, Point> mechanicPoints = new LinkedHashMap<>();
+
         for (GeoResult<RedisGeoCommands.GeoLocation<String>> result : nearbyMechanics) {
             Long mechanicId = Long.valueOf(result.getContent().getName());
             System.out.println("Abhi filhal mujhay nearby mechanics miay id hay:" + mechanicId);
@@ -1312,5 +1312,63 @@ public class ServiceRequestService {
         );
 
         return ResponseEntity.ok(cancelPayload);
+    }
+
+    public ResponseEntity<?> selectedmechaniclocation(Long requestId, String phonenumber, LocationDTO dto) {
+            Optional<User> checkuser = userRepository.findByPhonenumber(phonenumber);
+            if(checkuser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
+            }
+            User user = checkuser.get();
+
+          Optional<RequestService>  checkrequest =  serviceRequestRepository.findByRequestIdAndUser(requestId , user);
+        if(checkrequest.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
+        }
+        RequestService request = checkrequest.get();
+
+        GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();
+        GeoResults<RedisGeoCommands.GeoLocation<String>> nearbyMechanics =
+                geoOperations.search(
+                        "mechanic",
+                        GeoReference.fromCoordinate(dto.getLongitude().doubleValue(), dto.getLatitude().doubleValue()),
+                        new Distance(65, Metrics.KILOMETERS),
+                        RedisGeoCommands.GeoSearchCommandArgs
+                                .newGeoSearchArgs()
+                                .includeDistance()
+                                .includeCoordinates()
+
+                );
+
+        if (nearbyMechanics == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nearby Mechanics Not Available");
+        }
+        Map<Long, Point> mechanicPoints = new LinkedHashMap<>();
+
+        for (GeoResult<RedisGeoCommands.GeoLocation<String>> result : nearbyMechanics) {
+            Long mechanicId = Long.valueOf(result.getContent().getName());
+            mechanicPoints.put(mechanicId, result.getContent().getPoint());
+        }
+        List<NearbyMechanicDTO>     response = new ArrayList<>();
+            for (Long mechid  : mechanicPoints.keySet()) {
+                if(Objects.equals(mechid, request.getMechanic().getId())){
+                    Point point = mechanicPoints.get(mechid);
+                    response.add( new NearbyMechanicDTO(mechid , point.getY() , point.getX()  )) ;
+
+                }
+            }
+
+        String mapSessionId = "user-map-" + user.getUserid();
+        saveMapSessionMechanics(mapSessionId, response);
+
+        NearbyMechanicMapResponseDto mapResponse =
+                new NearbyMechanicMapResponseDto(
+                        mapSessionId,
+                        response
+                );
+        System.out.println(mapResponse);
+        return ResponseEntity.status(HttpStatus.OK).body(mapResponse);
+
+
     }
 }

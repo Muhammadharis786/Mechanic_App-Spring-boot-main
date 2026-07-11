@@ -87,6 +87,17 @@ public class ServiceRequestController {
         return serviceRequestService.cancelRequestByMechanicAfterAccept(requestId, userDetails.getUsername());
     }
 
+    @PostMapping("/api/service-request/selectedmechanic/map/{requestId}")
+    public ResponseEntity<?> selectedmechaniclocation(
+            @RequestBody LocationDTO dto,
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails
+    )
+
+    {
+        return serviceRequestService.selectedmechaniclocation(requestId, userDetails.getUsername() ,dto);
+    }
+
     @GetMapping("/api/service-request/tracking/{requestId}")
     public ResponseEntity<?> getRequestTracking(
             @PathVariable Long requestId,
