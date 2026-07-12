@@ -137,6 +137,7 @@ public class ServiceRequestService {
         User user = userOptional.get();
         RequestService request = new RequestService();
         request.setUser(user);
+        request.setMechanic(mechanic);
         request.setUserLatitude(dto.getUserLatitude());
         request.setUserLongitude(dto.getUserLongitude());
         request.setLocationName(dto.getLocationName());
