@@ -1316,6 +1316,7 @@ public class ServiceRequestService {
 
     public ResponseEntity<?> selectedmechaniclocation(Long requestId, String phonenumber, LocationDTO dto) {
             Optional<User> checkuser = userRepository.findByPhonenumber(phonenumber);
+        System.out.println("Ye data frontend say arha hay: "+ requestId +": "+ dto);
             if(checkuser.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
             }
@@ -1347,15 +1348,33 @@ public class ServiceRequestService {
 
         for (GeoResult<RedisGeoCommands.GeoLocation<String>> result : nearbyMechanics) {
             Long mechanicId = Long.valueOf(result.getContent().getName());
+            System.out.println("ye ids arhi hay redis say"+ mechanicId);
             mechanicPoints.put(mechanicId, result.getContent().getPoint());
         }
+        if(mechanicPoints.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic Not Found");
+        }
+        System.out.println("Ye mechanicPoints ki key set ids hain: "+ mechanicPoints.keySet());
+        System.out.println("Aur ye us request ka mechanics ki id: "+ request.getMechanic().getId()+" and "+ " request id: "+ request.getRequestId());
         List<NearbyMechanicDTO>     response = new ArrayList<>();
+        boolean flag = false;
             for (Long mechid  : mechanicPoints.keySet()) {
-                if(Objects.equals(mechid, request.getMechanic().getId())){
-                    Point point = mechanicPoints.get(mechid);
-                    response.add( new NearbyMechanicDTO(mechid , point.getY() , point.getX()  )) ;
+                System.out.println("mechanics points ek ek kr kay nikal rha hay: "+ mechid);
+               if(request.getMechanic().getId()!=null){
+                   System.out.println("aur dekoh ids redis wli: "+ mechid + "ye hay request wli mech id: "
+                           + request.getMechanic().getId());
+                   if(Objects.equals(mechid, request.getMechanic().getId())){
+                       Point point = mechanicPoints.get(mechid);
+                       response.add( new NearbyMechanicDTO(mechid , point.getY() , point.getX()  )) ;
 
-                }
+
+                   }
+                   flag =true;
+               }
+
+            }
+            if(!flag){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mechanic nh mil saka");
             }
 
         String mapSessionId = "user-map-" + user.getUserid();
