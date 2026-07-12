@@ -1327,6 +1327,10 @@ public class ServiceRequestService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request Not Found");
         }
         RequestService request = checkrequest.get();
+        if(request.getMechanic().getId()==null){
+
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("mechanic is null for this request ");
+        }
 
         GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();
         GeoResults<RedisGeoCommands.GeoLocation<String>> nearbyMechanics =
@@ -1360,7 +1364,7 @@ public class ServiceRequestService {
         boolean flag = false;
             for (Long mechid  : mechanicPoints.keySet()) {
                 System.out.println("mechanics points ek ek kr kay nikal rha hay: "+ mechid);
-               if(request.getMechanic().getId()!=null){
+
                    System.out.println("aur dekoh ids redis wli: "+ mechid + "ye hay request wli mech id: "
                            + request.getMechanic().getId());
                    if(Objects.equals(mechid, request.getMechanic().getId())){
@@ -1368,9 +1372,9 @@ public class ServiceRequestService {
                        response.add( new NearbyMechanicDTO(mechid , point.getY() , point.getX()  )) ;
 
 
-                   }
                    flag =true;
-               }
+                   }
+
 
             }
             if(!flag){
