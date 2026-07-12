@@ -22,7 +22,6 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
             r.requestStatus = 'ACCEPTED'
         WHERE r.requestId = :requestId
           AND r.requestStatus = 'PENDING'
-          AND r.mechanic IS NULL
     """)
     int acceptRequest(Long requestId, Mechanic mechanic);
 
