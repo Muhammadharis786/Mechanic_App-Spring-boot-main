@@ -13,6 +13,7 @@ import com.haris.MechanicApp.Model.Review.Review;
 import com.haris.MechanicApp.Model.Review.ReviewDto;
 import com.haris.MechanicApp.Model.Review.ServiceType;
 import com.haris.MechanicApp.Model.RoadInfo;
+import com.haris.MechanicApp.Model.Subscription.SubscriptionPlan;
 import com.haris.MechanicApp.Model.Verification.User;
 import com.haris.MechanicApp.Model.Appointments.Appointments;
 import com.haris.MechanicApp.Model.Appointments.AppointmentStatus;
@@ -1122,6 +1123,10 @@ public class ServiceRequestService {
 
         // mechanic free
         mechanic.setIsengaged(false);
+        if(mechanic.getSubscriptionPlan()== SubscriptionPlan.FREE){
+            mechanic.setMonthlyRequestCount(mechanic.getMonthlyRequestCount() + 1);
+        }
+
         mechanicRepository.save(mechanic);
 
         Map<String, Object> payload = new HashMap<>();

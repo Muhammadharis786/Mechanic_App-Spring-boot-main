@@ -8,10 +8,7 @@ import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Notification.Notification;
 import com.haris.MechanicApp.Model.Notification.NotificationType;
 import com.haris.MechanicApp.Model.Verification.VerificationTokenMechanic;
-import com.haris.MechanicApp.Repository.AppointmentRepository;
-import com.haris.MechanicApp.Repository.AppointmentRequestRepository;
-import com.haris.MechanicApp.Repository.MechanicNotificationRepository;
-import com.haris.MechanicApp.Repository.OtpTokenMechanicRepository;
+import com.haris.MechanicApp.Repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,6 +39,9 @@ public class AppointmentCleanupTask {
 
     @Autowired
     OtpTokenMechanicRepository otptokenrepo;
+
+    @Autowired
+    MechanicRepository mechanicRepository ;
 // ye ek auto schedula hay jo kay har ghantay may run hoga automatically
     //ye is lie lgya hay tkay pending request ko 1 din say zyada ko wo pending sa expired krday
 
@@ -61,6 +61,21 @@ public class AppointmentCleanupTask {
 
     @Scheduled(fixedRate = 60000)
     public void expireservicerequest (){
+
+    }
+    //ye har mahinay count =0  krdaig yni jo free tier walay hain unkay har mahienay jobs count 0 hojaigi
+    @Scheduled(cron = "0 0 0 1 * ?")
+    public void resetMonthlyRequests(){
+
+        List<Mechanic> mechanics = mechanicRepository.findAll();
+
+        for(Mechanic mechanic : mechanics){
+
+            mechanic.setMonthlyRequestCount(0);
+
+        }
+
+        mechanicRepository.saveAll(mechanics);
 
     }
 

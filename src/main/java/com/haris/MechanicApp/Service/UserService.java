@@ -7,6 +7,7 @@ import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
 import com.haris.MechanicApp.Model.Mechanic.MechanicDTO;
 import com.haris.MechanicApp.Model.RoadInfo;
+import com.haris.MechanicApp.Model.Subscription.SubscriptionPlan;
 import com.haris.MechanicApp.Model.User.UserDto;
 import com.haris.MechanicApp.Model.Verification.*;
 
@@ -508,7 +509,7 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No Data Found");
         }
 
-           List<Mechanic>   allnearbyOnlineNotEngagegmechanics = mechRepo.findAllById(foundIds);
+        List<Mechanic>   allnearbyOnlineNotEngagegmechanics = mechRepo.findAllById(foundIds);
 
         List<Mechanic> availableMechanics = allnearbyOnlineNotEngagegmechanics.stream()
                 .filter(mechanic -> !mechanic.isIsengaged())
@@ -531,6 +532,19 @@ Optional<User> checkUser  = userRepo.findByPhonenumber(user.getPhonenumber());
         for (Mechanic mechanic : availableMechanics) {
         if(mechanic.getUser()!=user){
         MechanicDTO mechanicDTO = new MechanicDTO();
+        if(mechanic.getSubscriptionPlan()== SubscriptionPlan.FREE){
+            if(mechanic.getMonthlyRequestCount()>4){
+                continue;
+            }
+            mechanicDTO.setSubscriptionPlan((SubscriptionPlan.FREE).toString());
+        }
+
+       else if (mechanic.getSubscriptionPlan()== SubscriptionPlan.PREMIUM){
+            mechanicDTO.setSubscriptionPlan((SubscriptionPlan.PREMIUM).toString());
+        }
+        else if (mechanic.getSubscriptionPlan()== SubscriptionPlan.ULTRA_PREMIUM){
+            mechanicDTO.setSubscriptionPlan((SubscriptionPlan.ULTRA_PREMIUM).toString());
+        }
         mechanicDTO.setId(mechanic.getId());
         mechanicDTO.setName(mechanic.getName());
         mechanicDTO.setMechanicType(mechanic.getMechanictype());

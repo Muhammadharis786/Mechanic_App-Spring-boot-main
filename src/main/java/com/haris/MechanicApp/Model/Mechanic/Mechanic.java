@@ -1,5 +1,6 @@
 package com.haris.MechanicApp.Model.Mechanic;
 
+import com.haris.MechanicApp.Model.Subscription.SubscriptionPlan;
 import com.haris.MechanicApp.Model.Verification.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Data
@@ -102,6 +104,19 @@ public class Mechanic {
     private int totalReviews = 0;
 
     private  int totalearning;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subscription_plan")
+    private SubscriptionPlan subscriptionPlan;
+    @Column(name = "subscription_start")
+
+    private Instant subscriptionStart;
+
+    @Column(name = "subscription_end")
+    private Instant subscriptionEnd;
+    @Column(name = "monthly_request_count")
+
+    private Integer monthlyRequestCount;
 
 
 }

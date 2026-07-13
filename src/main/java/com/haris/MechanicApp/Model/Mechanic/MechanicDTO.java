@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Model.Mechanic;
 
 
+import com.haris.MechanicApp.Model.Subscription.SubscriptionPlan;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,5 +26,6 @@ public class MechanicDTO {
     private boolean isengaged;
     private BigDecimal latitude;
     private BigDecimal longitude;
+    private String subscriptionPlan  ;
 
 }

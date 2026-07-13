@@ -302,6 +302,10 @@ public class MechanicService    {
         response.put("totalServices", mechanic.getTotalJobsCompleted());
         response.put("mechanicimgurl", mechanic.getMechanicimgurl());
         response.put("isonline", mechanic.isIsactive());
+        response.put("plan",mechanic.getSubscriptionPlan() );
+        response.put("plan_endDate", mechanic.getSubscriptionEnd());
+        response.put("totalmonthlyjobcount", mechanic.getMonthlyRequestCount());
+
 
         // ✅ Naya add hua
         response.put("todaysEarnings", todayEarnings);
