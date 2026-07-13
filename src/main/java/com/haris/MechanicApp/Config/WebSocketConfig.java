@@ -3,6 +3,7 @@ package com.haris.MechanicApp.Config;
 import com.haris.MechanicApp.Service.CustomUserDetailsService_Final;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -24,6 +25,10 @@ import java.util.Base64;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private CustomUserDetailsService_Final userDetailsService;
+
+    @Autowired
+    private WebSocketSessionRegistry sessionRegistry;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         // 1. 'topic' wo jagah hai jahan server messages phenkega (Broadcasting)s
@@ -42,6 +47,38 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-notifications")
                 .setAllowedOriginPatterns("*")  // Taake kisi bhi browser se connection ho sake
                 .withSockJS(); // Agar browser purana ho to ye madad karta hai
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        // CONNECT frame ke waqt Flutter client "mechanicId" header bhejta hai
+        // (websocket_service.dart -> connect()). Yahan usay pakad kar
+        // sessionId ke against store kar lete hain, taake disconnect hone
+        // pe (crash/force-kill/net gone) hume pata chale konsa mechanic tha.
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
+                StompHeaderAccessor accessor =
+                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String mechanicIdHeader = accessor.getFirstNativeHeader("mechanicId");
+                    String sessionId = accessor.getSessionId();
+
+                    if (mechanicIdHeader != null && sessionId != null) {
+                        try {
+                            Long mechanicId = Long.parseLong(mechanicIdHeader);
+                            sessionRegistry.register(sessionId, mechanicId);
+                        } catch (NumberFormatException ignored) {
+                            // Header malformed tha, skip — presence sirf
+                            // best-effort backup hai, request ko fail
+                            // karne ki zaroorat nahi.
+                        }
+                    }
+                }
+                return message;
+            }
+        });
     }
 
 }
