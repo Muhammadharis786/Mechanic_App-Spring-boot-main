@@ -64,7 +64,8 @@ public class PaymentService {
                         request,
                         SwichTokenResponse.class
                 );
-
+        System.out.println("This is response come form:"+ authUrl +" and response: "+ response);
+        assert response.getBody() != null;
         return response.getBody().getAccess_token();
     }
     public String generatePaymentUrl(
@@ -86,7 +87,7 @@ public class PaymentService {
                 + "&customerTransactionId=" + txnId
                 + "&item=" + URLEncoder.encode(item, "UTF-8")
                 + "&amount=" + 10
-                + "&channel=0"
+                + "&channel=1"
                 + "&description=MechanicServicePayment"
                 + "&PayeeName=" + URLEncoder.encode(payeeName, "UTF-8")
                 + "&Email=" + URLEncoder.encode(email, "UTF-8")
