@@ -1,6 +1,7 @@
 package com.haris.MechanicApp.Service;
 
 import com.haris.MechanicApp.Controller.LiveLocationController;
+import com.haris.MechanicApp.Model.Appointments.RequestStatus;
 import com.haris.MechanicApp.Model.GoogleDistance;
 import com.haris.MechanicApp.Model.Location.LocationDTO;
 import com.haris.MechanicApp.Model.Mechanic.Mechanic;
@@ -1398,6 +1399,27 @@ public class ServiceRequestService {
         System.out.println(mapResponse);
         return ResponseEntity.status(HttpStatus.OK).body(mapResponse);
 
+
+    }
+
+    public ResponseEntity<?> checkrequest(String phonenumber, Long requestId) {
+        Optional<User> checuser = userRepository.findByPhonenumber(phonenumber) ;
+        Optional<Mechanic> checkmech = mechanicRepository.findByPhonenumber(phonenumber) ;
+        if(checuser.isEmpty() && checkmech.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(" Not Found");
+        }
+
+          Optional<RequestService> checkservice =  serviceRequestRepository.findByRequestId(requestId);
+        if (checkservice.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(" Request Not Found");
+        }
+    RequestService request = checkservice.get();
+        System.out.println("may call hra hn taky may request ka status bata skn: " + request.getRequestStatus() +
+         "the request id: "+ request.getRequestId() );
+        return ResponseEntity.ok(request.getRequestStatus());
+        // this is for mechanic
+
+        //this is for user
 
     }
 }

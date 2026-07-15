@@ -19,6 +19,8 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import java.util.Base64;
+import java.util.concurrent.Executors;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 
 @Configuration
 @EnableWebSocketMessageBroker // Iska matlab hai: "WebSocket Messaging chalu kar do"
@@ -34,7 +36,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // 1. 'topic' wo jagah hai jahan server messages phenkega (Broadcasting)s
         //yha data moojod hoga phir yha say /topic say data server phenkaiga client ko unko phenkaiga
         //jinho nay  /topic ko subscirbe kya hoga
-        config.enableSimpleBroker("/topic");
+        // Heartbeat: {server->client every 10s, client->server every 10s}.
+        // Requires a real TaskScheduler — bina iske heartbeat values silently
+        // ignore ho jate hain aur zombie sessions wapis miss hone lagti hain.
+        config.enableSimpleBroker("/topic")
+                .setHeartbeatValue(new long[]{10000, 10000})
+                .setTaskScheduler(new ConcurrentTaskScheduler(Executors.newScheduledThreadPool(1)));
 
         // 2. 'app' wo prefix hai jab client server ko kuch bhejega
         //ye wo jgha hay jha data aiga client say

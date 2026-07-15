@@ -176,6 +176,11 @@ public class ServiceRequestController {
     ) {
         return serviceRequestService.submitReview(dto, userDetails.getUsername());
     }
+  @GetMapping ("api/service-request/checkrequest/{requestId}")
+    public ResponseEntity<?> checkrequest( @PathVariable Long requestId ,
+            @AuthenticationPrincipal UserDetails userDetails){
 
+      return serviceRequestService.checkrequest(userDetails.getUsername() , requestId);
+  }
 
 }

@@ -96,4 +96,6 @@ public interface ServiceRequestRepository extends JpaRepository<RequestService, 
                                             @Param("end") Instant end);
 
     List<RequestService> findByRequestStatus(ServiceRequestStatus status);
+
+    Optional<RequestService> findByRequestId(Long requestId);
 }
