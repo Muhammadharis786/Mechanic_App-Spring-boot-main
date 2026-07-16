@@ -765,27 +765,45 @@ public class ServiceRequestService {
         }
 
         // ✅ Workflow flags - Help Flutter understand state
-        response.put("hasArrived", request.getRequestStatus() == ServiceRequestStatus.ARRIVED ||
-                request.getRequestStatus() == ServiceRequestStatus.WAITING_USER_APPROVAL ||
+        response.put("hasArrived",
+                request.getRequestStatus() == ServiceRequestStatus.ARRIVED ||
+                        request.getRequestStatus() == ServiceRequestStatus.WAITING_USER_APPROVAL ||
+                        request.getRequestStatus() == ServiceRequestStatus.WORK_STARTED ||
+                        request.getRequestStatus() == ServiceRequestStatus.APPROVED_PRICE_REQUEST ||
+                        request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
+                        request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING ||
+                        request.getRequestStatus() == ServiceRequestStatus.COMPLETED
+        );
+
+        // ✅ FIX 1: hasSentPrice should ONLY be true when waiting for approval
+        response.put("hasSentPrice",
+                request.getRequestStatus() == ServiceRequestStatus.WAITING_USER_APPROVAL
+        );
+
+        response.put("workStarted",
                 request.getRequestStatus() == ServiceRequestStatus.APPROVED_PRICE_REQUEST ||
+                        request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
+                        request.getRequestStatus() == ServiceRequestStatus.WORK_STARTED ||
+                        request.getRequestStatus() == ServiceRequestStatus.COMPLETED ||
+                        request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING
+        );
+
+        response.put("workCompleted",
                 request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
-                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
+                        request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING ||
+                        request.getRequestStatus() == ServiceRequestStatus.COMPLETED
+        );
 
-        response.put("hasSentPrice", request.getRequestStatus() == ServiceRequestStatus.WAITING_USER_APPROVAL);
-
-        response.put("workStarted", request.getRequestStatus() == ServiceRequestStatus.APPROVED_PRICE_REQUEST ||
-                request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
-                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
-
-        response.put("workCompleted", request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
-                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
-
-        response.put("paymentPending", request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
+        // ✅ FIX 2: paymentPending should NOT include COMPLETED
+        response.put("paymentPending",
+                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING
+        );
 
         System.out.println("📡 Tracking API response: " + response);
 
         return ResponseEntity.ok(response);
     }
+
 
     @Transactional
     public ResponseEntity<?> cancelRequest(Long requestId, String userPhoneNumber) {
@@ -956,7 +974,7 @@ public class ServiceRequestService {
         }
 
 
-        request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
+            request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
 
         serviceRequestRepository.save(request);
 
@@ -1098,7 +1116,7 @@ public class ServiceRequestService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Work not completed yet");
             }
-            request.setRequestStatus(ServiceRequestStatus.PAYMENT_PENDING);
+                request.setRequestStatus(ServiceRequestStatus.PAYMENT_PENDING);
 
             serviceRequestRepository.save(request);
 
