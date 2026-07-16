@@ -39,9 +39,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Heartbeat: {server->client every 10s, client->server every 10s}.
         // Requires a real TaskScheduler — bina iske heartbeat values silently
         // ignore ho jate hain aur zombie sessions wapis miss hone lagti hain.
-        config.enableSimpleBroker("/topic")
-                .setHeartbeatValue(new long[]{10000, 10000})
-                .setTaskScheduler(new ConcurrentTaskScheduler(Executors.newScheduledThreadPool(1)));
+        config.enableSimpleBroker("/topic") ;
+
 
         // 2. 'app' wo prefix hai jab client server ko kuch bhejega
         //ye wo jgha hay jha data aiga client say
