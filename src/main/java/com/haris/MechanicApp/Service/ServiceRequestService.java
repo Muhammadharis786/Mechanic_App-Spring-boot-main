@@ -730,18 +730,22 @@ public class ServiceRequestService {
                     request.getMechanic(),
                     request
             );
-            dto.setRequestStatus(request.getRequestStatus().name());
+            dto.setRequestStatus(request.getRequestStatus().toString());
+            System.out.println("This is payload every 5 seconds give: "+ dto);
+
+
             return ResponseEntity.ok(dto);
         }
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("requestId", request.getRequestId());
-        payload.put("requestStatus", request.getRequestStatus().name());
+        payload.put("requestStatus", request.getRequestStatus().toString());
         payload.put("serviceType", request.getServiceType());
         payload.put("userNotes", request.getUserNotes());
         payload.put("userLatitude", request.getUserLatitude());
         payload.put("userLongitude", request.getUserLongitude());
         payload.put("locationName", request.getLocationName());
+        System.out.println("This is payload every 5 seconds give: "+ payload);
         return ResponseEntity.ok(payload);
     }
 
