@@ -721,9 +721,7 @@ public class ServiceRequestService {
         }
 
         RequestService request = requestOpt.get();
-        if (!request.getUser().getPhonenumber().equals(userPhoneNumber)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not allowed");
-        }
+
 
         if (request.getMechanic() != null) {
             AcceptedUserMechanicDto dto = buildAcceptedMechanicDto(
