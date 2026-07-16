@@ -722,29 +722,69 @@ public class ServiceRequestService {
 
         RequestService request = requestOpt.get();
 
+        // ✅ ALWAYS return complete standardized response
+        Map<String, Object> response = new HashMap<>();
 
+        // Core fields - ALWAYS present
+        response.put("requestId", request.getRequestId());
+        response.put("requestStatus", request.getRequestStatus().name());
+        response.put("status", request.getRequestStatus().name()); // Both keys for compatibility
+        response.put("serviceType", request.getServiceType());
+        response.put("userNotes", request.getUserNotes());
+
+        // User location - ALWAYS present
+        response.put("userLatitude", request.getUserLatitude());
+        response.put("userLongitude", request.getUserLongitude());
+        response.put("locationName", request.getLocationName());
+
+        // ✅ Prices - ALWAYS include (even if null)
+        response.put("finalPrice", request.getInspectionPrice());
+        response.put("inspectionPrice", request.getInspectionPrice());
+        response.put("arrivalPrice", request.getVisitingcharges());
+        response.put("visitingCharges", request.getVisitingcharges());
+
+        // ✅ Mechanic details - Include if assigned
         if (request.getMechanic() != null) {
-            AcceptedUserMechanicDto dto = buildAcceptedMechanicDto(
-                    request.getMechanic(),
-                    request
-            );
-            dto.setRequestStatus(request.getRequestStatus().toString());
-            System.out.println("This is payload every 5 seconds give: "+ dto);
+            Mechanic mech = request.getMechanic();
+            response.put("mechanicId", mech.getId());
+            response.put("mechanicName", mech.getName());
+            response.put("mechanicPhone", mech.getPhonenumber());
+            response.put("mechanicRating", mech.getAverageRating());
+            response.put("mechanicImage", mech.getMechanicimgurl());
+            response.put("mechanicType", mech.getMechanictype());
 
+            // Live location from Redis
+            String redisKey = "mechanic:details:" + mech.getId();
+            Object lat = redisTemplate.opsForHash().get(redisKey, "latitude");
+            Object lng = redisTemplate.opsForHash().get(redisKey, "longitude");
 
-            return ResponseEntity.ok(dto);
+            if (lat != null && lng != null) {
+                response.put("mechanicLatitude", Double.parseDouble(lat.toString()));
+                response.put("mechanicLongitude", Double.parseDouble(lng.toString()));
+            }
         }
 
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("requestId", request.getRequestId());
-        payload.put("requestStatus", request.getRequestStatus().toString());
-        payload.put("serviceType", request.getServiceType());
-        payload.put("userNotes", request.getUserNotes());
-        payload.put("userLatitude", request.getUserLatitude());
-        payload.put("userLongitude", request.getUserLongitude());
-        payload.put("locationName", request.getLocationName());
-        System.out.println("This is payload every 5 seconds give: "+ payload);
-        return ResponseEntity.ok(payload);
+        // ✅ Workflow flags - Help Flutter understand state
+        response.put("hasArrived", request.getRequestStatus() == ServiceRequestStatus.ARRIVED ||
+                request.getRequestStatus() == ServiceRequestStatus.WAITING_USER_APPROVAL ||
+                request.getRequestStatus() == ServiceRequestStatus.APPROVED_PRICE_REQUEST ||
+                request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
+                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
+
+        response.put("hasSentPrice", request.getRequestStatus() == ServiceRequestStatus.WAITING_USER_APPROVAL);
+
+        response.put("workStarted", request.getRequestStatus() == ServiceRequestStatus.APPROVED_PRICE_REQUEST ||
+                request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
+                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
+
+        response.put("workCompleted", request.getRequestStatus() == ServiceRequestStatus.WORK_COMPLETED ||
+                request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
+
+        response.put("paymentPending", request.getRequestStatus() == ServiceRequestStatus.PAYMENT_PENDING);
+
+        System.out.println("📡 Tracking API response: " + response);
+
+        return ResponseEntity.ok(response);
     }
 
     @Transactional
@@ -923,6 +963,7 @@ public class ServiceRequestService {
         // 📡 notify user via websocket
         Map<String, Object> pricepayload = new HashMap<>();
         pricepayload.put("requestId", request.getRequestId());
+        pricepayload.put("status", request.getRequestStatus().toString());
         pricepayload.put("type", "FINAL_PRICE_SENT");
         pricepayload.put("finalPrice", dto.getFinalPrice());
 
@@ -962,7 +1003,7 @@ public class ServiceRequestService {
 
         approvePayload.put("requestId", requestService.getRequestId());
         approvePayload.put("type", "USER_APPROVED");
-        approvePayload.put("status", "APPROVED_PAYMENT_REQUEST");
+        approvePayload.put("status", requestService.getRequestStatus().toString());
         if(requestService.getServiceType().equals("BIKE")){
             approvePayload.put("arrivalPrice", 300);
             requestService.setVisitingcharges(300.0);
@@ -1022,7 +1063,7 @@ public class ServiceRequestService {
 
         payload.put("requestId", request.getRequestId());
 
-        payload.put("status", request.getRequestStatus().name());
+        payload.put("status", request.getRequestStatus().toString());
          payload.put("message", "Repair completed. Please make payment.");
 
         simpMessagingTemplate.convertAndSend(
@@ -1064,7 +1105,7 @@ public class ServiceRequestService {
             Map<String, Object> payload = new HashMap<>();
 
             payload.put("type", "PAYMENT_PENDING");
-
+            payload.put("status", request.getRequestStatus().toString());
             payload.put("requestId", request.getRequestId());
 
             payload.put("amount", request.getInspectionPrice());
