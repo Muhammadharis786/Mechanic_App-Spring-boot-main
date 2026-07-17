@@ -34,6 +34,7 @@ public class PaymentService {
     private String pwaUrl;
     @Autowired
     private AppointmentRepository appointmentRepository;
+
     @Autowired
     private SwichChecksumUtil checksumUtil;
 

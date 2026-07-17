@@ -86,7 +86,10 @@ public SecurityFilterChain  securityFilterChain (HttpSecurity http){
                         .requestMatchers("/api/login").permitAll()
                                 .requestMatchers("/api/mechanic/registerwithotp").permitAll()
                                 .requestMatchers("/api/mechanic/register/verify").permitAll()
+                        .requestMatchers("/api/payment/callback").permitAll()
                                 .requestMatchers("/api/admin/**").permitAll()
+
+                        
 
 
 
