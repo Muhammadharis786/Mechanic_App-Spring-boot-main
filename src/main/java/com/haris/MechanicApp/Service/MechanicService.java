@@ -484,7 +484,11 @@ return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid OTP please ente
             }
             mech.setIsactive(false);
         mechanicRepository.save(mech);
-
+        String key = "mechanic:heartbeat:" + mech.getId();
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            System.out.println( " ye key delete hogia="+ "mechanic:heartbeat:" + mech.getId());
+            redisTemplate.delete(key);
+        }
         redisTemplate.delete("mechanic:online:" +mech.getId());
 
         redisTemplate.opsForHash().put(
