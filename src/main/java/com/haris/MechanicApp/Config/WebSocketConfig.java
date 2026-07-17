@@ -28,8 +28,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private CustomUserDetailsService_Final userDetailsService;
 
-    @Autowired
-    private WebSocketSessionRegistry sessionRegistry;
+//    @Autowired
+//    private WebSocketSessionRegistry sessionRegistry;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -55,36 +55,36 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS(); // Agar browser purana ho to ye madad karta hai
     }
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        // CONNECT frame ke waqt Flutter client "mechanicId" header bhejta hai
-        // (websocket_service.dart -> connect()). Yahan usay pakad kar
-        // sessionId ke against store kar lete hain, taake disconnect hone
-        // pe (crash/force-kill/net gone) hume pata chale konsa mechanic tha.
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
-                StompHeaderAccessor accessor =
-                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
-                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    String mechanicIdHeader = accessor.getFirstNativeHeader("mechanicId");
-                    String sessionId = accessor.getSessionId();
-
-                    if (mechanicIdHeader != null && sessionId != null) {
-                        try {
-                            Long mechanicId = Long.parseLong(mechanicIdHeader);
-                            sessionRegistry.register(sessionId, mechanicId);
-                        } catch (NumberFormatException ignored) {
-                            // Header malformed tha, skip — presence sirf
-                            // best-effort backup hai, request ko fail
-                            // karne ki zaroorat nahi.
-                        }
-                    }
-                }
-                return message;
-            }
-        });
-    }
+//    @Override
+//    public void configureClientInboundChannel(ChannelRegistration registration) {
+//        // CONNECT frame ke waqt Flutter client "mechanicId" header bhejta hai
+//        // (websocket_service.dart -> connect()). Yahan usay pakad kar
+//        // sessionId ke against store kar lete hain, taake disconnect hone
+//        // pe (crash/force-kill/net gone) hume pata chale konsa mechanic tha.
+//        registration.interceptors(new ChannelInterceptor() {
+//            @Override
+//            public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
+//                StompHeaderAccessor accessor =
+//                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+//
+//                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+//                    String mechanicIdHeader = accessor.getFirstNativeHeader("mechanicId");
+//                    String sessionId = accessor.getSessionId();
+//
+//                    if (mechanicIdHeader != null && sessionId != null) {
+//                        try {
+//                            Long mechanicId = Long.parseLong(mechanicIdHeader);
+//                            sessionRegistry.register(sessionId, mechanicId);
+//                        } catch (NumberFormatException ignored) {
+//                            // Header malformed tha, skip — presence sirf
+//                            // best-effort backup hai, request ko fail
+//                            // karne ki zaroorat nahi.
+//                        }
+//                    }
+//                }
+//                return message;
+//            }
+//        });
+//    }
 
 }
