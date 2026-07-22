@@ -960,9 +960,12 @@ public class ServiceRequestService {
         pricepayload.put("finalPrice", dto.getFinalPrice());
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/user/request/" + request.getUser().getUserid(),
+                "/topic/user/requests/" + request.getUser().getUserid(),
                 (Object)    pricepayload
         );
+        System.out.println("Sending price: " + dto.getFinalPrice());
+        System.out.println("To topic: /topic/user/request/" + request.getUser().getUserid());
+        System.out.println("Payload: " + pricepayload);
 
 
         return ResponseEntity.ok("Final price sent to "+ request.getUser().getUsername());
