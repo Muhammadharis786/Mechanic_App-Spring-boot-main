@@ -182,7 +182,7 @@ public class ServiceRequestService {
                 );
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/mechanic/slectedmechanic/requests/" + mechanicId,
+                "/topic/mechanic/requests/" + mechanicId,
                 notificationDto
         );
         Map<String, String> fcmData = new HashMap<>();
@@ -282,7 +282,8 @@ public class ServiceRequestService {
 
 
         String redisKey = "request:mechanics:" + request.getRequestId();
-
+//wo ye krha hay kay request id (506) kay mechanics add krha hay jessay
+        //request:mechanics:302 ---> have mechanics [38,29,...]
         for (Mechanic mech : allnearbyvalidmechanics) {
 
            redisTemplate.opsForSet().add(
@@ -544,8 +545,8 @@ public class ServiceRequestService {
     @Transactional
     public ResponseEntity<?> acceptRequest(Long requestId, String mechanicPhoneNumber) {
         Optional<RequestService> checkrequestservice = serviceRequestRepository.findById(requestId);
-
         Optional<Mechanic> mechanicOptional = mechanicRepository.findByPhonenumber(mechanicPhoneNumber);
+
         if (checkrequestservice.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Request Not Found");
         }
@@ -555,28 +556,19 @@ public class ServiceRequestService {
 
         Mechanic mechanic = mechanicOptional.get();
         RequestService requestService = checkrequestservice.get();
+        String mechanicIdStr = mechanic.getId().toString();
 
         if (mechanic.isIsengaged()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Mechanic Already Engaged");
         }
-//iskay ander nearby mechanics hain
-        Set<String> nearbyMechanicsList =
-                redisTemplate.opsForSet().members(
-                        "request:mechanics:" + requestId
-                );
-        boolean flag = true ;
-        for(String id : nearbyMechanicsList){
-            System.out.println("This is my id: " + id);
-            if(id.equals(mechanic.getId().toString())){
-                flag = false ;
 
-            }
+        Set<String> nearbyMechanicsList = redisTemplate.opsForSet().members("request:mechanics:" + requestId);
+
+        if (nearbyMechanicsList == null || !nearbyMechanicsList.contains(mechanicIdStr)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("This is not your request " + requestId);
         }
-        if(flag){
-            return  ResponseEntity.status(HttpStatus.CONFLICT).body("This is not your request "+ requestId);
-        }
+
         int updatedRows = serviceRequestRepository.acceptRequest(requestId, mechanic);
-
         if (updatedRows == 0) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Request Already Accepted Or Not Available");
         }
@@ -584,40 +576,21 @@ public class ServiceRequestService {
         mechanic.setIsengaged(true);
         mechanicRepository.save(mechanic);
 
-        AcceptedUserMechanicDto acceptedMechanicDto = buildAcceptedMechanicDto(
-                mechanic,
-                requestService
-        );
-// jab mechanic accept kraiga tu user ko mechanic ka data show hojaiga with distance and eta and vice verse
-        simpMessagingTemplate.convertAndSend(
-                "/topic/request/" + requestId,
-                acceptedMechanicDto
-        );
-
-        List<String > ids =  new ArrayList<>();
+        AcceptedUserMechanicDto acceptedMechanicDto = buildAcceptedMechanicDto(mechanic, requestService);
+//jessay hi mechanic accept kraiga tu us user nay ye subscribe "/topic/user/request/" + requestId kya hoga
+        //wo isko listern krha hoga tu uskay pass notification chala jaiga
+        simpMessagingTemplate.convertAndSend("/topic/user/requests/" + requestService.getUser().getUserid(), acceptedMechanicDto);
 
         Map<String, Object> expirePayload = new HashMap<>();
         expirePayload.put("requestId", requestId);
         expirePayload.put("type", "ROAD_REQUEST_EXPIRED");
-        expirePayload.put("message", "The request accepted by another mechanic "+ mechanic.getName());
+        expirePayload.put("message", "The request accepted by another mechanic " + mechanic.getName());
 
-        //check krnga phly ids null tu nh hay
-        if (nearbyMechanicsList != null) {
-       // phir may nearby mechanics ki ek ek kray k list nikalnga
-            for (String mechanicId : nearbyMechanicsList) {
-
-                if (!mechanicId.equals(mechanic.getId().toString())){
-                    simpMessagingTemplate.convertAndSend(
-                            "/topic/mechanic/requests/" + mechanicId,
-                            (Object) expirePayload
-                    );
-                    ids.add(mechanicId);
-                }
-              }
-
+        for (String otherMechanicId : nearbyMechanicsList) {
+            if (!otherMechanicId.equals(mechanicIdStr)) {
+                simpMessagingTemplate.convertAndSend("/topic/mechanic/requests/" + otherMechanicId,(Object) expirePayload);
+            }
         }
-        System.out.println("ye hay mechanic jab request accept hogi tu inki pass say page gayab "+ ids);
-
 
         return ResponseEntity.ok(acceptedMechanicDto);
     }
@@ -815,6 +788,7 @@ public class ServiceRequestService {
         // Status update
         request.setRequestStatus(ServiceRequestStatus.CANCELLED);
 
+
         Map<String, Object> cancelPayload = new HashMap<>();
         cancelPayload.put("requestId", request.getRequestId());
         cancelPayload.put("type", "ROAD_REQUEST_CANCELLED");
@@ -860,7 +834,7 @@ public class ServiceRequestService {
         }
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/request/" + request.getRequestId(),
+                "/topic/user/request/" + request.getUser().getUserid(),
                 (Object) cancelPayload
         );
 
@@ -974,7 +948,7 @@ public class ServiceRequestService {
         }
 
 
-            request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
+        request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
 
         serviceRequestRepository.save(request);
 
@@ -986,7 +960,7 @@ public class ServiceRequestService {
         pricepayload.put("finalPrice", dto.getFinalPrice());
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/request/" + request.getRequestId(),
+                "/topic/user/request/" + request.getUser().getUserid(),
                 (Object)    pricepayload
         );
 
@@ -1044,7 +1018,7 @@ public class ServiceRequestService {
         approvePayload.put("mechanicId", requestService.getMechanic().getId());
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/request/" + requestService.getRequestId(),
+                "/topic/mechanic/requests/" + requestService.getMechanic().getId(),
                 (Object)    approvePayload
         );
 
@@ -1085,7 +1059,7 @@ public class ServiceRequestService {
          payload.put("message", "Repair completed. Please make payment.");
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/request/" + request.getRequestId(),
+                "/topic/user/requests/" + request.getUser().getUserid(),
                 (Object)   payload
         );
 
@@ -1131,8 +1105,8 @@ public class ServiceRequestService {
             payload.put("message", "User is ready to pay cash");
 
             simpMessagingTemplate.convertAndSend(
-                    "/topic/request/"
-                            + request.getRequestId(),
+                    "/topic/mechanic/requests/"
+                            + request.getMechanic().getId(),
                     (Object) payload
             );
 
@@ -1200,8 +1174,8 @@ public class ServiceRequestService {
         payload.put("message", "Payment received successfully");
 
         simpMessagingTemplate.convertAndSend(
-                "/topic/request/"
-                        + request.getRequestId(),
+                "/topic/user/requests/"
+                        + request.getUser().getUserid(),
                 (Object) payload);
 
         return ResponseEntity.ok("Payment confirmed");
