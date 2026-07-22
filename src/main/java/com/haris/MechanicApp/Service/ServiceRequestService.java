@@ -949,6 +949,7 @@ public class ServiceRequestService {
 
 
         request.setRequestStatus(ServiceRequestStatus.WAITING_USER_APPROVAL);
+        request.setInspectionPrice(dto.getFinalPrice());  // ✅ YE LINE ADD KARO
 
         serviceRequestRepository.save(request);
 
